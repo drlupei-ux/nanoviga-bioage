@@ -1,230 +1,193 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>逆龄算法 · 生理年龄自测 | 陆大夫</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600;700&family=Noto+Sans+SC:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
-<style>
-  /* 基础样式保持您的优质设计 */
-  :root {
-    --ink: #1a1a1a; --ink-light: #444; --ink-faint: #888;
-    --gold: #b8860b; --gold-light: #d4a017; --gold-pale: #f5edd8;
-    --cream: #faf8f3; --white: #ffffff; --border: #e8e2d4;
-    --red-alert: #c0392b; --green-good: #27ae60; --blue-mid: #2980b9;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Noto Sans SC', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; }
-  
-  /* 布局组件 */
-  .header { background: var(--ink); color: var(--white); padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; border-bottom: 2px solid var(--gold); }
-  .header-logo { width: 36px; height: 36px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--ink); font-weight: 600; }
-  
-  .hero { background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 50%, #1a1a1a 100%); color: var(--white); padding: 40px 32px; text-align: center; position: relative; }
-  .hero h1 { font-family: 'Noto Serif SC', serif; font-size: 28px; letter-spacing: 4px; margin-bottom: 8px; }
-  .hero h1 em { color: var(--gold-light); font-style: normal; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>逆龄算法 · 生理年龄自测</title>
+    <style>
+        :root {
+            --ink: #1a1a1a; --gold: #b8860b; --cream: #faf8f3; --border: #e8e2d4;
+        }
+        body { font-family: -apple-system, sans-serif; background: var(--cream); color: var(--ink); margin: 0; }
+        
+        /* 页面切换逻辑：默认隐藏问卷和结果 */
+        #assessment-page, #result-page { display: none; }
 
-  .progress-wrap { background: var(--white); padding: 16px 32px; border-bottom: 1px solid var(--border); position: sticky; top: 72px; z-index: 90; display: none; }
-  .progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
-  .progress-fill { height: 100%; background: var(--gold); width: 0%; transition: width 0.3s; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
+        
+        /* 题目样式 */
+        .q-title { font-weight: bold; margin-bottom: 15px; font-size: 1.1rem; }
+        .options { display: grid; gap: 10px; }
+        .option { 
+            padding: 12px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: 0.3s;
+        }
+        .option.active { background: #f5edd8; border-color: var(--gold); }
+        
+        /* 进度条 */
+        .progress-container { position: sticky; top: 0; background: white; padding: 10px 0; z-index: 10; border-bottom: 1px solid var(--border); }
+        .progress-bar { height: 6px; background: #eee; border-radius: 3px; }
+        .progress-fill { height: 100%; background: var(--gold); width: 0%; transition: 0.3s; }
 
-  .main { max-width: 700px; margin: 0 auto; padding: 24px; }
-  .question-block { background: var(--white); border-radius: 12px; border: 1px solid var(--border); padding: 24px; margin-bottom: 16px; }
-  .question-block.answered { border-color: var(--gold); background: #fffdf7; }
-  .q-text { font-family: 'Noto Serif SC', serif; font-size: 16px; margin-bottom: 12px; }
-  
-  .q-options { display: grid; gap: 8px; }
-  .q-option { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: 0.2s; }
-  .q-option:hover { border-color: var(--gold); }
-  .q-option.selected { background: var(--gold-pale); border-color: var(--gold); }
-  .q-option input { display: none; }
-
-  /* 生日输入框样式 */
-  .date-input { width: 80px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; text-align: center; font-family: 'Cormorant Garamond', serif; }
-
-  /* 按钮样式 */
-  .submit-section { display: none; text-align: center; padding: 30px 0; }
-  .btn-submit { background: var(--ink); color: var(--white); border: 2px solid var(--gold); padding: 16px 48px; font-size: 16px; cursor: pointer; border-radius: 4px; }
-  .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; }
-
-  /* 结果页 */
-  #result-panel { display: none; animation: fadeIn 0.5s; }
-  .result-hero { background: var(--ink); color: var(--white); border-radius: 16px; padding: 40px; text-align: center; margin-bottom: 24px; }
-  .result-age { font-size: 72px; font-family: 'Cormorant Garamond', serif; color: var(--gold-light); }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-</style>
+        /* 按钮 */
+        .btn { 
+            background: var(--ink); color: white; padding: 15px 30px; border: none; border-radius: 8px; 
+            width: 100%; font-size: 1rem; cursor: pointer; margin-top: 20px;
+        }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        
+        /* 结果展示 */
+        .result-box { text-align: center; padding: 40px 0; }
+        .age-display { font-size: 4rem; color: var(--gold); font-weight: bold; }
+    </style>
 </head>
 <body>
 
-<header class="header">
-  <div class="header-brand">
-    <div class="header-logo">陆</div>
-    <div style="margin-left: 10px">
-      <div style="font-size: 16px; letter-spacing: 1px;">陆大夫逆龄管理</div>
-      <div style="font-size: 10px; color: var(--gold-light)">Age Reversal Medicine</div>
+<div id="intro-page" class="container">
+    <div class="card" style="text-align: center; margin-top: 50px;">
+        <h1>生理年龄测评</h1>
+        <p>基于生物学算法，评估您的衰老程度</p>
+        <button class="btn" onclick="goToPage('assessment-page')">开始测评</button>
     </div>
-  </div>
-</header>
-
-<section class="hero" id="hero-section">
-  <h1>你的身体，<em>真实年龄</em>是多少？</h1>
-  <p style="margin-top: 15px; color: rgba(255,255,255,0.7); font-size: 14px;">基于最新衰老科学评估模型，揭示你真实的衰老速度。</p>
-</section>
-
-<div class="progress-wrap" id="progress-wrap">
-  <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px;">
-    <span>评估进度</span><span id="progress-text">0 / 20</span>
-  </div>
-  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
 </div>
 
-<main class="main">
-  <div id="intro-panel" style="text-align: center; padding: 40px 0;">
-    <p style="margin-bottom: 30px; line-height: 1.8;">完成 20 道专业测评题，我们将计算您的生理年龄并提供针对性的健康建议。</p>
-    <button class="btn-submit" onclick="startAssessment()">立即开始评估 →</button>
-  </div>
-
-  <div id="assessment-panel" style="display: none;">
-    <div class="question-block" id="q-block-1">
-      <div class="q-text">Q01. 与5年前相比，你的体重变化如何？</div>
-      <div class="q-options">
-        <label class="q-option" onclick="selectOption('q1', 0, this)"><input type="radio" name="q1"> 稳定（±2kg）</label>
-        <label class="q-option" onclick="selectOption('q1', 2, this)"><input type="radio" name="q1"> 增加超过 5kg</label>
-      </div>
+<div id="assessment-page">
+    <div class="progress-container">
+        <div class="container">
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:12px;">
+                <span>进度</span><span id="progress-text">0 / 20</span>
+            </div>
+            <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+        </div>
     </div>
 
-    <div class="question-block" id="q-block-17">
-      <div class="q-text">Q17. 您的出生年份？</div>
-      <div style="padding: 10px 0;">
-        <input type="number" id="bd-year" class="date-input" placeholder="1985" oninput="updateBirthdate()"> 
-        <span style="margin-left: 10px; color: var(--ink-faint)">年</span>
-      </div>
-    </div>
+    <div class="container" id="question-list">
+        </div>
 
-    <div class="question-block" id="q-block-20">
-      <div class="q-text">Q20. 您目前最希望改善的目标是？</div>
-      <div class="q-options">
-        <label class="q-option" onclick="selectOption('q20', 0, this)"><input type="radio" name="q20"> 整体健康基准</label>
-        <label class="q-option" onclick="selectOption('q20', 1, this)"><input type="radio" name="q20"> 精力与睡眠</label>
-      </div>
+    <div class="container" style="padding-bottom: 50px;">
+        <div class="card" id="submit-card" style="display:none;">
+            <p style="font-size: 14px; margin-bottom:15px;">
+                <input type="checkbox" id="agree"> 我已确认以上信息准确无误
+            </p>
+            <button class="btn" id="submit-btn" onclick="calculateResult()">查看测评报告</button>
+        </div>
     </div>
+</div>
 
-    <div class="submit-section" id="submit-section">
-      <label style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px; font-size: 13px;">
-        <input type="checkbox" id="privacy-agree" onchange="checkCanSubmit()"> 我同意数据仅用于匿名健康评估
-      </label>
-      <button class="btn-submit" id="btn-submit" disabled onclick="calculateResult()">查看评估报告</button>
+<div id="result-page" class="container">
+    <div class="card result-box">
+        <p>您的生理年龄约为</p>
+        <div class="age-display" id="res-bio-age">--</div>
+        <p>实际年龄: <span id="res-real-age">--</span> 岁</p>
+        <button class="btn" onclick="location.reload()">重新测评</button>
     </div>
-  </div>
-
-  <div id="result-panel">
-    <div class="result-hero">
-      <div style="font-size: 14px; color: var(--gold-light); letter-spacing: 2px;">您的生理年龄约为</div>
-      <div class="result-age" id="res-bio-age">--</div>
-      <div style="margin-top: 10px; opacity: 0.6;">实际年龄: <span id="res-cal-age">--</span> 岁</div>
-    </div>
-    <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border);">
-      <h3 style="margin-bottom: 10px;">陆大夫的建议：</h3>
-      <ul id="res-advice" style="padding-left: 20px; line-height: 1.8; font-size: 14px; color: var(--ink-light);">
-        </ul>
-    </div>
-    <button class="btn-submit" style="width: 100%; margin-top: 20px;" onclick="location.reload()">重新测评</button>
-  </div>
-</main>
+</div>
 
 <script>
-  let answers = {};
-  const TOTAL_Q = 20;
+    // 题目数据：在此处按顺序添加，确保顺序不错
+    const questions = [
+        { id: 1, text: "与5年前相比，你的体重变化？", options: ["稳定(±2kg)", "增加超过5kg", "减轻超过5kg"], scores: [0, 2, 1] },
+        { id: 2, text: "你的日常睡眠质量如何？", options: ["非常规律", "经常熬夜", "睡眠浅/易醒"], scores: [0, 2, 1] },
+        { id: 3, text: "日常饮食中蔬菜摄入量？", options: ["充足", "一般", "几乎不吃"], scores: [0, 1, 2] },
+        // ... 此处可继续按顺序增加到 16 题 ...
+        { id: 17, text: "您的出生年份（年）", type: "input" },
+        { id: 18, text: "每周运动次数？", options: ["3次以上", "1-2次", "基本不运动"], scores: [0, 1, 2] },
+        { id: 19, text: "日常压力感？", options: ["较小", "适中", "很大"], scores: [0, 1, 2] },
+        { id: 20, text: "吸烟/饮酒习惯？", options: ["从不", "偶尔", "经常"], scores: [0, 1, 2] }
+    ];
 
-  function startAssessment() {
-    document.getElementById('intro-panel').style.display = 'none';
-    document.getElementById('assessment-panel').style.display = 'block';
-    document.getElementById('progress-wrap').style.display = 'block';
-    window.scrollTo(0, 0);
-  }
+    let userAnswers = {};
+    const totalCount = questions.length;
 
-  function selectOption(qKey, score, element) {
-    answers[qKey] = score;
-    // UI反馈
-    const parent = element.parentElement;
-    parent.querySelectorAll('.q-option').forEach(opt => opt.classList.remove('selected'));
-    element.classList.add('selected');
-    element.closest('.question-block').classList.add('answered');
-    updateProgress();
-  }
-
-  function updateBirthdate() {
-    const year = parseInt(document.getElementById('bd-year').value);
-    if (year > 1900 && year <= new Date().getFullYear()) {
-      answers['q17'] = 0; // 标记已填
-      document.getElementById('q-block-17').classList.add('answered');
-    } else {
-      delete answers['q17'];
-      document.getElementById('q-block-17').classList.remove('answered');
+    // 页面切换核心函数
+    function goToPage(pageId) {
+        document.getElementById('intro-page').style.display = 'none';
+        document.getElementById('assessment-page').style.display = 'none';
+        document.getElementById('result-page').style.display = 'none';
+        document.getElementById(pageId).style.display = 'block';
+        window.scrollTo(0, 0);
     }
-    updateProgress();
-  }
 
-  function updateProgress() {
-    const count = Object.keys(answers).length;
-    document.getElementById('progress-text').innerText = `${count} / ${TOTAL_Q}`;
-    document.getElementById('progress-fill').style.width = `${(count / TOTAL_Q) * 100}%`;
-    
-    if (count >= 18) { // 稍微降低门槛，防止用户因最后一道题没填死活看不见按钮
-      document.getElementById('submit-section').style.display = 'block';
+    // 初始化题目
+    function initQuestions() {
+        const container = document.getElementById('question-list');
+        questions.forEach((q, index) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.id = `q-card-${q.id}`;
+            
+            let html = `<div class="q-title">Q${index + 1}. ${q.text}</div>`;
+            
+            if (q.type === 'input') {
+                html += `<input type="number" class="option" style="width:100%" placeholder="例如: 1985" oninput="saveInput(${q.id}, this.value)">`;
+            } else {
+                html += `<div class="options">`;
+                q.options.forEach((opt, i) => {
+                    html += `<div class="option" onclick="saveSelect(${q.id}, ${q.scores[i]}, this)">${opt}</div>`;
+                });
+                html += `</div>`;
+            }
+            card.innerHTML = html;
+            container.appendChild(card);
+        });
     }
-    checkCanSubmit();
-  }
 
-  function checkCanSubmit() {
-    const agree = document.getElementById('privacy-agree').checked;
-    const count = Object.keys(answers).length;
-    document.getElementById('btn-submit').disabled = !(agree && count >= 18);
-  }
-
-  async function calculateResult() {
-    try {
-      // 1. 获取出生年份，设置严格保底值防止 NaN
-      const currentYear = new Date().getFullYear();
-      let birthYear = parseInt(document.getElementById('bd-year').value);
-      if (isNaN(birthYear) || birthYear < 1900) birthYear = currentYear - 35; // 默认35岁
-
-      const calAge = currentYear - birthYear;
-      
-      // 2. 简易算法逻辑（实际可替换为您的复杂公式）
-      let scoreSum = 0;
-      Object.values(answers).forEach(s => scoreSum += s);
-      
-      // 生理年龄 = 实际年龄 + (得分偏差)
-      let bioAge = calAge + (scoreSum / 4); 
-      bioAge = Math.max(18, Math.round(bioAge)); // 修正
-
-      // 3. UI 切换 (先切换，防止数据库报错卡死)
-      document.getElementById('assessment-panel').style.display = 'none';
-      document.getElementById('progress-wrap').style.display = 'none';
-      document.getElementById('hero-section').style.display = 'none';
-      document.getElementById('result-panel').style.display = 'block';
-
-      document.getElementById('res-bio-age').innerHTML = bioAge + '<span style="font-size:20px">岁</span>';
-      document.getElementById('res-cal-age').innerText = calAge;
-
-      // 4. 生成建议
-      const adviceList = document.getElementById('res-advice');
-      adviceList.innerHTML = "<li>根据您的评估，建议重点关注代谢弹性。</li><li>保持每日 7-8 小时高质量睡眠。</li>";
-
-      // 5. 异步保存数据 (即使失败也不影响用户看结果)
-      saveDataToCloud(bioAge, calAge);
-
-    } catch (e) {
-      console.error("计算出错", e);
-      alert("抱歉，计算过程出现小问题，请刷新重试。");
+    function saveSelect(qid, score, el) {
+        userAnswers[qid] = score;
+        // UI 选中效果
+        const options = el.parentElement.querySelectorAll('.option');
+        options.forEach(o => o.classList.remove('active'));
+        el.classList.add('active');
+        updateProgress();
     }
-  }
 
-  function saveDataToCloud(bio, cal) {
-    console.log("正在保存数据...", {bio, cal});
-    // 如果您配置了 CloudBase，在此处调用
-  }
+    function saveInput(qid, val) {
+        if (val > 1900 && val <= new Date().getFullYear()) {
+            userAnswers[qid] = val;
+        } else {
+            delete userAnswers[qid];
+        }
+        updateProgress();
+    }
+
+    function updateProgress() {
+        const answeredCount = Object.keys(userAnswers).length;
+        const percent = (answeredCount / totalCount) * 100;
+        document.getElementById('progress-fill').style.width = percent + '%';
+        document.getElementById('progress-text').innerText = `${answeredCount} / ${totalCount}`;
+
+        // 如果全部填完，显示提交按钮卡片
+        if (answeredCount >= totalCount) {
+            document.getElementById('submit-card').style.display = 'block';
+        }
+    }
+
+    function calculateResult() {
+        if (!document.getElementById('agree').checked) {
+            alert("请先勾选同意选项");
+            return;
+        }
+
+        const currentYear = new Date().getFullYear();
+        const birthYear = parseInt(userAnswers[17]) || 1990;
+        const realAge = currentYear - birthYear;
+        
+        // 简易逻辑：基础分 + 选项累加分
+        let totalScore = 0;
+        for (let id in userAnswers) {
+            if (id != 17) totalScore += userAnswers[id];
+        }
+
+        const bioAge = realAge + (totalScore / 2); // 示例算法
+
+        // 显示结果
+        document.getElementById('res-bio-age').innerText = Math.round(bioAge);
+        document.getElementById('res-real-age').innerText = realAge;
+        goToPage('result-page');
+    }
+
+    // 页面加载后立即初始化题目
+    initQuestions();
 </script>
 
 </body>
