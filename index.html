@@ -600,13 +600,6 @@ body::after{content:'';position:fixed;bottom:-10%;right:-10%;width:50%;height:50
           <div class="cond-weight">早发肿瘤家族史 → PLA +1岁</div>
         </div>
       </div>
-      <div class="cond-opt" data-val="-2" onclick="toggleCond(this)">
-        <div class="opt-check">✓</div>
-        <div class="cond-body">
-          <div class="cond-name">父母双方均健在且 ≥85岁</div>
-          <div class="cond-weight">长寿家族基因 → PLA −2岁保护</div>
-        </div>
-      </div>
       <div class="cond-opt none-cond" data-val="0" onclick="toggleCondNone(this)">
         <div class="opt-check">✓</div>
         <div class="cond-body">
@@ -617,7 +610,36 @@ body::after{content:'';position:fixed;bottom:-10%;right:-10%;width:50%;height:50
     </div>
   </div>
 
-  <div class="validate-msg" id="v5">请完成本页所有问题（至少选择一项，可选"以上均无"）</div>
+  <!-- Q11 父母寿命 独立单选 -->
+  <div class="q-block">
+    <div class="q-num">Q11 · 父母寿命与长寿遗传背景</div>
+    <div class="q-text">您父母最终的寿命与健康情况？</div>
+    <div class="q-hint">Pilling et al. UK Biobank（n&gt;500,000）：父母平均寿命每增加10岁，后代生物年龄降低约0.5岁；双亲均达高龄（≥85岁）者，子女端粒更长、表观遗传钟更年轻</div>
+    <div class="options" data-q="q11">
+      <div class="opt" data-val="-2" onclick="selectOpt(this)">
+        <div class="opt-dot"></div>
+        <div class="opt-label">双方寿命均达到或超过 85 岁</div>
+      </div>
+      <div class="opt" data-val="-1" onclick="selectOpt(this)">
+        <div class="opt-dot"></div>
+        <div class="opt-label">至少一方寿命超过 80 岁，另一方无重大早逝</div>
+      </div>
+      <div class="opt" data-val="0" onclick="selectOpt(this)">
+        <div class="opt-dot"></div>
+        <div class="opt-label">寿命属于普通范围（约 70–79 岁），或不确定 / 不知晓</div>
+      </div>
+      <div class="opt" data-val="1" onclick="selectOpt(this)">
+        <div class="opt-dot"></div>
+        <div class="opt-label">一方在 70 岁前因疾病去世（心脏病 / 癌症 / 中风等）</div>
+      </div>
+      <div class="opt" data-val="2" onclick="selectOpt(this)">
+        <div class="opt-dot"></div>
+        <div class="opt-label">双方均在 70 岁前因疾病去世</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="validate-msg" id="v5">请完成本页所有问题</div>
   <div class="nav-row">
     <button class="btn-back" onclick="goBack()">← 返回</button>
     <button class="btn-next" onclick="goNext()">下一步 →</button>
