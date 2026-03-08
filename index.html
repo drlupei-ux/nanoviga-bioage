@@ -862,7 +862,66 @@
                 grid-template-columns: repeat(2, 1fr);
             }
         }
-    </style>
+
+        /* ── 摘要卡片 ── */
+        .summary-card {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e6fffa 100%);
+            border: 1px solid #bee3f8;
+            border-radius: 14px;
+            padding: 20px 24px;
+            margin: 16px 0;
+        }
+        /* ── 微信CTA卡片 ── */
+        .wechat-cta-card {
+            background: #fff;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+        .wechat-cta-header h3 { font-size: 18px; font-weight: 700; color: #1a202c; margin: 0 0 10px; }
+        .privacy-note {
+            background: #fff8e1;
+            border-left: 4px solid #f6ad55;
+            padding: 10px 14px;
+            border-radius: 0 8px 8px 0;
+            font-size: 13px; color: #744210; margin: 0 0 20px;
+        }
+        .wechat-cta-body { display: flex; flex-direction: column; gap: 20px; }
+        .cta-step { display: flex; align-items: flex-start; gap: 16px; }
+        .step-number {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white; width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 15px; font-weight: 700; flex-shrink: 0;
+        }
+        .step-content { flex: 1; }
+        .step-content h4 { font-size: 15px; font-weight: 600; color: #2d3748; margin: 0 0 4px; }
+        .qr-wrapper {
+            display: inline-block; background: white; border-radius: 12px;
+            padding: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;
+        }
+        .wechat-qr-img { width: 150px; height: 150px; display: block; border-radius: 8px; }
+        .contact-input {
+            width: 100%; padding: 12px 16px; border: 2px solid #e2e8f0;
+            border-radius: 10px; font-size: 15px; color: #2d3748;
+            outline: none; box-sizing: border-box; margin-bottom: 12px;
+            transition: border-color 0.2s;
+        }
+        .contact-input:focus { border-color: #667eea; }
+        .btn-submit-contact {
+            width: 100%; padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border: none; border-radius: 10px;
+            font-size: 16px; font-weight: 600; cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+        }
+        .btn-submit-contact:hover { opacity: 0.92; transform: translateY(-1px); }
+        .submit-success {
+            background: linear-gradient(135deg, #f0fff4 0%, #e6fffa 100%);
+            border: 2px solid #68d391; border-radius: 12px; padding: 20px; text-align: center;
+        }
+        </style>
 </head>
 <body>
     <div class="container">
@@ -1171,32 +1230,83 @@
                     <ul id="recommendationsList"></ul>
                 </div>
 
-                <!-- AI DeepSeek 专属报告区 -->
+                <!-- AI 摘要 + 微信CTA区 -->
                 <div class="ai-report-section" id="aiReportSection">
-                    <div class="ai-report-header">
-                        <h3>✨ AI 专属健康报告</h3>
-                        <p>基于您的 PLA 评估数据，由 DeepSeek AI 生成个性化深度分析</p>
-                    </div>
-                    <button id="generateReportBtn" class="btn-generate-report" onclick="generateAIReport()">
-                        ✨ 生成我的专属健康报告
-                    </button>
-                    <div id="reportLoading" style="display:none; text-align:center; padding:30px 0;">
+
+                    <!-- 摘要加载中 -->
+                    <div id="summaryLoading" style="text-align:center; padding:28px 0;">
                         <div class="report-spinner"></div>
-                        <p style="color:#a0aec0; font-size:13px; margin-top:12px;">DeepSeek AI 正在深度分析您的健康数据...</p>
+                        <p style="color:#a0aec0; font-size:13px; margin-top:12px;">AI 正在生成您的健康摘要...</p>
                     </div>
-                    <div id="reportContent" style="display:none;">
-                        <div class="report-text" id="reportText"></div>
-                        <div class="report-wechat-cta">
-                            <p>📄 扫码联系健康顾问，获取完整 PDF 版报告</p>
-                            <div style="background:white; border-radius:10px; padding:10px; display:inline-block; margin-top:12px;">
-                                <img src="https://bioage-compass-prod-9chaf35e573d-1405252881.tcloudbaseapp.com/wechat-qr.jpg"
-                                     style="width:120px; height:120px; display:block;"
-                                     alt="微信二维码"
-                                     onerror="this.parentElement.innerHTML='<p style=color:#4a5568;padding:20px;font-size:12px>扫码联系</p>'">
-                            </div>
-                            <p style="font-size:12px; color:#718096; margin-top:8px;">微信号：Charlie20850 · 陆大夫逆龄管理</p>
+
+                    <!-- 摘要内容 -->
+                    <div id="summaryContent" style="display:none;">
+                        <div class="ai-report-header">
+                            <h3>✨ AI 健康摘要</h3>
+                        </div>
+                        <div class="summary-card">
+                            <p id="summaryText" style="line-height:1.8; color:#2d3748; font-size:15px;"></p>
                         </div>
                     </div>
+
+                    <!-- 微信CTA + 联系表单 -->
+                    <div id="wechatCtaSection" style="display:none; margin-top:28px;">
+                        <div class="wechat-cta-card">
+                            <div class="wechat-cta-header">
+                                <h3>📋 获取完整PLA报告 &amp; 专属CBA评估链接</h3>
+                                <p class="privacy-note">🔒 鉴于健康信息的保密要求，详细报告及CBA评估专属链接将通过<strong>微信1V1私信</strong>发送给您</p>
+                            </div>
+
+                            <div class="wechat-cta-body">
+                                <!-- 步骤1：添加微信 -->
+                                <div class="cta-step">
+                                    <div class="step-number">1</div>
+                                    <div class="step-content">
+                                        <h4>扫码添加「陆大夫逆龄管理」微信</h4>
+                                        <p style="color:#718096; font-size:13px; margin:4px 0 12px;">微信号：Charlie20850</p>
+                                        <div class="qr-wrapper">
+                                            <img src="wechat-qr.png"
+                                                 alt="陆大夫逆龄管理 微信二维码"
+                                                 class="wechat-qr-img"
+                                                 onerror="this.style.display='none';document.getElementById('qrFallback').style.display='block'">
+                                            <div id="qrFallback" style="display:none; padding:20px; background:#f7fafc; border-radius:10px; text-align:center;">
+                                                <p style="font-size:32px; margin:0;">💬</p>
+                                                <p style="font-size:14px; color:#4a5568; margin:8px 0 0;">微信号：Charlie20850</p>
+                                                <p style="font-size:12px; color:#718096;">陆大夫逆龄管理</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 步骤2：留下联系方式 -->
+                                <div class="cta-step">
+                                    <div class="step-number">2</div>
+                                    <div class="step-content">
+                                        <h4>留下您的联系方式</h4>
+                                        <p style="color:#718096; font-size:13px; margin:4px 0 12px;">手机号或邮箱，陆大夫将在收到后通过微信与您联系</p>
+                                        <input type="text" id="contactInput"
+                                               placeholder="手机号 或 邮箱地址"
+                                               class="contact-input">
+                                        <div id="contactSubmitArea">
+                                            <button id="submitContactBtn" class="btn-submit-contact" onclick="submitContactForm()">
+                                                提交 · 获取我的完整报告
+                                            </button>
+                                        </div>
+                                        <div id="contactSubmitLoading" style="display:none; text-align:center; padding:16px 0;">
+                                            <div class="report-spinner"></div>
+                                            <p style="color:#a0aec0; font-size:13px; margin-top:10px;">正在生成您的专属报告...</p>
+                                        </div>
+                                        <div id="contactSubmitSuccess" style="display:none;" class="submit-success">
+                                            <p style="font-size:22px; margin:0 0 8px;">✅</p>
+                                            <p style="font-weight:600; color:#2d3748; margin:0 0 6px;">已收到！陆大夫将尽快通过微信1V1与您联系</p>
+                                            <p style="font-size:13px; color:#718096; margin:0;">请确保您已添加微信 Charlie20850，详细报告及CBA评估链接将通过微信发送</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
                 <div class="wechat-upgrade-section">
@@ -1721,6 +1831,8 @@
             document.getElementById('nextBtn').textContent = currentQuestion === questions.length - 1 ? '完成评估' : '下一题';
             
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            // 自动生成 AI 摘要
+            setTimeout(autoGenerateSummary, 800);
         }
 
         function selectOption(optionIndex) {
@@ -1819,13 +1931,21 @@ try {
 
             document.getElementById('questionContainer').style.display = 'none';
             document.getElementById('resultScreen').style.display = 'block';
-            // 重置 AI 报告区状态
-            var btn = document.getElementById('generateReportBtn');
-            var loading = document.getElementById('reportLoading');
-            var content = document.getElementById('reportContent');
-            if (btn) { btn.style.display = 'block'; btn.textContent = '✨ 生成我的专属健康报告'; btn.style.background = ''; }
-            if (loading) loading.style.display = 'none';
-            if (content) content.style.display = 'none';
+            // 重置 AI 区域状态
+            var sl = document.getElementById('summaryLoading');
+            var sc = document.getElementById('summaryContent');
+            var wc = document.getElementById('wechatCtaSection');
+            var ci = document.getElementById('contactInput');
+            var sa = document.getElementById('contactSubmitArea');
+            var sl2 = document.getElementById('contactSubmitLoading');
+            var ss = document.getElementById('contactSubmitSuccess');
+            if (sl)  sl.style.display = 'block';
+            if (sc)  sc.style.display = 'none';
+            if (wc)  wc.style.display = 'none';
+            if (ci)  { ci.value = ''; ci.disabled = false; }
+            if (sa)  sa.style.display = 'block';
+            if (sl2) sl2.style.display = 'none';
+            if (ss)  ss.style.display = 'none';
 
             document.getElementById('bioAge').textContent = bioAge;
             document.getElementById('actualAge').textContent = actualAge;
@@ -1863,21 +1983,25 @@ try {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function generateAIReport() {
-            var btn     = document.getElementById('generateReportBtn');
-            var loading = document.getElementById('reportLoading');
-            var content = document.getElementById('reportContent');
+        // 评估完成后自动生成短摘要 + 展示微信CTA
+        function autoGenerateSummary() {
+            var summaryLoading = document.getElementById('summaryLoading');
+            var summaryContent = document.getElementById('summaryContent');
+            var wechatCta      = document.getElementById('wechatCtaSection');
+            if (!summaryLoading) return;
 
-            btn.style.display = 'none';
-            loading.style.display = 'block';
+            summaryLoading.style.display = 'block';
+            summaryContent.style.display = 'none';
+            wechatCta.style.display = 'none';
 
             var payload = {
-                name:             userInfo.name,
-                age:              userInfo.age,
-                gender:           userInfo.gender,
-                bioAge:           window._reportBioAge,
-                score:            window._reportScore,
-                dimensionScores:  window._reportDimensionScores
+                mode:           'summary',
+                name:           userInfo.name,
+                age:            userInfo.age,
+                gender:         userInfo.gender,
+                bioAge:         window._reportBioAge,
+                score:          window._reportScore,
+                dimensionScores: window._reportDimensionScores
             };
 
             fetch('https://bioage-compass-prod-9chaf35e573d-1405252881.ap-shanghai.app.tcloudbase.com/generateReport', {
@@ -1887,33 +2011,64 @@ try {
             })
             .then(function(r) { return r.json(); })
             .then(function(data) {
-                loading.style.display = 'none';
-                if (data.code === 0 && data.report) {
-                    content.style.display = 'block';
-                    // 简单 markdown → HTML
-                    var html = data.report
-                        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-                        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                        .replace(/^### (.+)$/gm,'<h4>$1</h4>')
-                        .replace(/^## (.+)$/gm,'<h3>$1</h3>')
-                        .replace(/^# (.+)$/gm,'<h3>$1</h3>')
-                        .replace(/\n/g,'<br>');
-                    document.getElementById('reportText').innerHTML = html;
-                } else {
-                    btn.style.display = 'block';
-                    btn.textContent = '⟳ 重新生成报告';
-                    btn.style.background = '#e53e3e';
-                    console.warn('报告生成失败:', data.message || JSON.stringify(data));
+                summaryLoading.style.display = 'none';
+                if (data.code === 0 && data.summary) {
+                    document.getElementById('summaryText').textContent = data.summary;
+                    summaryContent.style.display = 'block';
                 }
+                wechatCta.style.display = 'block';
             })
             .catch(function(e) {
-                loading.style.display = 'none';
-                btn.style.display = 'block';
-                btn.textContent = '⟳ 网络异常，点击重试';
-                btn.style.background = '#e53e3e';
-                console.warn('generateAIReport error:', e.message);
+                summaryLoading.style.display = 'none';
+                wechatCta.style.display = 'block';
+                console.warn('autoGenerateSummary error:', e.message);
             });
         }
+
+        // 用户提交联系方式后生成完整报告
+        function submitContactForm() {
+            var contact = (document.getElementById('contactInput').value || '').trim();
+            if (!contact) {
+                alert('请填写您的手机号或邮箱地址');
+                return;
+            }
+
+            document.getElementById('contactSubmitArea').style.display = 'none';
+            document.getElementById('contactSubmitLoading').style.display = 'block';
+            document.getElementById('contactInput').disabled = true;
+
+            var payload = {
+                mode:           'full',
+                name:           userInfo.name,
+                age:            userInfo.age,
+                gender:         userInfo.gender,
+                bioAge:         window._reportBioAge,
+                score:          window._reportScore,
+                dimensionScores: window._reportDimensionScores,
+                contact:        contact
+            };
+
+            fetch('https://bioage-compass-prod-9chaf35e573d-1405252881.ap-shanghai.app.tcloudbase.com/generateReport', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                document.getElementById('contactSubmitLoading').style.display = 'none';
+                document.getElementById('contactSubmitSuccess').style.display = 'block';
+                console.log('Full report generated and notification sent');
+            })
+            .catch(function(e) {
+                document.getElementById('contactSubmitLoading').style.display = 'none';
+                document.getElementById('contactSubmitArea').style.display = 'block';
+                document.getElementById('contactInput').disabled = false;
+                alert('提交失败，请检查网络后重试');
+                console.warn('submitContactForm error:', e.message);
+            });
+        }
+
+        function generateAIReport() { /* deprecated – kept for compatibility */ }
 
         function generateRecommendations(scores) {
             const recommendations = [];
