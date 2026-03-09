@@ -13,7 +13,7 @@ exports.main = async (event, context) => {
     if (bodyStr) data = JSON.parse(bodyStr);
   } catch(e) {}
 
-  const { name, age, gender, bioAge, score, dimensionScores, mode, contact } = data;
+  const { name, age, gender, bioAge, score, dimensionScores, mode, contact, assessmentCode } = data;
   const DEEPSEEK_KEY    = process.env.DEEPSEEK_API_KEY;
   const EMAIL_AUTH_CODE = process.env.EMAIL_163_AUTH_CODE;
 
@@ -46,7 +46,7 @@ exports.main = async (event, context) => {
     `- 性别：${gender==='male'?'男':'女'}\n- 生物年龄：${bioAge}岁\n` +
     `- PLA评分：${score}分\n- 各维度得分：${dimText}\n\n` +
     `报告必须包含以下5个部分：\n` +
-    `1. **深度六维分析**：逐一解读六个维度（运动能力、身心平衡、营养代谢、睡眠质量、遗传因素、环境因素）的得分含义及各自具体改善路径\n` +
+    `1. **深度七维分析**：逐一解读七个维度（运动能力、身心平衡、营养代谢、睡眠质量、遗传因素、环境因素、感官衰老）的得分含义及各自具体改善路径\n` +
     `2. **可逆性分析**：指出哪些维度的投入产出比最高（即最容易通过干预获得改善的维度），给出优先级排序与原因\n` +
     `3. **3/6/12个月行动计划**：分三个阶段列出可执行的具体行动，每阶段2-3条，循序渐进\n` +
     `4. **对标分析**：基于同龄人群健康数据，说明用户在各核心维度上的相对位置（领先/持平/待改善），帮助用户了解自己所处的健康层级\n` +
@@ -63,17 +63,17 @@ exports.main = async (event, context) => {
       name: name||'', age: age||0, gender: gender||'',
       bioAge: bioAge||0, score: score||0,
       dimensionScores: dimensionScores||{},
-      contact: contact||'', report,
-      createdAt: new Date().toISOString(), status: 'pending'
+      contact: contact||'', assessmentCode: assessmentCode||'',
+      report, createdAt: new Date().toISOString(), status: 'pending'
     });
     console.log('Saved to DB');
   } catch(e) { console.log('DB error:', e.message); }
 
-  // 发邮件通知（异步，不阻塞响应）
+  // 发邮件通知（同步等待，确保容器回收前完成）
   if (EMAIL_AUTH_CODE) {
     const ageDiff = age - bioAge;
     const diffStr = ageDiff > 0 ? `年轻${ageDiff}岁 🎉` : ageDiff < 0 ? `偏大${Math.abs(ageDiff)}岁` : '相当';
-    const subject = `【新报告请求】${name||'新客户'} | ${contact||'未留联系'} | PLA ${score}分`;
+    const subject = `【新报告请求】${name||'新客户'} | ${contact||'未留联系'} | PLA ${score}分${assessmentCode ? ' | ' + assessmentCode : ''}`;
     const body =
 `============================
 【BioAge Compass】新客户报告请求
@@ -85,6 +85,7 @@ exports.main = async (event, context) => {
 年龄：${age}岁
 性别：${gender==='male'?'男':'女'}
 联系方式：${contact||'未留联系方式'}
+评估码：${assessmentCode||'未知'}
 提交时间：${new Date().toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'})}
 
 📊 PLA评估结果
@@ -102,9 +103,12 @@ ${report}
 ⚡ 请通过微信1V1发送完整报告给该客户
 ============================`;
 
-    sendSmtpEmail163(ADMIN_EMAIL, EMAIL_AUTH_CODE, ADMIN_EMAIL, subject, body)
-      .then(() => console.log('Email sent OK'))
-      .catch(e => console.log('Email failed:', e.message));
+    try {
+      await sendSmtpEmail163(ADMIN_EMAIL, EMAIL_AUTH_CODE, ADMIN_EMAIL, subject, body);
+      console.log('Email sent OK');
+    } catch(e) {
+      console.log('Email failed:', e.message);
+    }
   } else {
     console.log('EMAIL_163_AUTH_CODE not set, skipping email');
   }
