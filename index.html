@@ -4,924 +4,687 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BioAge Compass - 精准长寿评估</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Noto+Serif+SC:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        /* ─── CSS Variables ─────────────────────────────── */
+        :root {
+            --bg:          #080C10;
+            --bg2:         #0E1420;
+            --bg3:         #141C2A;
+            --gold:        #C8A96E;
+            --gold-light:  #E8CFA0;
+            --gold-dim:    rgba(200,169,110,0.15);
+            --jade:        #3A9E7E;
+            --jade-light:  #5AC4A0;
+            --jade-dim:    rgba(58,158,126,0.15);
+            --cream:       #F0EBE0;
+            --cream-dim:   #A8A098;
+            --card-bg:     rgba(255,255,255,0.03);
+            --card-border: rgba(200,169,110,0.18);
+            --radius:      16px;
         }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, 'PingFang SC', sans-serif;
-            background: #f5f7fa;
+            font-family: 'Noto Serif SC', 'PingFang SC', 'Hiragino Sans GB', serif;
+            background: var(--bg);
+            color: var(--cream);
             min-height: 100vh;
-            color: #1a202c;
-            line-height: 1.6;
+            line-height: 1.7;
         }
 
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            background: white;
-        }
+        .container { max-width: 680px; margin: 0 auto; }
 
+        /* ─── Header ─────────────────────────────────────── */
         .header {
-            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
-            color: white;
-            padding: 40px 20px;
             text-align: center;
-            border-bottom: 3px solid #4299e1;
+            padding: 40px 30px 32px;
+            background: linear-gradient(135deg, var(--bg2), var(--bg3));
+            border-bottom: 1px solid var(--card-border);
         }
-
         .header h1 {
+            font-family: 'Playfair Display', 'Noto Serif SC', serif;
             font-size: 28px;
-            margin-bottom: 8px;
-            font-weight: 300;
+            font-weight: 700;
+            color: var(--gold);
             letter-spacing: 2px;
+            margin-bottom: 8px;
         }
-
         .header .subtitle {
-            font-size: 12px;
-            opacity: 0.85;
+            font-size: 13px;
+            color: var(--cream-dim);
+            letter-spacing: 3px;
             font-weight: 300;
-            letter-spacing: 1.2px;
         }
 
-        .content {
-            padding: 40px 20px;
-        }
+        .content { padding: 40px 24px; }
 
-        .hero-section {
-            margin-bottom: 50px;
+        /* ─── Buttons ──────────────────────────────────── */
+        .btn-primary {
+            display: block;
+            width: 100%;
+            max-width: 340px;
+            margin: 30px auto 0;
+            padding: 18px 32px;
+            background: linear-gradient(135deg, var(--gold), #A08050);
+            color: #080C10;
+            font-family: 'Noto Serif SC', serif;
+            font-size: 17px;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: opacity 0.2s, transform 0.15s;
         }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-primary:active { transform: translateY(0); }
 
+        .btn-secondary {
+            padding: 12px 24px;
+            background: transparent;
+            color: var(--cream-dim);
+            border: 1px solid rgba(200,169,110,0.25);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .btn-secondary:hover { border-color: var(--gold); color: var(--gold); }
+
+        /* ─── Hero / Welcome ───────────────────────────── */
+        .hero-section { margin-bottom: 40px; }
         .hero-title {
-            font-size: 24px;
-            color: #1a202c;
-            margin-bottom: 25px;
-            font-weight: 300;
-            text-align: center;
-            line-height: 1.5;
+            font-family: 'Playfair Display', 'Noto Serif SC', serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--gold);
+            line-height: 1.4;
+            margin-bottom: 20px;
         }
-
-        .hero-intro {
-            font-size: 15px;
-            color: #4a5568;
-            line-height: 1.9;
-            margin-bottom: 30px;
-            text-align: justify;
-        }
+        .hero-intro { color: var(--cream-dim); font-size: 14px; line-height: 1.9; }
+        .hero-intro p strong { color: var(--cream); }
 
         .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin: 40px 0;
-            padding: 30px 0;
-            border-top: 1px solid #e2e8f0;
-            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-around;
+            padding: 24px 0;
+            margin: 28px 0;
+            border-top: 1px solid var(--card-border);
+            border-bottom: 1px solid var(--card-border);
         }
-
-        .stat-item {
-            text-align: center;
-            padding: 15px 10px;
-        }
-
+        .stat-item { text-align: center; }
         .stat-number {
+            font-family: 'Playfair Display', serif;
             font-size: 32px;
-            font-weight: 200;
-            color: #4299e1;
-            margin-bottom: 8px;
-            letter-spacing: -1px;
+            font-weight: 700;
+            color: var(--gold);
         }
+        .stat-label { font-size: 12px; color: var(--cream-dim); margin-top: 4px; }
 
-        .stat-label {
-            font-size: 11px;
-            color: #718096;
-            letter-spacing: 0.5px;
-            line-height: 1.4;
-        }
-
-        .framework-section {
-            margin: 50px 0;
-        }
-
+        /* ─── Framework ─────────────────────────────────── */
+        .framework-section { margin: 36px 0; }
         .section-title {
-            font-size: 20px;
-            color: #2d3748;
-            margin-bottom: 25px;
+            font-family: 'Playfair Display', 'Noto Serif SC', serif;
+            font-size: 18px;
+            color: var(--gold-light);
+            margin-bottom: 20px;
             text-align: center;
-            font-weight: 300;
-            letter-spacing: 0.5px;
-            line-height: 1.5;
         }
-
         .framework-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 40px;
+            gap: 14px;
+            margin: 20px 0;
         }
-
         .framework-card {
-            background: #f7fafc;
-            padding: 25px 15px;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid #e2e8f0;
-            transition: all 0.3s;
-            position: relative;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 18px;
+            transition: border-color 0.2s;
         }
-
-        .framework-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, #4299e1, #667eea);
-            transform: scaleX(0);
-            transition: transform 0.3s;
-        }
-
-        .framework-card:active {
-            transform: scale(0.98);
-        }
-
-        .framework-card:active::before {
-            transform: scaleX(1);
-        }
-
+        .framework-card:hover { border-color: var(--gold); }
         .framework-level {
-            font-size: 10px;
-            color: #718096;
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            margin-bottom: 12px;
-        }
-
-        .framework-title {
-            font-size: 14px;
-            color: #2d3748;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .framework-desc {
-            font-size: 12px;
-            color: #718096;
-            line-height: 1.6;
-        }
-
-        .value-proposition {
-            background: linear-gradient(135deg, #edf2f7 0%, #e6fffa 100%);
-            padding: 30px 20px;
-            border-radius: 12px;
-            margin: 40px 0;
-            border-left: 4px solid #38b2ac;
-        }
-
-        .value-proposition h3 {
-            font-size: 18px;
-            color: #2d3748;
-            margin-bottom: 20px;
-            font-weight: 400;
-        }
-
-        .value-list {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 18px;
-        }
-
-        .value-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-        }
-
-        .value-icon {
-            font-size: 18px;
-            flex-shrink: 0;
-            margin-top: 2px;
-        }
-
-        .value-content h4 {
-            font-size: 14px;
-            color: #2d3748;
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-
-        .value-content p {
-            font-size: 13px;
-            color: #4a5568;
-            line-height: 1.6;
-        }
-
-        .pla-intro {
-            background: white;
-            padding: 30px 20px;
-            border-radius: 12px;
-            border: 2px solid #4299e1;
-            margin: 40px 0;
-        }
-
-        .pla-intro h3 {
-            font-size: 18px;
-            color: #2d3748;
-            margin-bottom: 18px;
-            font-weight: 400;
-            line-height: 1.5;
-        }
-
-        .pla-intro p {
-            font-size: 14px;
-            color: #4a5568;
-            line-height: 1.8;
-            margin-bottom: 15px;
-        }
-
-        .pla-features {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-top: 25px;
-        }
-
-        .pla-feature {
-            text-align: center;
-            padding: 18px 10px;
-            background: #f7fafc;
-            border-radius: 8px;
-        }
-
-        .pla-feature-icon {
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-
-        .pla-feature-text {
             font-size: 11px;
-            color: #4a5568;
-            line-height: 1.4;
+            letter-spacing: 2px;
+            color: var(--jade-light);
+            text-transform: uppercase;
+            margin-bottom: 6px;
         }
+        .framework-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 16px;
+            color: var(--gold);
+            margin-bottom: 6px;
+        }
+        .framework-desc { font-size: 12px; color: var(--cream-dim); line-height: 1.6; }
 
+        /* ─── Value Proposition ─────────────────────────── */
+        .value-proposition { margin: 36px 0; }
+        .value-proposition h3 {
+            font-family: 'Playfair Display', 'Noto Serif SC', serif;
+            font-size: 18px;
+            color: var(--gold-light);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .value-list { display: flex; flex-direction: column; gap: 16px; }
+        .value-item { display: flex; align-items: flex-start; gap: 16px; }
+        .value-icon { font-size: 24px; flex-shrink: 0; }
+        .value-content h4 { font-size: 15px; color: var(--cream); margin-bottom: 4px; }
+        .value-content p { font-size: 13px; color: var(--cream-dim); line-height: 1.7; }
+
+        /* ─── PLA Intro ─────────────────────────────────── */
+        .pla-intro { margin: 36px 0; }
+        .pla-intro h3 {
+            font-family: 'Playfair Display', 'Noto Serif SC', serif;
+            font-size: 18px;
+            color: var(--gold-light);
+            margin-bottom: 14px;
+        }
+        .pla-intro p { font-size: 14px; color: var(--cream-dim); line-height: 1.9; }
+        .pla-intro p strong { color: var(--cream); }
+        .pla-features {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 24px;
+            padding: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+        }
+        .pla-feature { text-align: center; }
+        .pla-feature-icon { font-size: 24px; margin-bottom: 8px; }
+        .pla-feature-text { font-size: 13px; color: var(--cream-dim); }
+        .pla-feature-text strong { display: block; color: var(--gold); font-size: 15px; }
+
+        /* ─── Dimension Grid (Welcome) ──────────────────── */
         .dimension-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin: 30px 0;
+            gap: 14px;
+            margin: 28px 0;
         }
-
         .dimension-card {
-            background: #f7fafc;
-            padding: 20px 15px;
-            border-radius: 8px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 20px 16px;
             text-align: center;
-            border: 1px solid #e2e8f0;
-            transition: all 0.3s;
+            transition: border-color 0.2s, transform 0.2s;
         }
-
-        .dimension-card:active {
-            transform: scale(0.98);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-            border-color: #4299e1;
-        }
-
-        .dimension-icon {
-            font-size: 28px;
-            margin-bottom: 12px;
-            display: block;
-        }
-
+        .dimension-card:hover { border-color: var(--gold); transform: translateY(-2px); }
+        .dimension-icon { font-size: 28px; display: block; margin-bottom: 10px; }
         .dimension-card h3 {
-            font-size: 13px;
-            color: #2d3748;
-            margin-bottom: 5px;
+            font-size: 15px;
             font-weight: 600;
+            color: var(--cream);
+            margin-bottom: 4px;
         }
+        .dimension-card p { font-size: 11px; color: var(--cream-dim); letter-spacing: 1px; }
 
-        .dimension-card p {
-            font-size: 11px;
-            color: #718096;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #4299e1 0%, #667eea 100%);
-            color: white;
-            border: none;
-            padding: 16px 40px;
-            font-size: 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-            display: block;
-            margin: 40px auto 0;
-            box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
-            width: 100%;
-            max-width: 300px;
-        }
-
-        .btn-primary:active {
-            transform: scale(0.98);
-        }
-
-        .question-container {
-            display: none;
-        }
-
-        .question-card {
-            background: #f7fafc;
-            padding: 25px 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .question-text {
-            font-size: 16px;
-            color: #2d3748;
-            margin-bottom: 20px;
-            font-weight: 400;
-            line-height: 1.6;
-        }
-
-        .options {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .option {
-            background: white;
-            border: 2px solid #e2e8f0;
-            padding: 14px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 14px;
-            color: #4a5568;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .option::before {
-            content: '';
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            border: 2px solid #cbd5e0;
-            flex-shrink: 0;
-            transition: all 0.2s;
-        }
-
-        .option:hover {
-            border-color: #90cdf4;
-            background: #f0f8ff;
-        }
-
-        .option:active {
-            transform: scale(0.99);
-        }
-
-        .option.selected {
-            border-color: #4299e1;
-            background: #ebf8ff;
-            color: #2b6cb0;
-            font-weight: 500;
-        }
-
-        .option.selected::before {
-            background: #4299e1;
-            border-color: #4299e1;
-            box-shadow: inset 0 0 0 3px white;
-        }
-
-        .progress-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .progress-bar {
-            flex: 1;
-            height: 6px;
-            background: #e2e8f0;
-            overflow: hidden;
-            border-radius: 3px;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4299e1 0%, #667eea 100%);
-            width: 0%;
-            transition: width 0.4s ease;
-        }
-
-        .question-counter {
-            font-size: 12px;
-            color: #718096;
-            white-space: nowrap;
-            font-weight: 500;
-            letter-spacing: 0.3px;
-        }
-
-        .navigation {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 25px;
-            gap: 10px;
-        }
-
-        .btn-secondary {
-            background: #718096;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: all 0.3s;
-        }
-
-        .btn-secondary:active {
-            transform: scale(0.98);
-        }
-
-        .result-screen {
-            display: none;
-        }
-
-        .score-display {
-            text-align: center;
-            padding: 45px 25px;
-            background: linear-gradient(135deg, #1a202c 0%, #2d3748 50%, #1a365d 100%);
-            color: white;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .score-display::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle at 50% 40%, rgba(66,153,225,0.12) 0%, transparent 60%);
-            pointer-events: none;
-        }
-
-        .score-number {
-            font-size: 90px;
-            font-weight: 100;
-            margin: 20px 0 5px;
-            letter-spacing: -4px;
-            line-height: 1;
-        }
-
-        .score-unit {
-            font-size: 28px;
-            font-weight: 300;
-            opacity: 0.85;
-            letter-spacing: 1px;
-            margin-bottom: 20px;
-            display: block;
-        }
-
-        .score-label {
-            font-size: 13px;
-            opacity: 0.7;
-            font-weight: 300;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
-
-        .dimension-scores {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin: 30px 0;
-        }
-
-        .dimension-score {
-            background: #f7fafc;
-            padding: 20px 15px;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .dimension-score h3 {
-            color: #2d3748;
-            margin-bottom: 12px;
-            font-size: 13px;
-            font-weight: 600;
-        }
-
-        .score-bar {
-            height: 8px;
-            background: #e2e8f0;
-            border-radius: 4px;
-            overflow: hidden;
-            margin: 10px 0;
-        }
-
-        .score-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4299e1 0%, #667eea 100%);
-            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .recommendations {
-            background: #fffaf0;
-            padding: 25px 20px;
-            border-radius: 8px;
-            border-left: 3px solid #ed8936;
-            margin-bottom: 30px;
-        }
-
-        .recommendations h3 {
-            color: #2d3748;
-            margin-bottom: 18px;
-            font-size: 16px;
-            font-weight: 400;
-        }
-
-        .recommendations ul {
-            list-style: none;
-            padding-left: 0;
-        }
-
-        .recommendations li {
-            padding: 10px 0;
-            color: #4a5568;
-            border-bottom: 1px solid rgba(237, 137, 54, 0.15);
-            font-size: 13px;
-            line-height: 1.7;
-        }
-
-        .recommendations li:last-child {
-            border-bottom: none;
-        }
-
-        /* ── AI 报告区 ─────────────────────────────── */
-        .ai-report-section {
-            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-            border-radius: 12px;
-            padding: 28px 22px;
-            margin-bottom: 25px;
-            color: white;
-        }
-        .ai-report-header { text-align: center; margin-bottom: 22px; }
-        .ai-report-header h3 { font-size: 17px; font-weight: 400; color: #e2e8f0; margin-bottom: 6px; }
-        .ai-report-header p  { font-size: 12px; color: #718096; }
-        .btn-generate-report {
-            display: block; width: 100%; padding: 15px;
-            background: linear-gradient(135deg, #4299e1, #667eea);
-            color: white; border: none; border-radius: 8px;
-            font-size: 15px; font-weight: 500; cursor: pointer;
-            transition: all 0.3s; letter-spacing: 0.5px;
-        }
-        .btn-generate-report:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(66,153,225,0.4); }
-        .report-spinner {
-            width: 36px; height: 36px;
-            border: 3px solid rgba(255,255,255,0.1);
-            border-top-color: #4299e1;
-            border-radius: 50%;
-            animation: spin 0.9s linear infinite;
-            margin: 0 auto;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .report-text {
-            background: rgba(255,255,255,0.06);
-            border-radius: 8px; padding: 18px;
-            font-size: 14px; line-height: 1.85;
-            color: #e2e8f0; margin-bottom: 20px;
-        }
-        .report-text h3 { color: #90cdf4; margin: 16px 0 8px; font-size: 15px; font-weight: 500; }
-        .report-text h4 { color: #63b3ed; margin: 12px 0 6px; font-size: 14px; font-weight: 500; }
-        .report-text strong { color: #fbb6ce; }
-        .report-wechat-cta {
-            text-align: center; padding: 18px 15px;
-            background: rgba(66,153,225,0.1);
-            border-radius: 8px;
-            border: 1px solid rgba(66,153,225,0.25);
-        }
-        .report-wechat-cta p { font-size: 13px; color: #90cdf4; margin-bottom: 10px; }
-        /* ────────────────────────────────────────────── */
-
-        .wechat-upgrade-section {
-            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-            padding: 35px 20px;
-            border-radius: 12px;
-            margin: 30px 0;
-            color: white;
-        }
-
-        .wechat-upgrade-section h3 {
-            font-size: 20px;
-            margin-bottom: 25px;
-            text-align: center;
-            font-weight: 400;
-            line-height: 1.5;
-        }
-
-        .upgrade-content {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 25px;
-        }
-
-        .upgrade-block {
-            background: rgba(255, 255, 255, 0.08);
-            padding: 25px 20px;
-            border-radius: 10px;
-            border-left: 3px solid #4299e1;
-        }
-
-        .upgrade-block h4 {
-            color: #4299e1;
-            font-size: 16px;
-            margin-bottom: 15px;
-            font-weight: 600;
-        }
-
-        .upgrade-block ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .upgrade-block li {
-            padding: 8px 0;
-            font-size: 13px;
-            line-height: 1.7;
-            color: #e2e8f0;
-            padding-left: 20px;
-            position: relative;
-        }
-
-        .upgrade-block li::before {
-            content: "→";
-            position: absolute;
-            left: 0;
-            color: #4299e1;
-            font-weight: bold;
-        }
-
-        .wechat-qr-center {
-            text-align: center;
-            margin: 30px 0;
-        }
-
-        .wechat-qr-wrapper {
-            display: inline-block;
-            padding: 20px;
-            background: white;
-            border-radius: 10px;
-        }
-
-        .wechat-qr-wrapper img {
-            max-width: 180px;
-            width: 100%;
-            border-radius: 8px;
-            display: block;
-        }
-
-        .wechat-cta {
-            text-align: center;
-            margin-top: 25px;
-            padding: 20px;
-            background: rgba(66, 153, 225, 0.15);
-            border-radius: 8px;
-        }
-
-        .wechat-cta p {
-            font-size: 14px;
-            line-height: 1.8;
-            color: #e2e8f0;
-            margin: 0;
-        }
-
+        /* ─── Authority / Footer ─────────────────────────── */
         .footer-authority {
-            background: #f7fafc;
-            padding: 30px 20px;
-            border-radius: 8px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 30px 24px;
             margin-top: 40px;
-            border: 1px solid #e2e8f0;
         }
-
         .footer-authority h4 {
-            color: #2d3748;
-            font-size: 16px;
-            margin-bottom: 20px;
-            font-weight: 600;
+            font-family: 'Playfair Display', 'Noto Serif SC', serif;
+            font-size: 18px;
+            color: var(--gold-light);
+            margin-bottom: 30px;
             text-align: center;
         }
-
         .authority-grid {
             display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            margin: 20px 0;
         }
-
         .authority-item {
-            background: white;
-            padding: 15px;
-            border-radius: 6px;
-            border-left: 3px solid #4299e1;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(200,169,110,0.1);
+            border-radius: 12px;
+            padding: 16px;
         }
-
-        .authority-item h5 {
-            color: #4299e1;
-            font-size: 13px;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-
-        .authority-item p {
-            color: #4a5568;
-            font-size: 12px;
-            line-height: 1.6;
-            margin: 0;
-        }
-
+        .authority-item h5 { font-size: 13px; color: var(--gold); margin-bottom: 6px; }
+        .authority-item p { font-size: 12px; color: var(--cream-dim); line-height: 1.6; }
         .footer-disclaimer {
+            border-top: 1px solid var(--card-border);
+            padding-top: 16px;
+            margin-top: 20px;
+            font-size: 12px;
+            color: var(--cream-dim);
+            line-height: 1.7;
             text-align: center;
-            color: #a0aec0;
-            font-size: 11px;
-            line-height: 1.6;
-            margin-top: 15px;
         }
 
-        .input-group {
-            margin-bottom: 20px;
-        }
-
+        /* ─── Basic Info Form ────────────────────────────── */
+        .input-group { margin-bottom: 20px; }
+        .input-row { display: flex; gap: 16px; }
+        .input-row .input-group { flex: 1; }
         .input-group label {
             display: block;
-            margin-bottom: 8px;
-            color: #2d3748;
-            font-weight: 500;
             font-size: 13px;
+            color: var(--cream-dim);
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
         }
-
         .input-group input,
         .input-group select {
             width: 100%;
-            padding: 12px 14px;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: all 0.3s;
-            background: white;
+            padding: 14px 16px;
+            background: var(--bg3);
+            border: 1px solid rgba(200,169,110,0.2);
+            border-radius: 10px;
+            color: var(--cream);
+            font-size: 15px;
+            font-family: 'Noto Serif SC', serif;
+            transition: border-color 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
         }
-
         .input-group input:focus,
         .input-group select:focus {
             outline: none;
-            border-color: #4299e1;
-            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(200,169,110,0.08);
+        }
+        .input-group input::placeholder { color: rgba(168,160,152,0.5); }
+        .input-group select option { background: var(--bg3); color: var(--cream); }
+
+        /* ─── Question Card ──────────────────────────────── */
+        .question-container { padding: 20px 0; }
+        .progress-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+        .progress-bar {
+            flex: 1;
+            height: 4px;
+            background: rgba(200,169,110,0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--jade), var(--gold));
+            border-radius: 2px;
+            transition: width 0.4s ease;
+        }
+        .question-counter {
+            font-size: 12px;
+            color: var(--cream-dim);
+            white-space: nowrap;
+            letter-spacing: 0.5px;
+        }
+        .question-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 28px 24px;
+            margin-bottom: 24px;
+        }
+        .question-text {
+            font-size: 16px;
+            color: var(--cream);
+            line-height: 1.8;
+            margin-bottom: 24px;
+        }
+        .options { display: flex; flex-direction: column; gap: 12px; }
+        .option {
+            padding: 16px 20px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(200,169,110,0.12);
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--cream-dim);
+            line-height: 1.6;
+            transition: all 0.2s;
+        }
+        .option:hover {
+            border-color: rgba(200,169,110,0.4);
+            color: var(--cream);
+            background: rgba(200,169,110,0.05);
+        }
+        .option.selected {
+            background: linear-gradient(135deg, rgba(58,158,126,0.2), rgba(58,158,126,0.1));
+            border-color: var(--jade);
+            color: var(--cream);
+        }
+        .navigation {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 16px;
         }
 
+        /* ─── Result Screen ──────────────────────────────── */
+        .result-screen { padding: 20px 0; }
+        .score-display {
+            background: linear-gradient(135deg, var(--bg2), var(--bg3));
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 40px 24px;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .score-label {
+            font-size: 13px;
+            letter-spacing: 2px;
+            color: var(--cream-dim);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+        .score-number {
+            font-family: 'Playfair Display', serif;
+            font-size: 96px;
+            font-weight: 700;
+            color: var(--gold);
+            line-height: 1;
+            display: inline-block;
+        }
+        .score-unit {
+            font-size: 28px;
+            color: var(--cream-dim);
+            vertical-align: super;
+            margin-left: 4px;
+        }
+
+        /* ─── Assessment Code Banner ─────────────────────── */
+        .assessment-code-banner {
+            background: linear-gradient(135deg, rgba(200,169,110,0.06), rgba(58,158,126,0.06));
+            border: 1px solid rgba(200,169,110,0.3);
+            border-radius: var(--radius);
+            padding: 22px 24px;
+            text-align: center;
+            margin: 0 0 24px;
+        }
+        .assessment-code-label {
+            font-size: 12px;
+            letter-spacing: 2px;
+            color: var(--cream-dim);
+            text-transform: uppercase;
+        }
+        .assessment-code-value {
+            font-family: 'Playfair Display', monospace;
+            font-size: 38px;
+            font-weight: 700;
+            color: var(--gold);
+            letter-spacing: 6px;
+            margin: 10px 0 8px;
+            display: block;
+        }
+        .assessment-code-hint {
+            font-size: 13px;
+            color: var(--jade-light);
+            line-height: 1.6;
+        }
+        .assessment-code-hint strong { color: var(--gold-light); }
+
+        /* ─── Radar Chart ────────────────────────────────── */
         .radar-chart-container {
-            max-width: 100%;
-            margin: 30px auto;
-            padding: 20px;
-            background: white;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin: 0 0 24px;
+        }
+        canvas { max-width: 100%; height: auto; }
+
+        /* ─── Dimension Scores ───────────────────────────── */
+        .dimension-scores {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            margin: 0 0 24px;
+        }
+        .dimension-score {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .dimension-score h3 {
+            font-size: 13px;
+            color: var(--cream);
+            margin-bottom: 10px;
+        }
+        .score-bar {
+            height: 6px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--jade), var(--gold));
+            border-radius: 3px;
+            transition: width 0.6s ease;
         }
 
-        canvas {
-            max-width: 100%;
-            height: auto;
+        /* ─── Recommendations ────────────────────────────── */
+        .recommendations {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin: 0 0 24px;
         }
-
-        @media (max-width: 480px) {
-            .hero-section { margin-bottom: 30px; }
-            .stats-grid { margin: 25px 0; padding: 20px 0; }
-            .framework-section { margin: 30px 0; }
-            .value-proposition { margin: 25px 0; }
-            .pla-intro { margin: 25px 0; }
-            .dimension-grid { margin: 20px 0; }
-            .content { padding: 25px 16px; }
-
-            .btn-primary {
-                max-width: 100%;
-                margin-top: 25px;
-                font-size: 16px;
-                padding: 16px 20px;
-            }
-
-            .navigation {
-                flex-direction: row;
-            }
-
-            #nextBtn {
-                flex: 1;
-            }
-
-            .question-text { font-size: 15px; }
-
-            .score-number { font-size: 72px; }
-            .score-unit { font-size: 22px; }
+        .recommendations h3 {
+            font-family: 'Playfair Display', 'Noto Serif SC', serif;
+            font-size: 17px;
+            color: var(--gold-light);
+            margin-bottom: 18px;
         }
-
-        @media (min-width: 768px) {
-            .header {
-                padding: 50px 40px;
-            }
-            .header h1 {
-                font-size: 36px;
-            }
-            .content {
-                padding: 60px 50px;
-            }
-            .framework-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
-            .dimension-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-            .dimension-scores {
-                grid-template-columns: repeat(3, 1fr);
-            }
-            .authority-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        .recommendations ul { list-style: none; padding: 0; }
+        .recommendations ul li {
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(200,169,110,0.08);
+            font-size: 14px;
+            color: var(--cream-dim);
+            line-height: 1.7;
         }
+        .recommendations ul li:last-child { border-bottom: none; }
+        .recommendations ul li strong { color: var(--cream); }
 
-        /* ── 摘要卡片 ── */
+        /* ─── AI Report ──────────────────────────────────── */
+        .ai-report-section { margin: 0 0 24px; }
+        .ai-report-header h3 {
+            font-family: 'Playfair Display', 'Noto Serif SC', serif;
+            font-size: 16px;
+            color: var(--gold-light);
+            margin-bottom: 14px;
+        }
+        .report-spinner {
+            width: 32px; height: 32px;
+            border: 3px solid rgba(200,169,110,0.15);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ─── Summary Card ───────────────────────────────── */
         .summary-card {
-            background: linear-gradient(135deg, #f0f9ff 0%, #e6fffa 100%);
-            border: 1px solid #bee3f8;
+            background: rgba(58,158,126,0.06);
+            border: 1px solid rgba(58,158,126,0.2);
             border-radius: 14px;
             padding: 20px 24px;
             margin: 16px 0;
         }
-        /* ── 微信CTA卡片 ── */
+        #summaryText { color: var(--cream); font-size: 15px; line-height: 1.8; }
+
+        /* ─── WeChat CTA Card ────────────────────────────── */
         .wechat-cta-card {
-            background: #fff;
-            border: 2px solid #e2e8f0;
-            border-radius: 16px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
             padding: 24px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
         }
-        .wechat-cta-header h3 { font-size: 18px; font-weight: 700; color: #1a202c; margin: 0 0 10px; }
+        .wechat-cta-header h3 {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--cream);
+            margin: 0 0 12px;
+        }
         .privacy-note {
-            background: #fff8e1;
-            border-left: 4px solid #f6ad55;
+            background: rgba(58,158,126,0.08);
+            border-left: 3px solid var(--jade);
             padding: 10px 14px;
             border-radius: 0 8px 8px 0;
-            font-size: 13px; color: #744210; margin: 0 0 20px;
+            font-size: 13px;
+            color: var(--cream-dim);
+            margin: 0 0 20px;
         }
+        .privacy-note strong { color: var(--jade-light); }
         .wechat-cta-body { display: flex; flex-direction: column; gap: 20px; }
         .cta-step { display: flex; align-items: flex-start; gap: 16px; }
         .step-number {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white; width: 32px; height: 32px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--jade), var(--jade-light));
+            color: var(--bg);
+            width: 32px; height: 32px;
+            border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-size: 15px; font-weight: 700; flex-shrink: 0;
+            font-size: 14px; font-weight: 700; flex-shrink: 0;
         }
         .step-content { flex: 1; }
-        .step-content h4 { font-size: 15px; font-weight: 600; color: #2d3748; margin: 0 0 4px; }
+        .step-content h4 { font-size: 15px; color: var(--cream); margin: 0 0 4px; }
+        .step-content p { font-size: 13px; color: var(--cream-dim); }
         .qr-wrapper {
-            display: inline-block; background: white; border-radius: 12px;
-            padding: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;
+            display: inline-block;
+            background: white;
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
         }
         .wechat-qr-img { width: 150px; height: 150px; display: block; border-radius: 8px; }
+        .code-reminder {
+            font-size: 13px;
+            padding: 10px 14px;
+            background: rgba(200,169,110,0.07);
+            border-left: 3px solid var(--gold);
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 12px;
+            line-height: 1.6;
+            color: var(--cream-dim);
+        }
+        .code-reminder strong { color: var(--gold-light); }
         .contact-input {
-            width: 100%; padding: 12px 16px; border: 2px solid #e2e8f0;
-            border-radius: 10px; font-size: 15px; color: #2d3748;
-            outline: none; box-sizing: border-box; margin-bottom: 12px;
+            width: 100%;
+            padding: 13px 16px;
+            background: var(--bg3);
+            border: 1px solid rgba(200,169,110,0.2);
+            border-radius: 10px;
+            font-size: 15px;
+            color: var(--cream);
+            font-family: 'Noto Serif SC', serif;
+            outline: none;
+            box-sizing: border-box;
+            margin-bottom: 12px;
             transition: border-color 0.2s;
         }
-        .contact-input:focus { border-color: #667eea; }
+        .contact-input:focus { border-color: var(--gold); }
+        .contact-input::placeholder { color: rgba(168,160,152,0.4); }
         .btn-submit-contact {
-            width: 100%; padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white; border: none; border-radius: 10px;
-            font-size: 16px; font-weight: 600; cursor: pointer;
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--jade), #2A8060);
+            color: var(--cream);
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
             transition: opacity 0.2s, transform 0.1s;
+            font-family: 'Noto Serif SC', serif;
         }
         .btn-submit-contact:hover { opacity: 0.92; transform: translateY(-1px); }
         .submit-success {
-            background: linear-gradient(135deg, #f0fff4 0%, #e6fffa 100%);
-            border: 2px solid #68d391; border-radius: 12px; padding: 20px; text-align: center;
+            background: rgba(58,158,126,0.1);
+            border: 1px solid rgba(58,158,126,0.3);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            color: var(--cream);
         }
-        </style>
+
+        /* ─── WeChat Upgrade Section ─────────────────────── */
+        .wechat-upgrade-section {
+            background: linear-gradient(135deg, rgba(14,20,32,0.95), rgba(20,28,42,0.95));
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 32px 24px;
+            margin: 24px 0;
+        }
+        .wechat-upgrade-section h3 {
+            font-family: 'Playfair Display', 'Noto Serif SC', serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--gold);
+            text-align: center;
+            line-height: 1.4;
+            margin-bottom: 24px;
+        }
+        .upgrade-content { display: flex; flex-direction: column; gap: 20px; }
+        .upgrade-block {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(200,169,110,0.1);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .upgrade-block h4 { font-size: 14px; color: var(--gold-light); margin-bottom: 12px; }
+        .upgrade-block ul { padding-left: 18px; }
+        .upgrade-block ul li {
+            font-size: 13px;
+            color: var(--cream-dim);
+            line-height: 1.7;
+            margin-bottom: 6px;
+        }
+        .upgrade-block ul li strong { color: var(--cream); }
+        .wechat-cta {
+            background: rgba(58,158,126,0.06);
+            border: 1px solid rgba(58,158,126,0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        /* ─── Responsive ─────────────────────────────────── */
+        @media (max-width: 480px) {
+            .hero-section { margin-bottom: 30px; }
+            .stats-grid { padding: 16px 0; margin: 20px 0; }
+            .framework-section, .value-proposition, .pla-intro { margin: 24px 0; }
+            .dimension-grid { margin: 20px 0; }
+            .content { padding: 24px 16px; }
+            .btn-primary { max-width: 100%; font-size: 16px; padding: 16px 20px; }
+            .navigation { flex-direction: row; }
+            #nextBtn { flex: 1; }
+            .question-text { font-size: 15px; }
+            .score-number { font-size: 72px; }
+            .score-unit { font-size: 22px; }
+            .input-row { flex-direction: column; gap: 0; }
+        }
+        @media (min-width: 768px) {
+            .header { padding: 50px 40px; }
+            .header h1 { font-size: 36px; }
+            .content { padding: 60px 50px; }
+            .framework-grid { grid-template-columns: repeat(4, 1fr); }
+            .dimension-grid { grid-template-columns: repeat(3, 1fr); }
+            .dimension-scores { grid-template-columns: repeat(3, 1fr); }
+            .authority-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -933,12 +696,12 @@
         <div class="content">
             <div id="welcomeScreen"><div class="hero-section">
                     <h2 class="hero-title">重新定义年龄：从日历年龄到生物年龄</h2>
-                    
+
                     <div class="hero-intro">
                         <p style="margin-bottom: 20px;">过去二十年，抗衰老医学取得了突破性进展。从端粒研究到表观遗传学（Epigenetics），从线粒体功能到细胞自噬机制（Autophagy），科学界逐渐揭示了衰老的本质规律。<strong>最重要的发现是：衰老并非不可逆转</strong>。</p>
-                        
+
                         <p style="margin-bottom: 20px;">哈佛、斯坦福等顶尖研究机构的临床数据表明，通过精准评估与科学干预，我们可以显著减缓甚至逆转生物年龄。这不是抗衰老产品的营销话术，而是建立在大规模队列研究和随机对照试验（RCT）基础上的科学共识。</p>
-                        
+
                         <p><strong>关键在于：精准评估是一切干预的前提</strong>。不同于传统体检的单点数据，现代抗衰老医学强调多维度、分层次的系统性评估——这正是BioAge Compass的核心价值。</p>
                     </div>
 
@@ -960,26 +723,26 @@
 
                 <div class="framework-section">
                     <h3 class="section-title">四层评估体系：从宏观到微观，从现象到本质</h3>
-                    
+
                     <div class="framework-grid">
                         <div class="framework-card">
                             <div class="framework-level">层级 01</div>
                             <h4 class="framework-title">PLA评估</h4>
                             <p class="framework-desc">生理生活年龄<br>基于生活方式的快速筛查</p>
                         </div>
-                        
+
                         <div class="framework-card">
                             <div class="framework-level">层级 02</div>
                             <h4 class="framework-title">CBA评估</h4>
                             <p class="framework-desc">临床生物标志物年龄<br>基于体检数据的精准分析</p>
                         </div>
-                        
+
                         <div class="framework-card">
                             <div class="framework-level">层级 03</div>
                             <h4 class="framework-title">DNA Age</h4>
                             <p class="framework-desc">DNA甲基化年龄<br>表观遗传学层面测定</p>
                         </div>
-                        
+
                         <div class="framework-card">
                             <div class="framework-level">层级 04</div>
                             <h4 class="framework-title">精准干预</h4>
@@ -987,14 +750,14 @@
                         </div>
                     </div>
 
-                    <p style="text-align: center; color: #718096; font-size: 13px; line-height: 1.8; margin: 25px auto 0;">
-                        这四个层级相互补充、递进深入。<strong>PLA提供快速全景视图，CBA实现临床级精准度，DNA Age揭示细胞本质，最终汇聚为个性化干预策略</strong>。每个层级都有独立价值，组合使用则能构建最完整的健康图谱。
+                    <p style="text-align: center; color: var(--cream-dim); font-size: 13px; line-height: 1.8; margin: 25px auto 0;">
+                        这四个层级相互补充、递进深入。<strong style="color: var(--cream);">PLA提供快速全景视图，CBA实现临床级精准度，DNA Age揭示细胞本质，最终汇聚为个性化干预策略</strong>。每个层级都有独立价值，组合使用则能构建最完整的健康图谱。
                     </p>
                 </div>
 
                 <div class="value-proposition">
                     <h3>BioAge Compass 能为您提供什么</h3>
-                    
+
                     <div class="value-list">
                         <div class="value-item">
                             <div class="value-icon">📊</div>
@@ -1003,7 +766,7 @@
                                 <p>将抽象的"健康"转化为可测量的生物年龄指标，建立清晰的改善基线与追踪体系</p>
                             </div>
                         </div>
-                        
+
                         <div class="value-item">
                             <div class="value-icon">🎯</div>
                             <div class="value-content">
@@ -1011,7 +774,7 @@
                                 <p>识别高可逆性健康维度，优先配置时间与资源，避免"撒胡椒面"式的盲目干预</p>
                             </div>
                         </div>
-                        
+
                         <div class="value-item">
                             <div class="value-icon">📈</div>
                             <div class="value-content">
@@ -1019,7 +782,7 @@
                                 <p>定期评估形成健康数据库，追踪干预效果，持续优化个人抗衰老策略</p>
                             </div>
                         </div>
-                        
+
                         <div class="value-item">
                             <div class="value-icon">🔬</div>
                             <div class="value-content">
@@ -1032,19 +795,19 @@
 
                 <div class="pla-intro">
                     <h3>层级01：PLA生理生活年龄评估</h3>
-                    
-                    <p><strong>PLA (Physiological Life Age Assessment)</strong> 是四层评估体系的第一层，也是最易获取的入口。它通过36个精心设计的问题，从六大核心维度评估您的生理状态，在15分钟内提供生物年龄的初步评估。</p>
-                    
+
+                    <p><strong>PLA (Physiological Life Age Assessment)</strong> 是四层评估体系的第一层，也是最易获取的入口。它通过29个精心设计的问题，从七大核心维度评估您的生理状态，在10分钟内提供生物年龄的初步评估。</p>
+
                     <p style="margin-top: 15px;">与传统问卷不同，PLA的设计基于大规模临床研究中验证的健康预测因子。每个问题都对应特定的生理指标或疾病风险，问题间的组合分析能够揭示您当前的整体健康状态。</p>
 
                     <div class="pla-features">
                         <div class="pla-feature">
                             <div class="pla-feature-icon">⚡</div>
-                            <p class="pla-feature-text"><strong>15分钟</strong><br>快速完成</p>
+                            <p class="pla-feature-text"><strong>10分钟</strong><br>快速完成</p>
                         </div>
                         <div class="pla-feature">
                             <div class="pla-feature-icon">🎯</div>
-                            <p class="pla-feature-text"><strong>6大维度</strong><br>全面分析</p>
+                            <p class="pla-feature-text"><strong>7大维度</strong><br>全面分析</p>
                         </div>
                         <div class="pla-feature">
                             <div class="pla-feature-icon">📊</div>
@@ -1084,31 +847,36 @@
                         <h3>环境因素</h3>
                         <p>Environment</p>
                     </div>
+                    <div class="dimension-card">
+                        <span class="dimension-icon">👁️</span>
+                        <h3>感官衰老</h3>
+                        <p>Sensory Aging</p>
+                    </div>
                 </div>
 
                 <button class="btn-primary" id="startAssessmentBtn">开始PLA评估</button>
 
                 <div class="footer-authority">
-                    <h4 style="font-size: 18px; margin-bottom: 30px;">科学基础与专业保障</h4>
-                    
+                    <h4>科学基础与专业保障</h4>
+
                     <div style="margin-bottom: 35px;">
-                        <h5 style="color: #4299e1; font-size: 14px; margin-bottom: 20px; font-weight: 600; text-align: center;">核心评估算法 (Core Assessment Algorithms)</h5>
+                        <h5 style="color: var(--gold); font-size: 14px; margin-bottom: 20px; font-weight: 600; text-align: center;">核心评估算法 (Core Assessment Algorithms)</h5>
                         <div class="authority-grid">
                             <div class="authority-item">
                                 <h5>Horvath Clock 算法</h5>
                                 <p>基于Steve Horvath教授的DNA甲基化时钟理论，经Nature等顶级期刊验证的衰老评估金标准</p>
                             </div>
-                            
+
                             <div class="authority-item">
                                 <h5>Framingham Heart Study</h5>
                                 <p>整合弗明汉心脏研究70年队列数据，构建心血管风险预测模型</p>
                             </div>
-                            
+
                             <div class="authority-item">
                                 <h5>CALERIE 临床试验</h5>
                                 <p>参考美国国立衰老研究所(NIA)热量限制与衰老研究成果</p>
                             </div>
-                            
+
                             <div class="authority-item">
                                 <h5>InCHIANTI Study</h5>
                                 <p>采用意大利老龄化纵向研究的生物标志物评估体系</p>
@@ -1116,20 +884,20 @@
                         </div>
                     </div>
 
-                    <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 25px 20px; border-radius: 10px; margin-bottom: 35px; border-left: 3px solid #4299e1;">
-                        <h5 style="color: #2d3748; font-size: 14px; margin-bottom: 15px; font-weight: 600; text-align: center;">国际研究机构支持 (International Research Support)</h5>
-                        <p style="color: #4a5568; font-size: 13px; line-height: 1.8; text-align: center; margin: 0;">
+                    <div style="background: rgba(58,158,126,0.06); padding: 25px 20px; border-radius: 10px; margin-bottom: 35px; border-left: 3px solid var(--jade);">
+                        <h5 style="color: var(--cream); font-size: 14px; margin-bottom: 15px; font-weight: 600; text-align: center;">国际研究机构支持 (International Research Support)</h5>
+                        <p style="color: var(--cream-dim); font-size: 13px; line-height: 1.8; text-align: center; margin: 0;">
                             整合哈佛医学院（Harvard Medical School）、斯坦福长寿中心（Stanford Center on Longevity）、梅奥诊所（Mayo Clinic）等国际顶尖机构研究成果，确保评估体系的科学性与前沿性
                         </p>
                     </div>
 
-                    <div style="background: #f7fafc; padding: 25px 20px; border-radius: 10px; margin-bottom: 25px; border: 1px solid #e2e8f0;">
+                    <div style="background: rgba(255,255,255,0.02); padding: 25px 20px; border-radius: 10px; margin-bottom: 25px; border: 1px solid var(--card-border);">
                         <div style="text-align: center; margin-bottom: 20px;">
-                            <h5 style="color: #2d3748; font-size: 14px; font-weight: 600; margin-bottom: 15px;">系统主理 (System Director)</h5>
-                            <div style="display: inline-block; padding: 20px 25px; background: white; border-radius: 8px; border-left: 3px solid #667eea; text-align: left; max-width: 600px;">
-                                <p style="color: #2d3748; font-size: 14px; line-height: 1.9; margin: 0;">
-                                    <strong style="color: #667eea;">陆大夫 Dr.Lu</strong><br>
-                                    <span style="color: #4a5568; font-size: 13px;">
+                            <h5 style="color: var(--cream); font-size: 14px; font-weight: 600; margin-bottom: 15px;">系统主理 (System Director)</h5>
+                            <div style="display: inline-block; padding: 20px 25px; background: rgba(200,169,110,0.05); border-radius: 8px; border-left: 3px solid var(--gold); text-align: left; max-width: 600px;">
+                                <p style="color: var(--cream); font-size: 14px; line-height: 1.9; margin: 0;">
+                                    <strong style="color: var(--gold);">陆大夫 Dr.Lu</strong><br>
+                                    <span style="color: var(--cream-dim); font-size: 13px;">
                                     近30年临床执业医生 | 复旦大学医学院临床医学专业<br>
                                     比利时生物医学硕士 | 英国帝国理工学院国际健康管理硕士<br>
                                     常年专注于抗衰老医学与精准健康管理
@@ -1138,11 +906,11 @@
                             </div>
                         </div>
 
-                        <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e2e8f0;">
-                            <p style="color: #2d3748; font-size: 14px; font-weight: 600; margin-bottom: 8px;">
+                        <div style="text-align: center; padding-top: 20px; border-top: 1px solid var(--card-border);">
+                            <p style="color: var(--cream); font-size: 14px; font-weight: 600; margin-bottom: 8px;">
                                 为超过千余高净值家庭提供专业服务
                             </p>
-                            <p style="color: #718096; font-size: 12px; margin: 0;">
+                            <p style="color: var(--cream-dim); font-size: 12px; margin: 0;">
                                 客户满意度98% | 服务覆盖中国、美国、欧洲等地区
                             </p>
                         </div>
@@ -1152,7 +920,7 @@
                         <p style="margin-bottom: 10px;">
                             © 2024 BioAge Compass. 本评估仅供健康参考，不构成医疗诊断。如有疾病请咨询专业医生。
                         </p>
-                        <p style="font-size: 10px; line-height: 1.6; color: #a0aec0; margin: 0; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+                        <p style="font-size: 10px; line-height: 1.6; color: var(--cream-dim); margin: 0; padding-top: 10px; border-top: 1px solid var(--card-border);">
                             本系统版权归微信公众号"陆大夫空间"所有。未经授权不得复制、传播或商用。All Rights Reserved.
                         </p>
                     </div>
@@ -1160,15 +928,37 @@
             </div>
 
             <div id="basicInfoScreen" style="display: none;">
-                <h2 style="color: #2d3748; margin-bottom: 25px; font-size: 20px; font-weight: 300;">基本信息</h2>
+                <h2 style="margin-bottom: 25px; font-size: 20px; font-weight: 300;">基本信息</h2>
                 <form id="basicInfoForm">
                     <div class="input-group">
                         <label for="name">姓名</label>
                         <input type="text" id="name" required placeholder="请输入您的姓名">
                     </div>
-                    <div class="input-group">
-                        <label for="age">实际年龄</label>
-                        <input type="number" id="age" min="18" max="100" required placeholder="请输入您的年龄">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="birthYear">出生年份</label>
+                            <select id="birthYear" required>
+                                <option value="">请选择</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="birthMonth">出生月份</label>
+                            <select id="birthMonth" required>
+                                <option value="">请选择</option>
+                                <option value="1">1月</option>
+                                <option value="2">2月</option>
+                                <option value="3">3月</option>
+                                <option value="4">4月</option>
+                                <option value="5">5月</option>
+                                <option value="6">6月</option>
+                                <option value="7">7月</option>
+                                <option value="8">8月</option>
+                                <option value="9">9月</option>
+                                <option value="10">10月</option>
+                                <option value="11">11月</option>
+                                <option value="12">12月</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="input-group">
                         <label for="gender">性别</label>
@@ -1195,7 +985,7 @@
                     <div class="progress-bar">
                         <div id="progressFill" class="progress-fill"></div>
                     </div>
-                    <span class="question-counter" id="questionCounter">1 / 36</span>
+                    <span class="question-counter" id="questionCounter">1 / 29</span>
                 </div>
                 <div id="questionCard"></div>
                 <div class="navigation">
@@ -1206,20 +996,30 @@
 
             <div id="resultScreen" class="result-screen">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 15px;">
-                    <h2 style="color: #2d3748; font-size: 18px; font-weight: 300; flex: 1;">您的评估简报</h2>
-                    <button id="completeBtn" style="background: #4299e1; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.3s; flex-shrink: 0;">完成</button>
+                    <h2 style="font-size: 18px; font-weight: 300; flex: 1;">您的评估简报</h2>
+                    <button id="completeBtn" style="background: var(--jade); color: var(--cream); border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.3s; flex-shrink: 0;">完成</button>
                 </div>
-                
+
                 <div class="score-display">
                     <div class="score-label">生物年龄 · Biological Age</div>
                     <div class="score-number" id="bioAge">--</div>
                     <span class="score-unit">岁</span>
-                    <p style="font-size: 13px; opacity: 0.7; letter-spacing: 0.5px; margin-bottom: 6px;">实际年龄 (Chronological Age): <span id="actualAge">--</span> 岁</p>
+                    <p style="font-size: 13px; opacity: 0.7; letter-spacing: 0.5px; margin-bottom: 6px; margin-top: 12px;">实际年龄 (Chronological Age): <span id="actualAge">--</span> 岁</p>
                     <p id="ageDifference" style="font-size: 15px; margin-top: 10px; opacity: 0.95; font-weight: 400;"></p>
                 </div>
 
+                <!-- 专属评估码 -->
+                <div class="assessment-code-banner" id="assessmentCodeBanner">
+                    <p class="assessment-code-label">您的专属评估码</p>
+                    <span class="assessment-code-value" id="assessmentCodeValue">--</span>
+                    <p class="assessment-code-hint">
+                        添加微信后，请将此评估码发送给陆大夫<br>
+                        以便精准关联您的报告 · 备选：发送<strong>姓名+手机后4位</strong>
+                    </p>
+                </div>
+
                 <div class="radar-chart-container">
-                    <h3 style="text-align: center; color: #2d3748; margin-bottom: 20px; font-size: 16px; font-weight: 400;">六维健康雷达图</h3>
+                    <h3 style="text-align: center; color: var(--cream-dim); margin-bottom: 20px; font-size: 16px; font-weight: 400;">七维健康雷达图</h3>
                     <canvas id="radarChart"></canvas>
                 </div>
 
@@ -1236,7 +1036,7 @@
                     <!-- 摘要加载中 -->
                     <div id="summaryLoading" style="text-align:center; padding:28px 0;">
                         <div class="report-spinner"></div>
-                        <p style="color:#a0aec0; font-size:13px; margin-top:12px;">AI 正在生成您的健康摘要...</p>
+                        <p style="color:var(--cream-dim); font-size:13px; margin-top:12px;">AI 正在生成您的健康摘要...</p>
                     </div>
 
                     <!-- 摘要内容 -->
@@ -1245,7 +1045,7 @@
                             <h3>✨ AI 健康摘要</h3>
                         </div>
                         <div class="summary-card">
-                            <p id="summaryText" style="line-height:1.8; color:#2d3748; font-size:15px;"></p>
+                            <p id="summaryText" style="line-height:1.8; font-size:15px;"></p>
                         </div>
                     </div>
 
@@ -1263,16 +1063,16 @@
                                     <div class="step-number">1</div>
                                     <div class="step-content">
                                         <h4>扫码添加「陆大夫逆龄管理」微信</h4>
-                                        <p style="color:#718096; font-size:13px; margin:4px 0 12px;">微信号：Charlie20850</p>
+                                        <p style="margin:4px 0 12px;">微信号：Charlie20850</p>
                                         <div class="qr-wrapper">
                                             <img src="wechat-qr.png"
                                                  alt="陆大夫逆龄管理 微信二维码"
                                                  class="wechat-qr-img"
                                                  onerror="this.style.display='none';document.getElementById('qrFallback').style.display='block'">
-                                            <div id="qrFallback" style="display:none; padding:20px; background:#f7fafc; border-radius:10px; text-align:center;">
+                                            <div id="qrFallback" style="display:none; padding:20px; background:var(--bg3); border-radius:10px; text-align:center;">
                                                 <p style="font-size:32px; margin:0;">💬</p>
-                                                <p style="font-size:14px; color:#4a5568; margin:8px 0 0;">微信号：Charlie20850</p>
-                                                <p style="font-size:12px; color:#718096;">陆大夫逆龄管理</p>
+                                                <p style="font-size:14px; color:var(--cream); margin:8px 0 0;">微信号：Charlie20850</p>
+                                                <p style="font-size:12px; color:var(--cream-dim);">陆大夫逆龄管理</p>
                                             </div>
                                         </div>
                                     </div>
@@ -1283,23 +1083,28 @@
                                     <div class="step-number">2</div>
                                     <div class="step-content">
                                         <h4>留下您的联系方式</h4>
-                                        <p style="color:#718096; font-size:13px; margin:4px 0 12px;">手机号或邮箱，陆大夫将在收到后通过微信与您联系</p>
+                                        <p style="margin:4px 0 12px;">手机号或邮箱，陆大夫将在收到后通过微信与您联系</p>
+                                        <div class="code-reminder">
+                                            添加微信后，请发送您的评估码
+                                            <strong id="ctaAssessmentCode">--</strong>
+                                            给陆大夫 · 或发送<strong>姓名+手机后4位</strong>
+                                        </div>
                                         <input type="text" id="contactInput"
                                                placeholder="手机号 或 邮箱地址"
                                                class="contact-input">
                                         <div id="contactSubmitArea">
                                             <button id="submitContactBtn" class="btn-submit-contact" onclick="submitContactForm()">
-                                                提交 · 获取我的完整报告
+                                                提交并申请详细报告
                                             </button>
                                         </div>
                                         <div id="contactSubmitLoading" style="display:none; text-align:center; padding:16px 0;">
                                             <div class="report-spinner"></div>
-                                            <p style="color:#a0aec0; font-size:13px; margin-top:10px;">正在生成您的专属报告...</p>
+                                            <p style="color:var(--cream-dim); font-size:13px; margin-top:10px;">正在生成您的专属报告...</p>
                                         </div>
                                         <div id="contactSubmitSuccess" style="display:none;" class="submit-success">
                                             <p style="font-size:22px; margin:0 0 8px;">✅</p>
-                                            <p style="font-weight:600; color:#2d3748; margin:0 0 6px;">已收到！陆大夫将尽快通过微信1V1与您联系</p>
-                                            <p style="font-size:13px; color:#718096; margin:0;">请确保您已添加微信 Charlie20850，详细报告及CBA评估链接将通过微信发送</p>
+                                            <p style="font-weight:600; color:var(--cream); margin:0 0 6px;">已收到！陆大夫将尽快通过微信1V1与您联系</p>
+                                            <p style="font-size:13px; color:var(--cream-dim); margin:0;">请确保您已添加微信 Charlie20850，详细报告及CBA评估链接将通过微信发送</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1311,12 +1116,12 @@
 
                 <div class="wechat-upgrade-section">
                     <h3>解锁完整PLA逆龄密码<br><span style="font-size: 14px; font-weight: 300; opacity: 0.85;">(Unlock Your Complete PLA Anti-Aging Blueprint)</span></h3>
-                    
+
                     <div class="upgrade-content">
                         <div class="upgrade-block">
                             <h4>📋 层级01：PLA完整报告（当前评估升级）</h4>
                             <ul>
-                                <li><strong>深度六维分析</strong>：每个维度的详细得分解读与改善路径</li>
+                                <li><strong>深度七维分析</strong>：每个维度的详细得分解读与改善路径</li>
                                 <li><strong>可逆性热力图</strong>：可视化展示哪些维度投入产出比最高</li>
                                 <li><strong>3/6/12个月行动计划</strong>：分阶段、可执行的具体建议</li>
                                 <li><strong>对标分析</strong>：与同龄人群健康数据对比，了解您的相对位置</li>
@@ -1338,49 +1143,40 @@
                         </div>
                     </div>
 
-                    <div class="wechat-qr-center">
-                        <p style="font-size: 15px; margin-bottom: 20px; color: #e2e8f0;">
-                            扫描添加健康顾问微信
-                        </p>
-                        <div class="wechat-qr-wrapper">
-                            <img src="https://bioage-compass-prod-9chaf35e573d-1405252881.tcloudbaseapp.com/wechat-qr.jpg" alt="健康顾问微信" onerror="this.parentElement.innerHTML='<p style=color:#cbd5e1;padding:40px;font-size:13px>微信二维码加载中...</p>'">
-                        </div>
-                    </div>
-
                     <div class="wechat-cta">
                         <p style="margin-bottom: 15px;">
-                            <strong style="font-size: 15px; color: #4299e1;">添加微信后您将获得：</strong>
+                            <strong style="font-size: 15px; color: var(--jade-light);">添加微信后您将获得：</strong>
                         </p>
-                        <p>
+                        <p style="color: var(--cream-dim); font-size: 14px; line-height: 2;">
                             ✓ PLA完整深度报告（包含可逆性热力图、行动计划、趋势预测）<br>
                             ✓ CBA评估专属优惠链接（仅需上传体检报告，48小时内获得器官年龄分析）<br>
-                            ✓ <strong style="color: #4299e1;">有机会获得陆医生一对一报告解读</strong>（个性化长期抗衰方案规划）<br>
+                            ✓ <strong style="color: var(--jade-light);">有机会获得陆医生一对一报告解读</strong>（个性化长期抗衰方案规划）<br>
                             ✓ 前沿抗衰老医学资讯与国际资源对接
                         </p>
                     </div>
                 </div>
 
                 <div class="footer-authority">
-                    <h4 style="font-size: 18px; margin-bottom: 30px;">科学基础与专业保障</h4>
-                    
+                    <h4>科学基础与专业保障</h4>
+
                     <div style="margin-bottom: 35px;">
-                        <h5 style="color: #4299e1; font-size: 14px; margin-bottom: 20px; font-weight: 600; text-align: center;">核心评估算法 (Core Assessment Algorithms)</h5>
+                        <h5 style="color: var(--gold); font-size: 14px; margin-bottom: 20px; font-weight: 600; text-align: center;">核心评估算法 (Core Assessment Algorithms)</h5>
                         <div class="authority-grid">
                             <div class="authority-item">
                                 <h5>Horvath Clock 算法</h5>
                                 <p>基于Steve Horvath教授的DNA甲基化时钟理论，经Nature等顶级期刊验证的衰老评估金标准</p>
                             </div>
-                            
+
                             <div class="authority-item">
                                 <h5>Framingham Heart Study</h5>
                                 <p>整合弗明汉心脏研究70年队列数据，构建心血管风险预测模型</p>
                             </div>
-                            
+
                             <div class="authority-item">
                                 <h5>CALERIE 临床试验</h5>
                                 <p>参考美国国立衰老研究所(NIA)热量限制与衰老研究成果</p>
                             </div>
-                            
+
                             <div class="authority-item">
                                 <h5>InCHIANTI Study</h5>
                                 <p>采用意大利老龄化纵向研究的生物标志物评估体系</p>
@@ -1388,20 +1184,20 @@
                         </div>
                     </div>
 
-                    <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 25px 20px; border-radius: 10px; margin-bottom: 35px; border-left: 3px solid #4299e1;">
-                        <h5 style="color: #2d3748; font-size: 14px; margin-bottom: 15px; font-weight: 600; text-align: center;">国际研究机构支持 (International Research Support)</h5>
-                        <p style="color: #4a5568; font-size: 13px; line-height: 1.8; text-align: center; margin: 0;">
+                    <div style="background: rgba(58,158,126,0.06); padding: 25px 20px; border-radius: 10px; margin-bottom: 35px; border-left: 3px solid var(--jade);">
+                        <h5 style="color: var(--cream); font-size: 14px; margin-bottom: 15px; font-weight: 600; text-align: center;">国际研究机构支持 (International Research Support)</h5>
+                        <p style="color: var(--cream-dim); font-size: 13px; line-height: 1.8; text-align: center; margin: 0;">
                             整合哈佛医学院（Harvard Medical School）、斯坦福长寿中心（Stanford Center on Longevity）、梅奥诊所（Mayo Clinic）等国际顶尖机构研究成果，确保评估体系的科学性与前沿性
                         </p>
                     </div>
 
-                    <div style="background: #f7fafc; padding: 25px 20px; border-radius: 10px; margin-bottom: 25px; border: 1px solid #e2e8f0;">
+                    <div style="background: rgba(255,255,255,0.02); padding: 25px 20px; border-radius: 10px; margin-bottom: 25px; border: 1px solid var(--card-border);">
                         <div style="text-align: center; margin-bottom: 20px;">
-                            <h5 style="color: #2d3748; font-size: 14px; font-weight: 600; margin-bottom: 15px;">系统主理 (System Director)</h5>
-                            <div style="display: inline-block; padding: 20px 25px; background: white; border-radius: 8px; border-left: 3px solid #667eea; text-align: left; max-width: 600px;">
-                                <p style="color: #2d3748; font-size: 14px; line-height: 1.9; margin: 0;">
-                                    <strong style="color: #667eea;">陆大夫 Dr.Lu</strong><br>
-                                    <span style="color: #4a5568; font-size: 13px;">
+                            <h5 style="color: var(--cream); font-size: 14px; font-weight: 600; margin-bottom: 15px;">系统主理 (System Director)</h5>
+                            <div style="display: inline-block; padding: 20px 25px; background: rgba(200,169,110,0.05); border-radius: 8px; border-left: 3px solid var(--gold); text-align: left; max-width: 600px;">
+                                <p style="color: var(--cream); font-size: 14px; line-height: 1.9; margin: 0;">
+                                    <strong style="color: var(--gold);">陆大夫 Dr.Lu</strong><br>
+                                    <span style="color: var(--cream-dim); font-size: 13px;">
                                     近30年临床执业医生 | 复旦大学医学院临床医学专业<br>
                                     比利时生物医学硕士 | 英国帝国理工学院国际健康管理硕士<br>
                                     常年专注于抗衰老医学与精准健康管理
@@ -1410,11 +1206,11 @@
                             </div>
                         </div>
 
-                        <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e2e8f0;">
-                            <p style="color: #2d3748; font-size: 14px; font-weight: 600; margin-bottom: 8px;">
+                        <div style="text-align: center; padding-top: 20px; border-top: 1px solid var(--card-border);">
+                            <p style="color: var(--cream); font-size: 14px; font-weight: 600; margin-bottom: 8px;">
                                 为超过千余高净值家庭提供专业服务
                             </p>
-                            <p style="color: #718096; font-size: 12px; margin: 0;">
+                            <p style="color: var(--cream-dim); font-size: 12px; margin: 0;">
                                 客户满意度98% | 服务覆盖中国、美国、欧洲等地区
                             </p>
                         </div>
@@ -1424,7 +1220,7 @@
                         <p style="margin-bottom: 10px;">
                             © 2024 BioAge Compass. 本评估仅供健康参考，不构成医疗诊断。如有疾病请咨询专业医生。
                         </p>
-                        <p style="font-size: 10px; line-height: 1.6; color: #a0aec0; margin: 0; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+                        <p style="font-size: 10px; line-height: 1.6; color: var(--cream-dim); margin: 0; padding-top: 10px; border-top: 1px solid var(--card-border);">
                             本系统版权归微信公众号"陆大夫空间"所有。未经授权不得复制、传播或商用。All Rights Reserved.
                         </p>
                     </div>
@@ -1439,7 +1235,10 @@
         let answers = [];
         let userInfo = {};
         let radarChartInstance = null;
+
+        // ─── 29 Questions across 7 Dimensions ───────────────────────────
         const questions = [
+            // ── 运动能力 (5Q) ──────────────────────────────────────────────
             {
                 dimension: '运动能力',
                 text: '您每周进行中等强度运动的频率是？（中等强度运动指：快走、慢跑、游泳、骑车、跳舞等，运动时微微出汗、心跳加快但仍能说话）',
@@ -1472,16 +1271,6 @@
             },
             {
                 dimension: '运动能力',
-                text: '您的柔韧性如何？',
-                options: [
-                    { text: '很好，坐姿体前屈可以轻松触碰或超过脚趾', score: 10 },
-                    { text: '一般，坐姿体前屈稍作努力可以触碰脚趾', score: 7 },
-                    { text: '较差，坐姿体前屈距离脚趾5-10厘米', score: 4 },
-                    { text: '非常僵硬，坐姿体前屈距离脚趾超过10厘米', score: 1 }
-                ]
-            },
-            {
-                dimension: '运动能力',
                 text: '爬3层楼梯（约45-50级台阶）后的感觉？',
                 options: [
                     { text: '呼吸平稳，完全不累，可以立即继续爬', score: 10 },
@@ -1500,6 +1289,7 @@
                     { text: '无法单腿站立10秒', score: 1 }
                 ]
             },
+            // ── 身心平衡 (4Q) ──────────────────────────────────────────────
             {
                 dimension: '身心平衡',
                 text: '您感到压力或焦虑的频率？',
@@ -1522,16 +1312,6 @@
             },
             {
                 dimension: '身心平衡',
-                text: '您是否有规律的放松或冥想习惯？（包括：冥想、瑜伽、太极、深呼吸练习、正念等）',
-                options: [
-                    { text: '每天都有，每次15分钟以上', score: 10 },
-                    { text: '每周3-5次，每次15分钟以上', score: 7 },
-                    { text: '偶尔有，每周1-2次或不定期', score: 4 },
-                    { text: '从不进行此类活动', score: 1 }
-                ]
-            },
-            {
-                dimension: '身心平衡',
                 text: '您的社交关系质量如何？',
                 options: [
                     { text: '有稳定的亲密关系和社交圈，每周至少见面2次以上', score: 10 },
@@ -1550,16 +1330,7 @@
                     { text: '情绪经常失控，难以自我调节', score: 1 }
                 ]
             },
-            {
-                dimension: '身心平衡',
-                text: '您对未来的态度？',
-                options: [
-                    { text: '充满希望和动力，有清晰的目标', score: 10 },
-                    { text: '比较乐观，对未来有期待', score: 7 },
-                    { text: '有些迷茫，不确定未来方向', score: 4 },
-                    { text: '悲观或焦虑，对未来感到担忧', score: 1 }
-                ]
-            },
+            // ── 营养代谢 (4Q) ──────────────────────────────────────────────
             {
                 dimension: '营养代谢',
                 text: '您每天摄入的蔬菜和水果总量？',
@@ -1568,16 +1339,6 @@
                     { text: '每天3-4份', score: 7 },
                     { text: '每天1-2份', score: 4 },
                     { text: '每天少于1份或经常不吃', score: 1 }
-                ]
-            },
-            {
-                dimension: '营养代谢',
-                text: '您的饮水习惯？',
-                options: [
-                    { text: '每天喝2000ml以上（约8杯水）', score: 10 },
-                    { text: '每天喝1500-2000ml（约6-7杯水）', score: 7 },
-                    { text: '每天喝1000-1500ml（约4-5杯水）', score: 4 },
-                    { text: '每天少于1000ml（少于4杯水）', score: 1 }
                 ]
             },
             {
@@ -1602,16 +1363,6 @@
             },
             {
                 dimension: '营养代谢',
-                text: '您是否定期补充营养品？（如维生素、鱼油、钙片、益生菌等）',
-                options: [
-                    { text: '根据体检结果或医生建议科学补充', score: 10 },
-                    { text: '偶尔补充，但不太规律', score: 7 },
-                    { text: '很少补充，想起来才吃', score: 4 },
-                    { text: '从不补充营养品', score: 1 }
-                ]
-            },
-            {
-                dimension: '营养代谢',
                 text: '您的消化系统状况？',
                 options: [
                     { text: '消化很好，很少不适，排便规律', score: 10 },
@@ -1620,6 +1371,7 @@
                     { text: '有慢性消化系统疾病（如胃炎、肠炎等）', score: 1 }
                 ]
             },
+            // ── 睡眠质量 (4Q) ──────────────────────────────────────────────
             {
                 dimension: '睡眠质量',
                 text: '您每晚的睡眠时长？',
@@ -1660,44 +1412,15 @@
                     { text: '非常疲劳，全天都感到困倦', score: 1 }
                 ]
             },
-            {
-                dimension: '睡眠质量',
-                text: '您是否有打鼾或睡眠呼吸问题？',
-                options: [
-                    { text: '没有打鼾或呼吸问题', score: 10 },
-                    { text: '轻微打鼾，不影响睡眠质量', score: 7 },
-                    { text: '经常打鼾，床伴反映较大声', score: 4 },
-                    { text: '有睡眠呼吸暂停或被憋醒的情况', score: 1 }
-                ]
-            },
-            {
-                dimension: '睡眠质量',
-                text: '您白天是否感到困倦？',
-                options: [
-                    { text: '精力充沛，不困', score: 10 },
-                    { text: '偶尔有点困，每周1-2次', score: 7 },
-                    { text: '经常感到困倦，每周3-5次', score: 4 },
-                    { text: '无法抵抗睡意，经常打瞌睡', score: 1 }
-                ]
-            },
+            // ── 遗传因素 (4Q，合并精简) ─────────────────────────────────────
             {
                 dimension: '遗传因素',
-                text: '您的父母是否有慢性疾病？（指高血压、糖尿病、心脏病、癌症等）',
+                text: '您的父母及祖父母的整体健康与寿命状况？',
                 options: [
-                    { text: '父母都很健康，无慢性疾病', score: 10 },
-                    { text: '父母中一方有轻微慢性病（65岁后发病）', score: 7 },
-                    { text: '父母都有慢性病或一方有严重疾病', score: 4 },
-                    { text: '父母有严重遗传性疾病或早发疾病（50岁前）', score: 1 }
-                ]
-            },
-            {
-                dimension: '遗传因素',
-                text: '您的家族长寿史？（指父母及祖父母的寿命）',
-                options: [
-                    { text: '多数亲属长寿（父母及祖父母平均寿命>85岁）', score: 10 },
-                    { text: '亲属寿命正常（父母及祖父母平均寿命75-85岁）', score: 7 },
-                    { text: '亲属寿命较短（父母及祖父母平均寿命65-75岁）', score: 4 },
-                    { text: '家族有早逝史（父母或祖父母有人<65岁去世）', score: 1 }
+                    { text: '均长寿且健康（平均寿命>85岁，无重大慢性病）', score: 10 },
+                    { text: '寿命正常，有轻微慢性病但发病较晚（>65岁）', score: 7 },
+                    { text: '有多位亲属患慢性病，或有人<75岁去世', score: 4 },
+                    { text: '家族有严重遗传疾病，或多位亲属<65岁去世', score: 1 }
                 ]
             },
             {
@@ -1712,22 +1435,12 @@
             },
             {
                 dimension: '遗传因素',
-                text: '父母或祖父母中是否有糖尿病史？',
+                text: '您的直系亲属（父母/祖父母）中是否有糖尿病或癌症史？',
                 options: [
-                    { text: '没有糖尿病史', score: 10 },
-                    { text: '有，但控制良好（只有1人患病）', score: 7 },
-                    { text: '有，控制一般（有2人患病）', score: 4 },
-                    { text: '有多人患病（3人以上）或有严重并发症', score: 1 }
-                ]
-            },
-            {
-                dimension: '遗传因素',
-                text: '父母或祖父母中是否有癌症史？',
-                options: [
-                    { text: '没有癌症史', score: 10 },
-                    { text: '有，但发病晚（>70岁）且只有1人', score: 7 },
-                    { text: '有，中年发病（50-70岁）或有2人患病', score: 4 },
-                    { text: '有多例（3人以上）或早发（<50岁）', score: 1 }
+                    { text: '两者都没有', score: 10 },
+                    { text: '有其中一种，但发病较晚（>65岁）且只有1人', score: 7 },
+                    { text: '有其中一种，中年发病（50-65岁）或两种都有', score: 4 },
+                    { text: '两者都有，或有多人早发（<50岁）', score: 1 }
                 ]
             },
             {
@@ -1740,6 +1453,7 @@
                     { text: '没做过基因检测', score: 5 }
                 ]
             },
+            // ── 环境因素 (4Q) ──────────────────────────────────────────────
             {
                 dimension: '环境因素',
                 text: '您所在城市的空气质量？（可参考手机天气APP的AQI指数）',
@@ -1772,32 +1486,53 @@
             },
             {
                 dimension: '环境因素',
-                text: '您的居住环境如何？',
-                options: [
-                    { text: '安静、绿化好、空间充足（>80平米/人）', score: 10 },
-                    { text: '比较舒适（50-80平米/人，偶有噪音）', score: 7 },
-                    { text: '一般（30-50平米/人，有噪音）', score: 4 },
-                    { text: '嘈杂、拥挤、环境差（<30平米/人）', score: 1 }
-                ]
-            },
-            {
-                dimension: '环境因素',
-                text: '您接触阳光的频率？（户外活动时间）',
-                options: [
-                    { text: '每天30分钟以上户外活动', score: 10 },
-                    { text: '每周3-5次，每次30分钟以上', score: 7 },
-                    { text: '每周1-2次户外活动', score: 4 },
-                    { text: '几乎不进行户外活动（每周<1次）', score: 1 }
-                ]
-            },
-            {
-                dimension: '环境因素',
                 text: '您的工作环境压力？',
                 options: [
                     { text: '压力小，工作满意，每天工作<8小时', score: 10 },
                     { text: '压力适中，每天工作8-9小时', score: 7 },
                     { text: '压力较大，经常加班（每天>10小时）', score: 4 },
                     { text: '长期高压，经常熬夜加班或轮班工作', score: 1 }
+                ]
+            },
+            // ── 感官衰老 (4Q — 新增维度) ────────────────────────────────────
+            {
+                dimension: '感官衰老',
+                text: '您近距离视力（看手机/书本文字）的情况？',
+                options: [
+                    { text: '清晰，无需眯眼或拉远，不依赖老花镜', score: 10 },
+                    { text: '偶尔需要调整距离，光线不好时略模糊', score: 7 },
+                    { text: '经常需要拉远或依赖老花镜', score: 4 },
+                    { text: '明显退化，近距离视物困难', score: 1 }
+                ]
+            },
+            {
+                dimension: '感官衰老',
+                text: '您的夜间视力及暗适应能力？',
+                options: [
+                    { text: '黑暗中适应快，夜间开车/行走无困难', score: 10 },
+                    { text: '需要几分钟适应，夜间活动略受影响', score: 7 },
+                    { text: '暗适应明显变慢，夜间视力较差', score: 4 },
+                    { text: '夜间视力严重下降，尽量避免夜间外出', score: 1 }
+                ]
+            },
+            {
+                dimension: '感官衰老',
+                text: '您的听力状况（正常对话、电话通话）？',
+                options: [
+                    { text: '听力正常，能清楚辨别各种声音', score: 10 },
+                    { text: '偶尔需要对方重复，高频声音稍模糊', score: 7 },
+                    { text: '经常听不清，需要提高音量或要求重复', score: 4 },
+                    { text: '明显听力下降，已影响日常沟通', score: 1 }
+                ]
+            },
+            {
+                dimension: '感官衰老',
+                text: '您的嗅觉及味觉感知能力？',
+                options: [
+                    { text: '嗅觉、味觉正常，能细腻辨别各种气味和味道', score: 10 },
+                    { text: '较以前略有下降，但基本正常', score: 7 },
+                    { text: '明显下降，需要更高浓度才能感知气味/味道', score: 4 },
+                    { text: '严重退化，对大多数气味/味道不敏感', score: 1 }
                 ]
             }
         ];
@@ -1806,7 +1541,7 @@
         function showQuestion() {
             const question = questions[currentQuestion];
             const progress = ((currentQuestion + 1) / questions.length) * 100;
-            
+
             document.getElementById('progressFill').style.width = progress + '%';
             document.getElementById('questionCounter').textContent = (currentQuestion + 1) + ' / ' + questions.length;
 
@@ -1830,10 +1565,8 @@
 
             document.getElementById('prevBtn').style.display = currentQuestion > 0 ? 'block' : 'none';
             document.getElementById('nextBtn').textContent = currentQuestion === questions.length - 1 ? '完成评估' : '下一题';
-            
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            // 自动生成 AI 摘要
-            setTimeout(autoGenerateSummary, 800);
         }
 
         function selectOption(optionIndex) {
@@ -1841,21 +1574,37 @@
             options.forEach((opt, idx) => {
                 opt.classList.toggle('selected', idx === optionIndex);
             });
-            
+
             answers[currentQuestion] = questions[currentQuestion].options[optionIndex].score;
+        }
+
+        // ─── Age-stratified bioAge algorithm ────────────────────────────
+        function getAgeFactor(age) {
+            if (age < 35) return 0.8;
+            if (age < 45) return 1.0;
+            if (age < 55) return 1.2;
+            return 1.5;
+        }
+
+        function calcBioAge(actualAge, totalScore, dimensionScores) {
+            const ageFactor = getAgeFactor(actualAge);
+            const delta = (totalScore - 50) / 5 * ageFactor;
+            const genScore = dimensionScores['遗传因素'] !== undefined ? dimensionScores['遗传因素'] : 5;
+            const geneticPenalty = genScore < 5 ? (5 - genScore) * 0.3 : 0;
+            return Math.round(actualAge - delta + geneticPenalty);
         }
 
         async function calculateResults() {
             console.log('========================================');
             console.log('开始计算结果...');
             console.log('========================================');
-            
+
             const dimensionScores = {};
-            const dimensions = ['运动能力', '身心平衡', '营养代谢', '睡眠质量', '遗传因素', '环境因素'];
-            
+            const dimensions = ['运动能力', '身心平衡', '营养代谢', '睡眠质量', '遗传因素', '环境因素', '感官衰老'];
+
             dimensions.forEach(dim => {
                 const dimQuestions = questions.filter(q => q.dimension === dim);
-                const dimAnswers = dimQuestions.map((q, idx) => {
+                const dimAnswers = dimQuestions.map((q) => {
                     const qIndex = questions.indexOf(q);
                     return answers[qIndex] || 0;
                 });
@@ -1865,23 +1614,34 @@
 
             const totalScore = Object.values(dimensionScores).reduce((a, b) => a + b, 0) / dimensions.length * 10;
             const actualAge = userInfo.age;
-            const bioAge = Math.round(actualAge - (totalScore - 50) / 5);
-            
+            const bioAge = calcBioAge(actualAge, totalScore, dimensionScores);
+
+            // 生成专属评估码
+            const assessmentCode = 'R-' + Math.random().toString(36).substr(2, 4).toUpperCase();
+            window._assessmentCode = assessmentCode;
+
             console.log('计算完成：');
             console.log('- 总分:', totalScore);
             console.log('- 实际年龄:', actualAge);
             console.log('- 生物年龄:', bioAge);
+            console.log('- 评估码:', assessmentCode);
             console.log('========================================');
+
 // ── 数据保存 ──────────────────────────────────────────
 var savePayload = {
     name: userInfo.name,
     age: userInfo.age,
+    birthYear: userInfo.birthYear,
+    birthMonth: userInfo.birthMonth,
     gender: userInfo.gender,
     height: userInfo.height,
     weight: userInfo.weight,
     answers: answers,
-    score: totalScore,
+    dimensionScores: dimensionScores,
+    score: Math.round(totalScore * 10) / 10,
     bioAge: bioAge,
+    assessmentCode: assessmentCode,
+    version: 'PLA-v2',
     createdAt: new Date().toISOString()
 };
 
@@ -1932,6 +1692,7 @@ try {
 
             document.getElementById('questionContainer').style.display = 'none';
             document.getElementById('resultScreen').style.display = 'block';
+
             // 重置 AI 区域状态
             var sl = document.getElementById('summaryLoading');
             var sc = document.getElementById('summaryContent');
@@ -1950,38 +1711,49 @@ try {
 
             document.getElementById('bioAge').textContent = bioAge;
             document.getElementById('actualAge').textContent = actualAge;
-            
+
             const ageDiff = actualAge - bioAge;
-            const diffText = ageDiff > 0 ? 
+            const diffText = ageDiff > 0 ?
                 `恭喜！您的生物年龄比实际年龄年轻 ${ageDiff} 岁` :
                 ageDiff < 0 ?
                 `您的生物年龄比实际年龄大 ${Math.abs(ageDiff)} 岁，建议优化生活方式` :
                 `您的生物年龄与实际年龄相当`;
-            
+
             document.getElementById('ageDifference').textContent = diffText;
-            
+
+            // 显示评估码
+            var code = window._assessmentCode || '--';
+            var codeEl = document.getElementById('assessmentCodeValue');
+            var ctaCodeEl = document.getElementById('ctaAssessmentCode');
+            if (codeEl) codeEl.textContent = code;
+            if (ctaCodeEl) ctaCodeEl.textContent = code;
+
             const dimensionScoresHTML = Object.entries(dimensionScores).map(([dim, score]) => `
                 <div class="dimension-score">
                     <h3>${dim}</h3>
                     <div class="score-bar">
                         <div class="score-bar-fill" style="width: ${score * 10}%"></div>
                     </div>
-                    <p style="font-size: 13px; color: #4a5568; margin-top: 8px;">${score.toFixed(1)} / 10</p>
+                    <p style="font-size: 13px; color: var(--cream-dim); margin-top: 8px;">${score.toFixed(1)} / 10</p>
                 </div>
             `).join('');
-            
+
             document.getElementById('dimensionScores').innerHTML = dimensionScoresHTML;
-            
+
             const recommendations = generateRecommendations(dimensionScores);
             const recommendationsHTML = recommendations.map(rec => `<li>${rec}</li>`).join('');
             document.getElementById('recommendationsList').innerHTML = recommendationsHTML;
-            
+
             try {
                 drawRadarChart(dimensionScores);
             } catch(e) {
                 console.error("雷达图渲染失败:", e);
             }
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // 评估完成后自动生成 AI 摘要（移至此处，避免在答题中重复调用）
+            autoGenerateSummary();
         }
 
         // 评估完成后自动生成短摘要 + 展示微信CTA
@@ -1996,12 +1768,12 @@ try {
             wechatCta.style.display = 'none';
 
             var payload = {
-                mode:           'summary',
-                name:           userInfo.name,
-                age:            userInfo.age,
-                gender:         userInfo.gender,
-                bioAge:         window._reportBioAge,
-                score:          window._reportScore,
+                mode:            'summary',
+                name:            userInfo.name,
+                age:             userInfo.age,
+                gender:          userInfo.gender,
+                bioAge:          window._reportBioAge,
+                score:           window._reportScore,
                 dimensionScores: window._reportDimensionScores
             };
 
@@ -2039,14 +1811,15 @@ try {
             document.getElementById('contactInput').disabled = true;
 
             var payload = {
-                mode:           'full',
-                name:           userInfo.name,
-                age:            userInfo.age,
-                gender:         userInfo.gender,
-                bioAge:         window._reportBioAge,
-                score:          window._reportScore,
+                mode:            'full',
+                name:            userInfo.name,
+                age:             userInfo.age,
+                gender:          userInfo.gender,
+                bioAge:          window._reportBioAge,
+                score:           window._reportScore,
                 dimensionScores: window._reportDimensionScores,
-                contact:        contact
+                assessmentCode:  window._assessmentCode,
+                contact:         contact
             };
 
             fetch('https://bioage-compass-prod-9chaf35e573d-1405252881.ap-shanghai.app.tcloudbase.com/generateReport', {
@@ -2079,11 +1852,13 @@ try {
                 '营养代谢': { reversible: true, level: 'medium', timeframe: '6-12个月', icon: '⚡' },
                 '睡眠质量': { reversible: true, level: 'high', timeframe: '1-3个月', icon: '🔄' },
                 '遗传因素': { reversible: false, level: 'low', timeframe: null, icon: '📊' },
-                '环境因素': { reversible: true, level: 'medium', timeframe: '6-12个月', icon: '⚡' }
+                '环境因素': { reversible: true, level: 'medium', timeframe: '6-12个月', icon: '⚡' },
+                '感官衰老': { reversible: true, level: 'medium', timeframe: '6-12个月', icon: '👁️' }
             };
-            
+
             Object.entries(scores).forEach(([dimension, score]) => {
                 const info = reversibilityMap[dimension];
+                if (!info) return;
                 if (score < 6) {
                     if (info.reversible && info.level === 'high') {
                         recommendations.push(`${info.icon} <strong>${dimension}</strong> - 高度可逆 | 通过生活方式干预可在${info.timeframe}内显著改善，投资回报率最高的优化方向`);
@@ -2094,10 +1869,10 @@ try {
                     }
                 }
             });
-            
+
             const lowScores = Object.entries(scores).filter(([_, score]) => score < 6);
             const highScores = Object.entries(scores).filter(([_, score]) => score >= 8);
-            
+
             if (lowScores.length === 0) {
                 recommendations.push('🌟 <strong>最佳健康状态</strong> | 各维度均表现优秀，属于高可塑性健康状态。建议通过CBA评估深入了解器官层面表现，制定精准的预防性优化策略');
                 recommendations.push('💎 <strong>维持策略</strong> | 当前重点在于维持与微调。建议季度PLA追踪+年度CBA深度评估，确保长期健康资本的保值增值');
@@ -2111,13 +1886,13 @@ try {
                 recommendations.push('🚨 <strong>综合干预</strong> | 多个维度需要改善，建议寻求专业健康管理支持，制定系统性优化方案');
                 recommendations.push('💡 <strong>专业指导</strong> | 添加健康顾问微信，获取基于您评估结果的个性化深度分析与干预路径');
             }
-            
+
             if (highScores.length >= 4) {
                 recommendations.push('📈 <strong>进阶评估</strong> | PLA显示良好基础，建议通过CBA评估验证器官年龄，确认生活方式优势是否转化为生理优势');
-            } else if (lowScores.some(([dim]) => reversibilityMap[dim].level === 'low')) {
+            } else if (lowScores.some(([dim]) => reversibilityMap[dim] && reversibilityMap[dim].level === 'low')) {
                 recommendations.push('🧬 <strong>遗传风险管理</strong> | 遗传维度得分较低，强烈建议通过CBA+基因检测，建立针对性的预防策略');
             }
-            
+
             return recommendations;
         }
 
@@ -2135,12 +1910,12 @@ try {
                         label: '您的得分',
                         data: Object.values(scores),
                         fill: true,
-                        backgroundColor: 'rgba(66, 153, 225, 0.2)',
-                        borderColor: 'rgb(66, 153, 225)',
-                        pointBackgroundColor: 'rgb(66, 153, 225)',
-                        pointBorderColor: '#fff',
-                        pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: 'rgb(66, 153, 225)',
+                        backgroundColor: 'rgba(58,158,126,0.15)',
+                        borderColor: '#C8A96E',
+                        pointBackgroundColor: '#C8A96E',
+                        pointBorderColor: 'rgba(200,169,110,0.3)',
+                        pointHoverBackgroundColor: '#E8CFA0',
+                        pointHoverBorderColor: '#C8A96E',
                         pointRadius: 4,
                         pointHoverRadius: 6,
                         borderWidth: 2
@@ -2148,48 +1923,37 @@ try {
                 },
                 options: {
                     elements: {
-                        line: {
-                            borderWidth: 2,
-                            tension: 0.15
-                        }
+                        line: { borderWidth: 2, tension: 0.15 }
                     },
                     scales: {
                         r: {
                             angleLines: {
                                 display: true,
-                                color: 'rgba(0, 0, 0, 0.05)'
+                                color: 'rgba(200,169,110,0.1)'
                             },
                             grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
+                                color: 'rgba(200,169,110,0.08)'
                             },
                             pointLabels: {
-                                font: {
-                                    size: 11,
-                                    weight: '500'
-                                },
-                                color: '#2d3748'
+                                font: { size: 11, weight: '500' },
+                                color: '#A8A098'
                             },
-                            ticks: {
-                                display: false
-                            },
+                            ticks: { display: false },
                             suggestedMin: 0,
                             suggestedMax: 10
                         }
                     },
                     plugins: {
-                        legend: {
-                            display: false
-                        },
+                        legend: { display: false },
                         tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            backgroundColor: 'rgba(14,20,32,0.95)',
+                            borderColor: 'rgba(200,169,110,0.3)',
+                            borderWidth: 1,
                             padding: 10,
-                            titleFont: {
-                                size: 12,
-                                weight: '600'
-                            },
-                            bodyFont: {
-                                size: 11
-                            },
+                            titleFont: { size: 12, weight: '600' },
+                            titleColor: '#C8A96E',
+                            bodyFont: { size: 11 },
+                            bodyColor: '#A8A098',
                             callbacks: {
                                 label: function(context) {
                                     return ' 得分: ' + context.parsed.r.toFixed(1) + ' / 10';
@@ -2205,9 +1969,21 @@ try {
 
         document.addEventListener('DOMContentLoaded', function() {
             console.log('========================================');
-            console.log('页面加载完成');
+            console.log('BioAge Compass v2 页面加载完成');
             console.log('========================================');
-            
+
+            // 动态填充出生年份选项（当前年份-18 到 1930）
+            var birthYearSel = document.getElementById('birthYear');
+            if (birthYearSel) {
+                var curYear = new Date().getFullYear();
+                for (var y = curYear - 18; y >= 1930; y--) {
+                    var opt = document.createElement('option');
+                    opt.value = y;
+                    opt.textContent = y + '年';
+                    birthYearSel.appendChild(opt);
+                }
+            }
+
             const startBtn = document.getElementById('startAssessmentBtn');
             if (startBtn) {
                 startBtn.addEventListener('click', function() {
@@ -2221,23 +1997,28 @@ try {
             const submitBtn = document.getElementById('submitBasicInfoBtn');
             if (submitBtn) {
                 submitBtn.addEventListener('click', function() {
-                    const name = document.getElementById('name').value;
-                    const age = parseInt(document.getElementById('age').value);
+                    const name = document.getElementById('name').value.trim();
+                    const birthYear = parseInt(document.getElementById('birthYear').value);
+                    const birthMonth = parseInt(document.getElementById('birthMonth').value);
                     const gender = document.getElementById('gender').value;
                     const height = parseFloat(document.getElementById('height').value);
                     const weight = parseFloat(document.getElementById('weight').value);
 
-                    if (!name || !age || !gender || !height || !weight) {
+                    if (!name || !birthYear || !birthMonth || !gender || !height || !weight) {
                         alert('请填写所有信息');
                         return;
                     }
 
-                    userInfo = { name, age, gender, height, weight };
+                    // 根据出生年月精确计算年龄
+                    var birthDate = new Date(birthYear, birthMonth - 1, 1);
+                    var age = Math.floor((Date.now() - birthDate.getTime()) / (365.25 * 24 * 3600 * 1000));
+
+                    userInfo = { name, age, birthYear, birthMonth, gender, height, weight };
                     console.log('✅ 基本信息已提交:', userInfo);
-                    
+
                     document.getElementById('basicInfoScreen').style.display = 'none';
                     document.getElementById('questionContainer').style.display = 'block';
-                    
+
                     showQuestion();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 });
@@ -2250,7 +2031,7 @@ try {
                         alert('请选择一个选项');
                         return;
                     }
-                    
+
                     if (currentQuestion < questions.length - 1) {
                         currentQuestion++;
                         showQuestion();
