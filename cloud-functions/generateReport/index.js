@@ -13,7 +13,7 @@ exports.main = async (event, context) => {
     if (bodyStr) data = JSON.parse(bodyStr);
   } catch(e) {}
 
-  const { name, age, gender, bioAge, score, dimensionScores, mode, contact, assessmentCode } = data;
+  const { name, age, gender, bioAge, score, dimensionScores, mode, contact, assessmentCode, agingPace, peerPercentile } = data;
   const DEEPSEEK_KEY    = process.env.DEEPSEEK_API_KEY;
   const EMAIL_AUTH_CODE = process.env.EMAIL_163_AUTH_CODE;
 
@@ -39,19 +39,26 @@ exports.main = async (event, context) => {
     return okResp({ summary });
   }
 
-  // ─── 模式2：完整报告 + 保存DB + 发邮件通知 ────────────────────────────────
+  // ─── 模式2：完整缓龄报告 + 保存DB + 发邮件通知 ───────────────────────────
+  const ageDiff = (age || 0) - (bioAge || 0);
+  const derivedStatus = ageDiff >= 8 ? '逆龄' : ageDiff >= 3 ? '缓慢衰老' : ageDiff >= -2 ? '正常衰老' : '加速衰老';
+  const agingPaceStr = agingPace ? `${agingPace}x` : ((bioAge && age) ? (bioAge/age).toFixed(2) + 'x' : 'N/A');
+  const peerRankStr  = peerPercentile ? `前${peerPercentile}%` : 'N/A';
+
   const prompt =
-    `你是一位专业的抗衰老健康顾问。请根据以下PLA评估数据，为用户生成一份完整PLA逆龄密码报告（约700字）。\n\n` +
+    `你是一位专业的抗衰老健康顾问。请根据以下PLA评估数据，为用户生成一份完整缓龄报告（约600字）。\n\n` +
     `用户信息：\n- 姓名：${name||'用户'}\n- 年龄：${age}岁\n` +
-    `- 性别：${gender==='male'?'男':'女'}\n- 生物年龄：${bioAge}岁\n` +
+    `- 性别：${gender==='male'?'男':'女'}\n- 身体年龄：${bioAge}岁\n` +
+    `- 衰老速度：${agingPaceStr}\n- 同龄排名：${peerRankStr}\n- 缓龄状态：${derivedStatus}\n` +
     `- PLA评分：${score}分\n- 各维度得分：${dimText}\n\n` +
-    `报告必须包含以下5个部分：\n` +
-    `1. **深度七维分析**：逐一解读七个维度（运动能力、身心平衡、营养代谢、睡眠质量、遗传因素、环境因素、感官衰老）的得分含义及各自具体改善路径\n` +
-    `2. **可逆性分析**：指出哪些维度的投入产出比最高（即最容易通过干预获得改善的维度），给出优先级排序与原因\n` +
-    `3. **3/6/12个月行动计划**：分三个阶段列出可执行的具体行动，每阶段2-3条，循序渐进\n` +
-    `4. **对标分析**：基于同龄人群健康数据，说明用户在各核心维度上的相对位置（领先/持平/待改善），帮助用户了解自己所处的健康层级\n` +
-    `5. **趋势预测**：基于当前各维度状态，推演若保持现状与积极干预两种情景下未来3-5年的健康轨迹，给出明确建议\n\n` +
-    `报告要专业、温暖、具体，语言流畅自然，每部分使用加粗标题。`;
+    `报告必须包含以下2个部分，每部分使用加粗标题：\n\n` +
+    `1. **风险信号**：基于七维评估数据，识别用户最显著的3-5个健康风险信号。` +
+    `每个风险信号说明：①是什么风险 ②当前数据体现 ③对加速衰老的影响机制。语言专业但易懂。\n\n` +
+    `2. **缓龄策略**：针对上述风险信号，制定个性化缓龄优化策略，分两阶段：\n` +
+    `   - 近期（1-3个月可执行）：3条具体行动建议\n` +
+    `   - 中期（3-12个月可达成）：3条进阶建议\n` +
+    `   每条建议需具体可操作，避免泛泛而谈。\n\n` +
+    `语言：简体中文，温暖专业，流畅自然，不超过600字。`;
 
   const report = await callDeepSeek(DEEPSEEK_KEY, prompt, 1500);
 
@@ -73,7 +80,7 @@ exports.main = async (event, context) => {
   if (EMAIL_AUTH_CODE) {
     const ageDiff = age - bioAge;
     const diffStr = ageDiff > 0 ? `年轻${ageDiff}岁 🎉` : ageDiff < 0 ? `偏大${Math.abs(ageDiff)}岁` : '相当';
-    const subject = `【新报告请求】${name||'新客户'} | ${contact||'未留联系'} | PLA ${score}分${assessmentCode ? ' | ' + assessmentCode : ''}`;
+    const subject = `【缓龄报告】${name||'新客户'} | ${contact||'未留联系'} | ${derivedStatus} | ${assessmentCode||''}`.slice(0,60);
     const body =
 `============================
 【BioAge Compass】新客户报告请求
@@ -93,6 +100,7 @@ exports.main = async (event, context) => {
 实际年龄：${age}岁
 生物年龄：${bioAge}岁（${diffStr}）
 PLA总分：${score}分
+衰老速度：${agingPaceStr} | 同龄排名：${peerRankStr} | 缓龄状态：${derivedStatus}
 各维度：${dimText}
 
 📄 AI完整评估报告

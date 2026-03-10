@@ -684,6 +684,231 @@
             .dimension-scores { grid-template-columns: repeat(3, 1fr); }
             .authority-grid { grid-template-columns: repeat(2, 1fr); }
         }
+
+        /* ════════════════════════════════════════════════
+           NEW 4-SCREEN FLOW: Dashboard → LeadCapture → Report
+           ════════════════════════════════════════════════ */
+
+        /* ─── KPI Dashboard Grid ─────────────────────── */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            margin: 24px 0;
+        }
+        .kpi-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(200,169,110,0.22);
+            border-radius: 16px;
+            padding: 20px 16px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        .kpi-card:hover { border-color: var(--gold); }
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--jade), var(--gold));
+            opacity: 0.6;
+        }
+        .kpi-label {
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            color: var(--cream-dim);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        .kpi-value {
+            font-family: 'Playfair Display', serif;
+            font-size: 44px;
+            font-weight: 700;
+            color: var(--gold);
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+        .kpi-value.jade { color: var(--jade-light); }
+        .kpi-sub {
+            font-size: 12px;
+            color: var(--cream-dim);
+            line-height: 1.4;
+        }
+        .aging-status-badge {
+            display: inline-block;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+            border: 1px solid currentColor;
+        }
+
+        /* ─── Dashboard Screen ──────────────────────── */
+        .dashboard-screen { padding: 4px 0 20px; }
+        .dashboard-greeting {
+            font-size: 16px;
+            color: var(--cream);
+            margin-bottom: 20px;
+            font-weight: 400;
+            line-height: 1.6;
+        }
+        .dashboard-greeting strong { color: var(--gold); }
+        .unlock-cta-btn {
+            display: block;
+            width: 100%;
+            padding: 18px 32px;
+            background: linear-gradient(135deg, var(--jade), #228060);
+            color: var(--cream);
+            font-family: 'Noto Serif SC', serif;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: opacity 0.2s, transform 0.15s;
+            margin-top: 28px;
+        }
+        .unlock-cta-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        /* ─── Lead Capture Screen ───────────────────── */
+        .lead-capture-screen { padding: 4px 0 20px; }
+        .lead-capture-headline {
+            font-family: 'Playfair Display', 'Noto Serif SC', serif;
+            font-size: 22px;
+            color: var(--gold);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        .lead-capture-sub {
+            font-size: 14px;
+            color: var(--cream-dim);
+            line-height: 1.9;
+            margin-bottom: 28px;
+        }
+        .lead-capture-form { display: flex; flex-direction: column; gap: 16px; }
+        .lead-field-group { display: flex; flex-direction: column; gap: 6px; }
+        .lead-field-group label {
+            font-size: 12px;
+            color: var(--cream-dim);
+            letter-spacing: 0.5px;
+        }
+        .lead-field-required::after { content: ' *'; color: var(--gold); }
+        .lead-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg3);
+            border: 1px solid rgba(200,169,110,0.2);
+            border-radius: 10px;
+            color: var(--cream);
+            font-size: 15px;
+            font-family: 'Noto Serif SC', serif;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+        .lead-input:focus {
+            outline: none;
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(200,169,110,0.08);
+        }
+        .lead-input::placeholder { color: rgba(168,160,152,0.45); }
+        .lead-privacy-note {
+            background: rgba(58,158,126,0.07);
+            border-left: 3px solid var(--jade);
+            padding: 10px 14px;
+            border-radius: 0 8px 8px 0;
+            font-size: 12px;
+            color: var(--cream-dim);
+            line-height: 1.7;
+        }
+        .btn-lead-submit {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--gold), #A08050);
+            color: #080C10;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            font-family: 'Noto Serif SC', serif;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+        .btn-lead-submit:hover { opacity: 0.92; transform: translateY(-1px); }
+
+        /* ─── Report Screen ─────────────────────────── */
+        .report-screen { padding: 4px 0 20px; }
+        .report-header {
+            font-family: 'Playfair Display', 'Noto Serif SC', serif;
+            font-size: 18px;
+            color: var(--gold-light);
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        .metrics-recap-bar {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 16px 8px;
+            margin-bottom: 24px;
+        }
+        .recap-item { text-align: center; flex: 1; }
+        .recap-value {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--gold);
+            display: block;
+            line-height: 1.2;
+        }
+        .recap-label { font-size: 10px; color: var(--cream-dim); letter-spacing: 0.5px; margin-top: 3px; }
+        .recap-divider { width: 1px; height: 32px; background: var(--card-border); flex-shrink: 0; }
+        .report-content-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .report-content-card h3 {
+            font-family: 'Playfair Display', 'Noto Serif SC', serif;
+            font-size: 16px;
+            color: var(--gold-light);
+            margin-bottom: 16px;
+        }
+        .report-text {
+            font-size: 14px;
+            color: var(--cream-dim);
+            line-height: 2;
+            word-break: break-word;
+        }
+        .report-text strong { color: var(--cream); font-weight: 600; }
+        .report-wechat-section {
+            background: rgba(58,158,126,0.06);
+            border: 1px solid rgba(58,158,126,0.2);
+            border-radius: 14px;
+            padding: 24px;
+            text-align: center;
+            margin-top: 24px;
+        }
+        .report-wechat-section h3 { font-size: 16px; color: var(--jade-light); margin-bottom: 12px; }
+
+        @media (max-width: 480px) {
+            .kpi-grid { gap: 10px; }
+            .kpi-value { font-size: 36px; }
+            .metrics-recap-bar { padding: 12px 4px; }
+            .recap-value { font-size: 16px; }
+        }
     </style>
 </head>
 <body>
@@ -695,7 +920,7 @@
 
         <div class="content">
             <div id="welcomeScreen"><div class="hero-section">
-                    <h2 class="hero-title">重新定义年龄：从日历年龄到生物年龄</h2>
+                    <h2 class="hero-title">你的年龄只是一个数字<br>真正重要的是身体年龄</h2>
 
                     <div class="hero-intro">
                         <p style="margin-bottom: 20px;">过去二十年，抗衰老医学取得了突破性进展。从端粒研究到表观遗传学（Epigenetics），从线粒体功能到细胞自噬机制（Autophagy），科学界逐渐揭示了衰老的本质规律。<strong>最重要的发现是：衰老并非不可逆转</strong>。</p>
@@ -854,7 +1079,7 @@
                     </div>
                 </div>
 
-                <button class="btn-primary" id="startAssessmentBtn">开始PLA评估</button>
+                <button class="btn-primary" id="startAssessmentBtn">开始缓龄评估</button>
 
                 <div class="footer-authority">
                     <h4>科学基础与专业保障</h4>
@@ -1226,6 +1451,176 @@
                     </div>
                 </div>
             </div>
+
+            <!-- ══════════════════════════════════════════════════
+                 SCREEN A: dashboardScreen
+                 Shown immediately after calculateResults()
+                 ══════════════════════════════════════════════════ -->
+            <div id="dashboardScreen" class="dashboard-screen" style="display:none;">
+
+                <p class="dashboard-greeting">
+                    Hi, <strong id="dashGreeting">朋友</strong>！这是你的缓龄评估结果
+                </p>
+
+                <!-- 4 KPI Cards 2×2 -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-label">身体年龄</div>
+                        <div class="kpi-value" id="dashBioAge">--</div>
+                        <div class="kpi-sub">岁 · 实际 <span id="dashActualAge">--</span> 岁</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">衰老速度</div>
+                        <div class="kpi-value jade" id="dashAgingPace">--</div>
+                        <div class="kpi-sub" id="dashAgingPaceLabel">健康节奏</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">同龄排名</div>
+                        <div class="kpi-value" id="dashPeerRank">--</div>
+                        <div class="kpi-sub">同龄人中</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">缓龄状态</div>
+                        <div style="margin-top: 10px;">
+                            <span class="aging-status-badge" id="dashStatusBadge">--</span>
+                        </div>
+                        <div class="kpi-sub" id="dashStatusDesc" style="margin-top: 8px;">--</div>
+                    </div>
+                </div>
+
+                <!-- Radar Chart (separate canvas from resultScreen) -->
+                <div class="radar-chart-container">
+                    <h3 style="text-align:center; color:var(--cream-dim); margin-bottom:20px; font-size:15px; font-weight:300; letter-spacing:1px;">七维健康雷达图</h3>
+                    <canvas id="radarChartDash"></canvas>
+                </div>
+
+                <!-- AI 健康洞察 -->
+                <div class="ai-report-section" id="dashAiSection" style="margin-top: 24px;">
+                    <div id="dashSummaryLoading" style="text-align:center; padding:28px 0;">
+                        <div class="report-spinner"></div>
+                        <p style="color:var(--cream-dim); font-size:13px; margin-top:12px;">AI 正在生成您的健康洞察...</p>
+                    </div>
+                    <div id="dashSummaryContent" style="display:none;">
+                        <div class="ai-report-header">
+                            <h3>✨ AI 健康洞察</h3>
+                        </div>
+                        <div class="summary-card">
+                            <p id="dashSummaryText" style="line-height:1.9; font-size:14px;"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Unlock CTA -->
+                <button class="unlock-cta-btn" id="unlockReportBtn">🔓 解锁完整缓龄报告</button>
+
+            </div>
+
+            <!-- ══════════════════════════════════════════════════
+                 SCREEN B: leadCaptureScreen
+                 Shown when user clicks "解锁完整缓龄报告"
+                 ══════════════════════════════════════════════════ -->
+            <div id="leadCaptureScreen" class="lead-capture-screen" style="display:none;">
+
+                <h2 class="lead-capture-headline">解锁完整缓龄报告</h2>
+                <p class="lead-capture-sub">
+                    免费获取个性化缓龄分析，仅需留下联系方式<br>
+                    报告将由陆大夫团队通过微信1V1发送给您
+                </p>
+
+                <div class="lead-capture-form" id="leadCaptureForm">
+                    <div class="lead-field-group">
+                        <label class="lead-field-required" for="leadPhone">手机号</label>
+                        <input type="tel" id="leadPhone" class="lead-input"
+                               placeholder="请输入您的手机号码" maxlength="20">
+                    </div>
+                    <div class="lead-field-group">
+                        <label for="leadEmail">邮箱（选填）</label>
+                        <input type="email" id="leadEmail" class="lead-input"
+                               placeholder="example@mail.com">
+                    </div>
+                    <div class="lead-field-group">
+                        <label for="leadWechat">微信号（选填）</label>
+                        <input type="text" id="leadWechat" class="lead-input"
+                               placeholder="您的微信号，方便陆大夫联系您">
+                    </div>
+                    <div class="lead-privacy-note">
+                        🔒 信息仅用于报告发送，不做他用
+                    </div>
+                    <div id="leadSubmitArea">
+                        <button class="btn-lead-submit" id="leadSubmitBtn" onclick="submitLeadCapture()">
+                            提交并解锁完整报告
+                        </button>
+                    </div>
+                    <div id="leadSubmitLoading" style="display:none; text-align:center; padding:20px 0;">
+                        <div class="report-spinner"></div>
+                        <p style="color:var(--cream-dim); font-size:13px; margin-top:10px;">正在生成您的专属缓龄报告...</p>
+                    </div>
+                    <div id="leadSubmitError" style="display:none; color:#C26B5A; font-size:13px; padding:10px 0; text-align:center;">
+                        提交失败，请检查网络后重试
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ══════════════════════════════════════════════════
+                 SCREEN C: reportScreen
+                 Shown after lead capture submits successfully
+                 ══════════════════════════════════════════════════ -->
+            <div id="reportScreen" class="report-screen" style="display:none;">
+
+                <h2 class="report-header">📊 完整缓龄报告 · <span id="reportNameHeader">用户</span></h2>
+
+                <!-- Compact metrics recap bar -->
+                <div class="metrics-recap-bar">
+                    <div class="recap-item">
+                        <span class="recap-value" id="recapBioAge">--</span>
+                        <div class="recap-label">身体年龄</div>
+                    </div>
+                    <div class="recap-divider"></div>
+                    <div class="recap-item">
+                        <span class="recap-value" id="recapAgingPace">--</span>
+                        <div class="recap-label">衰老速度</div>
+                    </div>
+                    <div class="recap-divider"></div>
+                    <div class="recap-item">
+                        <span class="recap-value" id="recapPeerRank">--</span>
+                        <div class="recap-label">同龄排名</div>
+                    </div>
+                    <div class="recap-divider"></div>
+                    <div class="recap-item">
+                        <span class="recap-value" id="recapStatus" style="font-size:14px;">--</span>
+                        <div class="recap-label">缓龄状态</div>
+                    </div>
+                </div>
+
+                <!-- Report content -->
+                <div class="report-content-card" id="reportContentArea" style="display:none;">
+                    <h3>📋 您的完整缓龄分析</h3>
+                    <div class="report-text" id="reportFullText"></div>
+                </div>
+
+                <!-- Loading state -->
+                <div id="reportLoadingArea" style="text-align:center; padding:48px 0;">
+                    <div class="report-spinner"></div>
+                    <p style="color:var(--cream-dim); font-size:13px; margin-top:14px;">报告生成中，请稍候...</p>
+                </div>
+
+                <!-- WeChat CTA -->
+                <div class="report-wechat-section" id="reportWechatSection" style="display:none;">
+                    <h3>🤝 1V1 专属咨询</h3>
+                    <p style="color:var(--cream-dim); font-size:13px; line-height:1.9; margin-bottom:16px;">
+                        扫码添加陆大夫微信，获取报告详细解读<br>及个性化缓龄干预方案
+                    </p>
+                    <div class="qr-wrapper" style="display:inline-block; margin-bottom:12px;">
+                        <img src="wechat-qr.png" alt="陆大夫微信二维码" class="wechat-qr-img"
+                             style="width:160px; border-radius:8px;"
+                             onerror="this.style.display='none'">
+                    </div>
+                    <p style="font-size:13px; color:var(--cream-dim);">微信号：Charlie20850</p>
+                </div>
+
+            </div>
+
         </div>
     </div>
 
@@ -1235,6 +1630,15 @@
         let answers = [];
         let userInfo = {};
         let radarChartInstance = null;
+        let radarChartDashInstance = null;
+
+        // ─── Aging Status Helper ─────────────────────────────────────────
+        function getAgingStatus(diff) {
+            if (diff >= 8)  return { label: '逆龄',    color: '#3A9E7E', desc: '显著逆龄' };
+            if (diff >= 3)  return { label: '缓慢衰老', color: '#C8A96E', desc: '低于平均衰老速度' };
+            if (diff >= -2) return { label: '正常衰老', color: '#A8A098', desc: '与实际年龄相当' };
+            return              { label: '加速衰老', color: '#C26B5A', desc: '需要关注' };
+        }
 
         // ─── 29 Questions across 7 Dimensions ───────────────────────────
         const questions = [
@@ -1620,6 +2024,15 @@
             const assessmentCode = 'R-' + Math.random().toString(36).substr(2, 4).toUpperCase();
             window._assessmentCode = assessmentCode;
 
+            // ── 新增三个核心指标 ────────────────────────────────
+            var agingPace      = actualAge > 0 ? (bioAge / actualAge).toFixed(2) : '1.00';
+            var agingDiff      = actualAge - bioAge;
+            var peerPercentile = Math.max(1, Math.min(99, Math.round(50 - agingDiff * 3.5)));
+            var agingStatus    = getAgingStatus(agingDiff);
+            window._agingPace      = agingPace;
+            window._peerPercentile = peerPercentile;
+            window._agingStatus    = agingStatus;
+
             console.log('计算完成：');
             console.log('- 总分:', totalScore);
             console.log('- 实际年龄:', actualAge);
@@ -1677,11 +2090,207 @@ try {
 // ─────────────────────────────────────────────────────
 
             try {
-                showResults(bioAge, actualAge, dimensionScores, totalScore);
+                showDashboard(bioAge, actualAge, dimensionScores, totalScore);
             } catch(e) {
                 console.error("显示结果出错:", e);
                 alert("结果显示异常，请刷新页面后重试。错误: " + e.message);
             }
+        }
+
+        // ─── showDashboard (新主结果页) ─────────────────────────────────
+        function showDashboard(bioAge, actualAge, dimensionScores, totalScore) {
+            window._reportBioAge          = bioAge;
+            window._reportScore           = totalScore;
+            window._reportDimensionScores = dimensionScores;
+
+            document.getElementById('questionContainer').style.display = 'none';
+            document.getElementById('dashboardScreen').style.display   = 'block';
+
+            // Greeting
+            document.getElementById('dashGreeting').textContent = userInfo.name || '朋友';
+
+            // KPI 1: Bio Age
+            document.getElementById('dashBioAge').textContent    = bioAge;
+            document.getElementById('dashActualAge').textContent = actualAge;
+
+            // KPI 2: Aging Pace
+            var pace = window._agingPace;
+            var paceNum = parseFloat(pace);
+            var paceEl = document.getElementById('dashAgingPace');
+            paceEl.textContent  = pace + 'x';
+            paceEl.className    = 'kpi-value' + (paceNum < 1.0 ? ' jade' : '');
+            var paceLabel = paceNum < 0.9 ? '优秀节奏' : paceNum <= 1.0 ? '健康节奏' : '偏快节奏';
+            document.getElementById('dashAgingPaceLabel').textContent = paceLabel;
+
+            // KPI 3: Peer Rank
+            document.getElementById('dashPeerRank').textContent = '前' + window._peerPercentile + '%';
+
+            // KPI 4: Status
+            var st = window._agingStatus;
+            var badge = document.getElementById('dashStatusBadge');
+            badge.textContent              = st.label;
+            badge.style.color             = st.color;
+            badge.style.borderColor       = st.color;
+            badge.style.backgroundColor   = st.color + '22';
+            document.getElementById('dashStatusDesc').textContent = st.desc;
+
+            // Draw radar on dashboard
+            try { drawRadarChartDash(dimensionScores); } catch(e) { console.warn('雷达图失败:', e); }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            autoGenerateSummaryDash();
+        }
+
+        // ─── Radar Chart for Dashboard ───────────────────────────────────
+        function drawRadarChartDash(scores) {
+            var canvas = document.getElementById('radarChartDash');
+            if (!canvas) return;
+            var ctx = canvas.getContext('2d');
+            if (radarChartDashInstance) { radarChartDashInstance.destroy(); radarChartDashInstance = null; }
+            radarChartDashInstance = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: Object.keys(scores),
+                    datasets: [{
+                        label: '您的得分',
+                        data: Object.values(scores),
+                        fill: true,
+                        backgroundColor: 'rgba(58,158,126,0.15)',
+                        borderColor: '#C8A96E',
+                        pointBackgroundColor: '#C8A96E',
+                        pointBorderColor: 'rgba(200,169,110,0.3)',
+                        pointHoverBackgroundColor: '#E8CFA0',
+                        pointHoverBorderColor: '#C8A96E',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    elements: { line: { borderWidth: 2, tension: 0.15 } },
+                    scales: {
+                        r: {
+                            angleLines: { display: true, color: 'rgba(200,169,110,0.1)' },
+                            grid: { color: 'rgba(200,169,110,0.08)' },
+                            pointLabels: { font: { size: 11, weight: '500' }, color: '#A8A098' },
+                            ticks: { display: false },
+                            suggestedMin: 0, suggestedMax: 10
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(14,20,32,0.95)',
+                            borderColor: 'rgba(200,169,110,0.3)',
+                            borderWidth: 1,
+                            padding: 10,
+                            titleColor: '#C8A96E',
+                            bodyColor: '#A8A098',
+                            callbacks: { label: function(c) { return ' 得分: ' + c.parsed.r.toFixed(1) + ' / 10'; } }
+                        }
+                    },
+                    responsive: true, maintainAspectRatio: true
+                }
+            });
+        }
+
+        // ─── AI 洞察 (Dashboard) ─────────────────────────────────────────
+        function autoGenerateSummaryDash() {
+            var loading = document.getElementById('dashSummaryLoading');
+            var content = document.getElementById('dashSummaryContent');
+            if (!loading) return;
+            loading.style.display = 'block';
+            content.style.display = 'none';
+            var payload = {
+                mode: 'summary',
+                name: userInfo.name, age: userInfo.age, gender: userInfo.gender,
+                bioAge: window._reportBioAge, score: window._reportScore,
+                dimensionScores: window._reportDimensionScores
+            };
+            fetch('https://bioage-compass-prod-9chaf35e573d-1405252881.ap-shanghai.app.tcloudbase.com/generateReport', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(function(r) { return r.json(); })
+            .then(function(data) {
+                loading.style.display = 'none';
+                if (data.code === 0 && data.summary) {
+                    document.getElementById('dashSummaryText').textContent = data.summary;
+                    content.style.display = 'block';
+                }
+            }).catch(function(e) {
+                loading.style.display = 'none';
+                console.warn('autoGenerateSummaryDash error:', e.message);
+            });
+        }
+
+        // ─── showLeadCapture ─────────────────────────────────────────────
+        function showLeadCapture() {
+            document.getElementById('dashboardScreen').style.display   = 'none';
+            document.getElementById('leadCaptureScreen').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ─── submitLeadCapture ───────────────────────────────────────────
+        function submitLeadCapture() {
+            var phone  = (document.getElementById('leadPhone').value  || '').trim();
+            var email  = (document.getElementById('leadEmail').value  || '').trim();
+            var wechat = (document.getElementById('leadWechat').value || '').trim();
+            if (!phone) {
+                document.getElementById('leadPhone').style.borderColor = '#C26B5A';
+                document.getElementById('leadPhone').focus();
+                return;
+            }
+            document.getElementById('leadPhone').style.borderColor = '';
+            var contactParts = [phone];
+            if (email)  contactParts.push('邮箱:' + email);
+            if (wechat) contactParts.push('微信:' + wechat);
+            var contact = contactParts.join(' | ');
+            document.getElementById('leadSubmitArea').style.display    = 'none';
+            document.getElementById('leadSubmitLoading').style.display = 'block';
+            document.getElementById('leadSubmitError').style.display   = 'none';
+            var payload = {
+                mode: 'full',
+                name: userInfo.name, age: userInfo.age, gender: userInfo.gender,
+                bioAge: window._reportBioAge, score: window._reportScore,
+                dimensionScores: window._reportDimensionScores,
+                assessmentCode: window._assessmentCode,
+                agingPace: window._agingPace,
+                peerPercentile: window._peerPercentile,
+                contact: contact
+            };
+            fetch('https://bioage-compass-prod-9chaf35e573d-1405252881.ap-shanghai.app.tcloudbase.com/generateReport', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(function(r) { return r.json(); })
+            .then(function(data) {
+                document.getElementById('leadSubmitLoading').style.display = 'none';
+                showReport(data.report || '陆大夫将通过微信将完整报告发送给您，请保持关注。');
+            }).catch(function(e) {
+                document.getElementById('leadSubmitLoading').style.display = 'none';
+                document.getElementById('leadSubmitArea').style.display    = 'block';
+                document.getElementById('leadSubmitError').style.display   = 'block';
+                console.warn('submitLeadCapture error:', e.message);
+            });
+        }
+
+        // ─── showReport ──────────────────────────────────────────────────
+        function showReport(reportContent) {
+            document.getElementById('leadCaptureScreen').style.display = 'none';
+            document.getElementById('reportScreen').style.display      = 'block';
+            document.getElementById('reportNameHeader').textContent    = userInfo.name || '用户';
+            document.getElementById('recapBioAge').textContent         = window._reportBioAge + '岁';
+            document.getElementById('recapAgingPace').textContent      = window._agingPace + 'x';
+            document.getElementById('recapPeerRank').textContent       = '前' + window._peerPercentile + '%';
+            var st = window._agingStatus;
+            document.getElementById('recapStatus').textContent         = st ? st.label : '--';
+            if (st) document.getElementById('recapStatus').style.color = st.color;
+            document.getElementById('reportLoadingArea').style.display   = 'none';
+            document.getElementById('reportContentArea').style.display   = 'block';
+            document.getElementById('reportWechatSection').style.display = 'block';
+            // Render markdown bold (**text**) as <strong>
+            var html = (reportContent || '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+            document.getElementById('reportFullText').innerHTML = html;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function showResults(bioAge, actualAge, dimensionScores, totalScore) {
@@ -1983,6 +2592,10 @@ try {
                     birthYearSel.appendChild(opt);
                 }
             }
+
+            // 解锁完整报告按钮
+            var unlockBtn = document.getElementById('unlockReportBtn');
+            if (unlockBtn) unlockBtn.addEventListener('click', showLeadCapture);
 
             const startBtn = document.getElementById('startAssessmentBtn');
             if (startBtn) {
