@@ -1219,7 +1219,7 @@
                 </div>
             </div>
 
-            <div id="resultScreen" class="result-screen">
+            <div id="resultScreen" class="result-screen" style="display:none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 15px;">
                     <h2 style="font-size: 18px; font-weight: 300; flex: 1;">您的评估简报</h2>
                     <button id="completeBtn" style="background: var(--jade); color: var(--cream); border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.3s; flex-shrink: 0;">完成</button>
@@ -2104,6 +2104,7 @@ try {
             window._reportDimensionScores = dimensionScores;
 
             document.getElementById('questionContainer').style.display = 'none';
+            document.getElementById('resultScreen').style.display      = 'none';
             document.getElementById('dashboardScreen').style.display   = 'block';
 
             // Greeting
