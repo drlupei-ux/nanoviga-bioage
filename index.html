@@ -909,6 +909,18 @@
             .metrics-recap-bar { padding: 12px 4px; }
             .recap-value { font-size: 16px; }
         }
+
+        /* ─── Welcome Screen: Mini Stat Pills ────────── */
+        .mini-stat {
+            font-size: 13px;
+            color: var(--cream-dim);
+            background: rgba(200,169,110,0.06);
+            border: 1px solid rgba(200,169,110,0.18);
+            border-radius: 20px;
+            padding: 6px 16px;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
@@ -919,236 +931,27 @@
         </div>
 
         <div class="content">
-            <div id="welcomeScreen"><div class="hero-section">
-                    <h2 class="hero-title">你的年龄只是一个数字<br>真正重要的是身体年龄</h2>
+            <div id="welcomeScreen">
+                <div style="min-height:80vh; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:48px 0 40px; text-align:center;">
 
-                    <div class="hero-intro">
-                        <p style="margin-bottom: 20px;">过去二十年，抗衰老医学取得了突破性进展。从端粒研究到表观遗传学（Epigenetics），从线粒体功能到细胞自噬机制（Autophagy），科学界逐渐揭示了衰老的本质规律。<strong>最重要的发现是：衰老并非不可逆转</strong>。</p>
+                    <h2 class="hero-title" style="margin-bottom:32px;">
+                        你的年龄只是一个数字<br>真正重要的是身体年龄
+                    </h2>
 
-                        <p style="margin-bottom: 20px;">哈佛、斯坦福等顶尖研究机构的临床数据表明，通过精准评估与科学干预，我们可以显著减缓甚至逆转生物年龄。这不是抗衰老产品的营销话术，而是建立在大规模队列研究和随机对照试验（RCT）基础上的科学共识。</p>
-
-                        <p><strong>关键在于：精准评估是一切干预的前提</strong>。不同于传统体检的单点数据，现代抗衰老医学强调多维度、分层次的系统性评估——这正是BioAge Compass的核心价值。</p>
+                    <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-bottom:44px;">
+                        <span class="mini-stat">⏱ 10 分钟</span>
+                        <span class="mini-stat">📐 7 大维度</span>
+                        <span class="mini-stat">⚡ 即时报告</span>
                     </div>
 
-                    <div class="stats-grid">
-                        <div class="stat-item">
-                            <div class="stat-number">30+</div>
-                            <div class="stat-label">年研究经验</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number">98%</div>
-                            <div class="stat-label">客户满意度</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number">4层</div>
-                            <div class="stat-label">评估体系</div>
-                        </div>
-                    </div>
-                </div>
+                    <button class="btn-primary" id="startAssessmentBtn" style="max-width:320px; margin:0 auto;">
+                        开始缓龄评估
+                    </button>
 
-                <div class="framework-section">
-                    <h3 class="section-title">四层评估体系：从宏观到微观，从现象到本质</h3>
-
-                    <div class="framework-grid">
-                        <div class="framework-card">
-                            <div class="framework-level">层级 01</div>
-                            <h4 class="framework-title">PLA评估</h4>
-                            <p class="framework-desc">生理生活年龄<br>基于生活方式的快速筛查</p>
-                        </div>
-
-                        <div class="framework-card">
-                            <div class="framework-level">层级 02</div>
-                            <h4 class="framework-title">CBA评估</h4>
-                            <p class="framework-desc">临床生物标志物年龄<br>基于体检数据的精准分析</p>
-                        </div>
-
-                        <div class="framework-card">
-                            <div class="framework-level">层级 03</div>
-                            <h4 class="framework-title">DNA Age</h4>
-                            <p class="framework-desc">DNA甲基化年龄<br>表观遗传学层面测定</p>
-                        </div>
-
-                        <div class="framework-card">
-                            <div class="framework-level">层级 04</div>
-                            <h4 class="framework-title">精准干预</h4>
-                            <p class="framework-desc">个性化方案<br>基于多层评估的管理</p>
-                        </div>
-                    </div>
-
-                    <p style="text-align: center; color: var(--cream-dim); font-size: 13px; line-height: 1.8; margin: 25px auto 0;">
-                        这四个层级相互补充、递进深入。<strong style="color: var(--cream);">PLA提供快速全景视图，CBA实现临床级精准度，DNA Age揭示细胞本质，最终汇聚为个性化干预策略</strong>。每个层级都有独立价值，组合使用则能构建最完整的健康图谱。
+                    <p style="font-size:12px; color:var(--cream-dim); margin-top:24px; letter-spacing:0.5px;">
+                        基于 Horvath Clock · Framingham Heart Study 等医学金标准
                     </p>
-                </div>
 
-                <div class="value-proposition">
-                    <h3>BioAge Compass 能为您提供什么</h3>
-
-                    <div class="value-list">
-                        <div class="value-item">
-                            <div class="value-icon">📊</div>
-                            <div class="value-content">
-                                <h4>科学量化评估</h4>
-                                <p>将抽象的"健康"转化为可测量的生物年龄指标，建立清晰的改善基线与追踪体系</p>
-                            </div>
-                        </div>
-
-                        <div class="value-item">
-                            <div class="value-icon">🎯</div>
-                            <div class="value-content">
-                                <h4>精准干预方向</h4>
-                                <p>识别高可逆性健康维度，优先配置时间与资源，避免"撒胡椒面"式的盲目干预</p>
-                            </div>
-                        </div>
-
-                        <div class="value-item">
-                            <div class="value-icon">📈</div>
-                            <div class="value-content">
-                                <h4>动态追踪优化</h4>
-                                <p>定期评估形成健康数据库，追踪干预效果，持续优化个人抗衰老策略</p>
-                            </div>
-                        </div>
-
-                        <div class="value-item">
-                            <div class="value-icon">🔬</div>
-                            <div class="value-content">
-                                <h4>前沿医学整合</h4>
-                                <p>连接国际顶尖抗衰老医学资源，将最新研究成果转化为可执行的健康方案</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="pla-intro">
-                    <h3>层级01：PLA生理生活年龄评估</h3>
-
-                    <p><strong>PLA (Physiological Life Age Assessment)</strong> 是四层评估体系的第一层，也是最易获取的入口。它通过29个精心设计的问题，从七大核心维度评估您的生理状态，在10分钟内提供生物年龄的初步评估。</p>
-
-                    <p style="margin-top: 15px;">与传统问卷不同，PLA的设计基于大规模临床研究中验证的健康预测因子。每个问题都对应特定的生理指标或疾病风险，问题间的组合分析能够揭示您当前的整体健康状态。</p>
-
-                    <div class="pla-features">
-                        <div class="pla-feature">
-                            <div class="pla-feature-icon">⚡</div>
-                            <p class="pla-feature-text"><strong>10分钟</strong><br>快速完成</p>
-                        </div>
-                        <div class="pla-feature">
-                            <div class="pla-feature-icon">🎯</div>
-                            <p class="pla-feature-text"><strong>7大维度</strong><br>全面分析</p>
-                        </div>
-                        <div class="pla-feature">
-                            <div class="pla-feature-icon">📊</div>
-                            <p class="pla-feature-text"><strong>即时报告</strong><br>可逆性评估</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="dimension-grid">
-                    <div class="dimension-card">
-                        <span class="dimension-icon">🏃</span>
-                        <h3>运动能力</h3>
-                        <p>Exercise Capacity</p>
-                    </div>
-                    <div class="dimension-card">
-                        <span class="dimension-icon">🧘</span>
-                        <h3>身心平衡</h3>
-                        <p>Mental Balance</p>
-                    </div>
-                    <div class="dimension-card">
-                        <span class="dimension-icon">🥗</span>
-                        <h3>营养代谢</h3>
-                        <p>Nutrition</p>
-                    </div>
-                    <div class="dimension-card">
-                        <span class="dimension-icon">😴</span>
-                        <h3>睡眠质量</h3>
-                        <p>Sleep Quality</p>
-                    </div>
-                    <div class="dimension-card">
-                        <span class="dimension-icon">🧬</span>
-                        <h3>遗传因素</h3>
-                        <p>Genetics</p>
-                    </div>
-                    <div class="dimension-card">
-                        <span class="dimension-icon">🌍</span>
-                        <h3>环境因素</h3>
-                        <p>Environment</p>
-                    </div>
-                    <div class="dimension-card">
-                        <span class="dimension-icon">👁️</span>
-                        <h3>感官衰老</h3>
-                        <p>Sensory Aging</p>
-                    </div>
-                </div>
-
-                <button class="btn-primary" id="startAssessmentBtn">开始缓龄评估</button>
-
-                <div class="footer-authority">
-                    <h4>科学基础与专业保障</h4>
-
-                    <div style="margin-bottom: 35px;">
-                        <h5 style="color: var(--gold); font-size: 14px; margin-bottom: 20px; font-weight: 600; text-align: center;">核心评估算法 (Core Assessment Algorithms)</h5>
-                        <div class="authority-grid">
-                            <div class="authority-item">
-                                <h5>Horvath Clock 算法</h5>
-                                <p>基于Steve Horvath教授的DNA甲基化时钟理论，经Nature等顶级期刊验证的衰老评估金标准</p>
-                            </div>
-
-                            <div class="authority-item">
-                                <h5>Framingham Heart Study</h5>
-                                <p>整合弗明汉心脏研究70年队列数据，构建心血管风险预测模型</p>
-                            </div>
-
-                            <div class="authority-item">
-                                <h5>CALERIE 临床试验</h5>
-                                <p>参考美国国立衰老研究所(NIA)热量限制与衰老研究成果</p>
-                            </div>
-
-                            <div class="authority-item">
-                                <h5>InCHIANTI Study</h5>
-                                <p>采用意大利老龄化纵向研究的生物标志物评估体系</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style="background: rgba(58,158,126,0.06); padding: 25px 20px; border-radius: 10px; margin-bottom: 35px; border-left: 3px solid var(--jade);">
-                        <h5 style="color: var(--cream); font-size: 14px; margin-bottom: 15px; font-weight: 600; text-align: center;">国际研究机构支持 (International Research Support)</h5>
-                        <p style="color: var(--cream-dim); font-size: 13px; line-height: 1.8; text-align: center; margin: 0;">
-                            整合哈佛医学院（Harvard Medical School）、斯坦福长寿中心（Stanford Center on Longevity）、梅奥诊所（Mayo Clinic）等国际顶尖机构研究成果，确保评估体系的科学性与前沿性
-                        </p>
-                    </div>
-
-                    <div style="background: rgba(255,255,255,0.02); padding: 25px 20px; border-radius: 10px; margin-bottom: 25px; border: 1px solid var(--card-border);">
-                        <div style="text-align: center; margin-bottom: 20px;">
-                            <h5 style="color: var(--cream); font-size: 14px; font-weight: 600; margin-bottom: 15px;">系统主理 (System Director)</h5>
-                            <div style="display: inline-block; padding: 20px 25px; background: rgba(200,169,110,0.05); border-radius: 8px; border-left: 3px solid var(--gold); text-align: left; max-width: 600px;">
-                                <p style="color: var(--cream); font-size: 14px; line-height: 1.9; margin: 0;">
-                                    <strong style="color: var(--gold);">陆大夫 Dr.Lu</strong><br>
-                                    <span style="color: var(--cream-dim); font-size: 13px;">
-                                    近30年临床执业医生 | 复旦大学医学院临床医学专业<br>
-                                    比利时生物医学硕士 | 英国帝国理工学院国际健康管理硕士<br>
-                                    常年专注于抗衰老医学与精准健康管理
-                                    </span>
-                                </p>
-                            </div>
-                        </div>
-
-                        <div style="text-align: center; padding-top: 20px; border-top: 1px solid var(--card-border);">
-                            <p style="color: var(--cream); font-size: 14px; font-weight: 600; margin-bottom: 8px;">
-                                为超过千余高净值家庭提供专业服务
-                            </p>
-                            <p style="color: var(--cream-dim); font-size: 12px; margin: 0;">
-                                客户满意度98% | 服务覆盖中国、美国、欧洲等地区
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="footer-disclaimer">
-                        <p style="margin-bottom: 10px;">
-                            © 2024 BioAge Compass. 本评估仅供健康参考，不构成医疗诊断。如有疾病请咨询专业医生。
-                        </p>
-                        <p style="font-size: 10px; line-height: 1.6; color: var(--cream-dim); margin: 0; padding-top: 10px; border-top: 1px solid var(--card-border);">
-                            本系统版权归微信公众号"陆大夫空间"所有。未经授权不得复制、传播或商用。All Rights Reserved.
-                        </p>
-                    </div>
                 </div>
             </div>
 
