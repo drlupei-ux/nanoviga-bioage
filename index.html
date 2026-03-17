@@ -980,35 +980,217 @@
             font-size: 10px; color: var(--cream-dim);
             letter-spacing: 0.3px; line-height: 1.4;
         }
+
+        /* ─── Topbar ────────────────────────────────── */
+        .topbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(8,12,16,0.92);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(200,169,110,0.12);
+        }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo-mark {
+            width: 30px; height: 30px;
+            border: 1.5px solid var(--gold);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Playfair Display', serif;
+            font-size: 13px; color: var(--gold);
+        }
+        .logo-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 12px; letter-spacing: 2px;
+            color: var(--gold-light); font-weight: 400;
+        }
+        .logo-sub { font-size: 9px; color: var(--cream-dim); letter-spacing: 2px; margin-top: 1px; }
+        .progress-wrap { flex: 1; max-width: 240px; margin: 0 32px; }
+        .progress-track {
+            height: 1.5px; background: rgba(255,255,255,0.1);
+            border-radius: 2px; overflow: visible; position: relative;
+        }
+        .progress-fill-top {
+            height: 100%;
+            background: linear-gradient(90deg, var(--jade) 0%, var(--gold) 100%);
+            border-radius: 2px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+            position: relative;
+        }
+        .progress-fill-top::after {
+            content:''; position: absolute; right: -3px; top: -3px;
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--gold); box-shadow: 0 0 8px var(--gold);
+        }
+        .progress-label { font-size: 9px; color: var(--cream-dim); letter-spacing: 1.5px; text-align: center; margin-top: 6px; }
+        .step-counter { font-size: 10px; color: var(--cream-dim); letter-spacing: 2px; min-width: 50px; text-align: right; }
+
+        /* ─── Hero improvements ─────────────────────── */
+        .hero-eyebrow {
+            font-size: 10px; letter-spacing: 5px; color: var(--jade);
+            text-transform: uppercase; margin-bottom: 24px; font-weight: 300;
+        }
+        .hero-title em { font-style: italic; color: var(--gold); }
+        .hero-badge {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 11px; color: var(--cream-dim); letter-spacing: 1px;
+        }
+        .badge-dot {
+            width: 5px; height: 5px; border-radius: 50%;
+            background: var(--gold); flex-shrink: 0;
+        }
+        .start-btn {
+            padding: 14px 48px;
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            font-family: 'Noto Serif SC', serif;
+            font-size: 14px; letter-spacing: 3px; cursor: pointer;
+            border-radius: 2px; transition: all 0.3s ease;
+            position: relative; overflow: hidden;
+        }
+        .start-btn::before {
+            content:''; position: absolute; inset: 0;
+            background: var(--gold); transform: scaleX(0);
+            transform-origin: left; transition: transform 0.3s ease; z-index: -1;
+        }
+        .start-btn:hover { color: var(--bg); }
+        .start-btn:hover::before { transform: scaleX(1); }
+
+        /* ─── Question radio button ─────────────────── */
+        .q-dim-label {
+            font-size: 10px; letter-spacing: 3px; color: var(--jade);
+            text-transform: uppercase; margin-bottom: 12px; font-weight: 300;
+        }
+        .option {
+            display: flex; align-items: center; gap: 14px;
+        }
+        .opt-radio {
+            width: 18px; height: 18px; flex-shrink: 0;
+            border: 1.5px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.25s;
+        }
+        .option.selected .opt-radio {
+            border-color: var(--gold); background: var(--gold);
+        }
+        .option.selected .opt-radio::after {
+            content:''; width: 6px; height: 6px;
+            border-radius: 50%; background: var(--bg);
+        }
+        .opt-label-text {
+            font-size: 14px; color: var(--cream-dim); line-height: 1.5;
+            transition: color 0.25s; font-weight: 300;
+        }
+        .option.selected .opt-label-text { color: var(--cream); }
+
+        /* ─── Age display hero ──────────────────────── */
+        .age-display-hero { margin-bottom: 12px; }
+        .age-number-hero {
+            font-family: 'Playfair Display', serif;
+            font-size: 80px; line-height: 1; font-weight: 400;
+            color: var(--gold); text-shadow: 0 0 60px rgba(200,169,110,0.3);
+            letter-spacing: -4px;
+        }
+        .age-unit-hero {
+            font-size: 12px; color: var(--cream-dim); letter-spacing: 3px;
+            text-transform: uppercase; margin-top: 6px;
+        }
+        .age-compare {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 8px 20px; border-radius: 40px; font-size: 13px;
+            letter-spacing: 1px; margin-top: 8px;
+        }
+        .age-compare.older {
+            background: rgba(194,107,90,0.12); border: 1px solid rgba(194,107,90,0.25);
+            color: #E8907D;
+        }
+        .age-compare.younger {
+            background: rgba(74,158,138,0.12); border: 1px solid rgba(74,158,138,0.25);
+            color: var(--jade-light);
+        }
+        .age-compare.neutral {
+            background: rgba(200,169,110,0.1); border: 1px solid rgba(200,169,110,0.2);
+            color: var(--gold-light);
+        }
+        .compare-icon { font-size: 16px; }
+
+        /* ─── Interpretation bar ────────────────────── */
+        .interp-bar {
+            width: 100%; height: 6px;
+            background: linear-gradient(90deg, #4A9E8A, #C8A96E 50%, #C26B5A);
+            border-radius: 3px; position: relative; margin: 0 auto 8px;
+            max-width: 400px;
+        }
+        .interp-marker {
+            position: absolute; top: -20px; transform: translateX(-50%);
+            width: 2px; height: 26px; background: white;
+        }
+        .interp-marker::after {
+            content: '▼'; position: absolute; bottom: -16px;
+            left: 50%; transform: translateX(-50%);
+            font-size: 12px; color: white;
+        }
+        .interp-labels {
+            display: flex; justify-content: space-between;
+            max-width: 400px; margin: 0 auto;
+            font-size: 9px; color: var(--cream-dim); letter-spacing: 1px;
+        }
+
+        /* ─── Adjust content for fixed topbar ──────── */
+        .content { padding-top: 20px !important; }
+        body { padding-top: 60px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>BioAge Compass</h1>
-            <p class="subtitle">AI 缓龄评估系统 · AI Aging Optimization System</p>
+    <div class="topbar" id="topbar">
+    <div class="logo">
+        <div class="logo-mark">L</div>
+        <div>
+            <div class="logo-text">BIOAGE COMPASS</div>
+            <div class="logo-sub">生命罗盘 · AI 缓龄评估</div>
         </div>
-
-        <div class="content">
+    </div>
+    <div class="progress-wrap" id="topProgressWrap" style="display:none">
+        <div class="progress-track">
+            <div class="progress-fill-top" id="topProgressFill" style="width:0%"></div>
+        </div>
+        <div class="progress-label" id="topProgressLabel">评估进行中</div>
+    </div>
+    <div class="step-counter" id="topStepCounter"></div>
+</div>
+<div class="container">
+    <div class="content">
             <div id="welcomeScreen">
                 <div style="min-height:80vh; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:48px 0 40px; text-align:center;">
 
-                    <h2 class="hero-title" style="margin-bottom:32px;">
-                        您的身体<br>比您以为的老了几岁？
+                    <div class="hero-eyebrow">L1 · 生活方式生物年龄评估</div>
+
+                    <h2 class="hero-title" style="margin-bottom:16px;">
+                        您的身体，<br>比您以为的<em>老了几岁</em>？
                     </h2>
 
-                    <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-bottom:44px;">
-                        <span class="mini-stat">⏱ 5 分钟</span>
-                        <span class="mini-stat">🔓 无需注册</span>
-                        <span class="mini-stat">⚡ 即时生成</span>
+                    <p style="font-size:14px; color:var(--cream-dim); max-width:480px; line-height:1.9; margin-bottom:36px; font-weight:300;">
+                        基于 Framingham 心脏研究与 DunedinPACE 衰老模型，<br>
+                        29 道题，5 分钟，精准评估您的生活方式年龄
+                    </p>
+
+                    <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap; margin-bottom:44px;">
+                        <div class="hero-badge"><div class="badge-dot"></div>免费评估</div>
+                        <div class="hero-badge"><div class="badge-dot"></div>5 分钟完成</div>
+                        <div class="hero-badge"><div class="badge-dot"></div>即时生成</div>
                     </div>
 
-                    <button class="btn-primary" id="startAssessmentBtn" style="max-width:320px; margin:0 auto;">
+                    <button class="start-btn" id="startAssessmentBtn">
                         开始缓龄评估
                     </button>
 
-                    <p style="font-size:12px; color:var(--cream-dim); margin-top:24px; letter-spacing:0.5px;">
-                        基于 Horvath Clock · Framingham Heart Study 等医学金标准
+                    <p style="font-size:11px; color:var(--cream-dim); margin-top:32px; letter-spacing:1px; opacity:0.6;">
+                        Horvath Clock · Framingham Heart Study · DunedinPACE
                     </p>
 
                 </div>
@@ -1331,8 +1513,18 @@
             <div id="dashboardScreen" class="dashboard-screen" style="display:none;">
 
                 <p class="dashboard-greeting">
-                    Hi, <strong id="dashGreeting">朋友</strong>！这是你的缓龄评估结果
+                    Hi, <strong id="dashGreeting">朋友</strong>！这是您的缓龄评估结果
                 </p>
+                <div style="text-align:center; margin-bottom:24px;">
+                    <div class="age-display-hero">
+                        <div class="age-number-hero" id="dashAgeHero">--</div>
+                        <div class="age-unit-hero">岁 · 生物年龄</div>
+                    </div>
+                    <div class="age-compare" id="dashAgeCompare">
+                        <span class="compare-icon" id="dashCompareIcon">◆</span>
+                        <span id="dashCompareText">正在计算...</span>
+                    </div>
+                </div>
 
                 <!-- 4 KPI Cards 2×2 -->
                 <div class="kpi-grid">
@@ -1360,6 +1552,18 @@
                             <span class="aging-status-badge" id="dashStatusBadge">--</span>
                         </div>
                         <div class="kpi-sub" id="dashStatusDesc" style="margin-top: 8px;">--</div>
+                    </div>
+                </div>
+
+                <!-- Interpretation bar -->
+                <div style="margin: 8px 0 28px;">
+                    <div class="interp-bar" id="dashInterpBar">
+                        <div class="interp-marker" id="dashInterpMarker" style="left:50%"></div>
+                    </div>
+                    <div class="interp-labels">
+                        <span>超级逆龄</span>
+                        <span>正常衰老</span>
+                        <span>加速衰老</span>
                     </div>
                 </div>
 
@@ -1829,16 +2033,26 @@
             document.getElementById('progressFill').style.width = progress + '%';
             document.getElementById('questionCounter').textContent = (currentQuestion + 1) + ' / ' + questions.length;
 
+            // Update topbar progress
+            var topFill = document.getElementById('topProgressFill');
+            var topWrap = document.getElementById('topProgressWrap');
+            var topCounter = document.getElementById('topStepCounter');
+            if (topFill) topFill.style.width = progress + '%';
+            if (topWrap) topWrap.style.display = 'flex';
+            if (topCounter) topCounter.textContent = (currentQuestion + 1) + ' / ' + questions.length;
+
             // 如果当前题已回答过，标记对应选项
             const savedAnswer = answers[currentQuestion];
 
             const questionHTML = `
                 <div class="question-card">
+                    <div class="q-dim-label">${question.dimension}</div>
                     <div class="question-text">${currentQuestion + 1}. ${question.text}</div>
                     <div class="options">
                         ${question.options.map((option, index) => `
                             <div class="option${savedAnswer === option.score ? ' selected' : ''}" onclick="selectOption(${index})">
-                                ${option.text}
+                                <div class="opt-radio"></div>
+                                <span class="opt-label-text">${option.text}</span>
                             </div>
                         `).join('')}
                     </div>
@@ -2009,6 +2223,37 @@ try {
             document.getElementById('dashBioAge').textContent    = bioAge;
             document.getElementById('dashActualAge').textContent = actualAge;
 
+            // Hero age display
+            var heroAgeEl = document.getElementById('dashAgeHero');
+            if (heroAgeEl) heroAgeEl.textContent = bioAge;
+
+            // Age-compare badge
+            var diff = actualAge - bioAge;
+            var compareEl = document.getElementById('dashAgeCompare');
+            var compareTextEl = document.getElementById('dashCompareText');
+            var compareIconEl = document.getElementById('dashCompareIcon');
+            if (compareEl && compareTextEl) {
+                compareEl.className = 'age-compare';
+                if (diff >= 3) {
+                    compareEl.classList.add('younger');
+                    compareTextEl.textContent = '比实际年龄年轻 ' + diff + ' 岁';
+                    if (compareIconEl) compareIconEl.textContent = '↓';
+                } else if (diff <= -3) {
+                    compareEl.classList.add('older');
+                    compareTextEl.textContent = '比实际年龄老 ' + Math.abs(diff) + ' 岁';
+                    if (compareIconEl) compareIconEl.textContent = '↑';
+                } else {
+                    compareEl.classList.add('neutral');
+                    compareTextEl.textContent = '与实际年龄相当';
+                    if (compareIconEl) compareIconEl.textContent = '◆';
+                }
+            }
+
+            // Interpretation bar marker: 0% = super young (-15 diff), 100% = super old (+15 diff)
+            var markerPos = Math.max(2, Math.min(98, 50 - diff * 3));
+            var markerEl = document.getElementById('dashInterpMarker');
+            if (markerEl) markerEl.style.left = markerPos + '%';
+
             // KPI 2: Aging Pace
             var pace = window._agingPace;
             var paceNum = parseFloat(pace);
@@ -2043,6 +2288,13 @@ try {
             try { drawRadarChartDash(dimensionScores); } catch(e) { console.warn('雷达图失败:', e); }
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Hide topbar progress on dashboard
+            var topWrap = document.getElementById('topProgressWrap');
+            var topCounter = document.getElementById('topStepCounter');
+            if (topWrap) topWrap.style.display = 'none';
+            if (topCounter) topCounter.textContent = '';
+
             autoGenerateSummaryDash();
         }
 
