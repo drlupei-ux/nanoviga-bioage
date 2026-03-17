@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "routes": [
+    { "src": "/wechat-qr.png",      "dest": "/wechat-qr.png"      },
+    { "src": "/layer2\\.html",      "dest": "/layer2.html"        },
+    { "src": "/(.*)",               "dest": "/index.html"         }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options",        "value": "DENY"    },
+        { "key": "Cache-Control",          "value": "no-cache, no-store, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/wechat-qr.png",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400" }
+      ]
+    }
+  ]
+}
