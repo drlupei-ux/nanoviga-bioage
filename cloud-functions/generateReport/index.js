@@ -63,6 +63,7 @@ exports.main = async (event, context) => {
   const report = await callDeepSeek(DEEPSEEK_KEY, prompt, 1500);
 
   // 保存到 CloudBase 数据库
+  let dbSaved = false, dbError = null;
   try {
     const tcb = require('@cloudbase/node-sdk');
     const app = tcb.init({ env: process.env.TCB_ENV_ID || 'bioage-compass-prod-9chaf35e573d' });
@@ -73,13 +74,15 @@ exports.main = async (event, context) => {
       contact: contact||'', assessmentCode: assessmentCode||'',
       report, createdAt: new Date().toISOString(), status: 'pending'
     });
+    dbSaved = true;
     console.log('Saved to DB');
-  } catch(e) { console.log('DB error:', e.message); }
+  } catch(e) { dbError = e.message; console.log('DB error:', e.message); }
 
-  // 发邮件通知（同步等待，确保容器回收前完成）
+  // ── 先立即返回报告给用户，SMTP 在后台异步发送 ──────────────────────────────
+  // 注：fire-and-forget 模式，不 await，避免 SMTP 延迟阻塞 HTTP 响应
   if (EMAIL_AUTH_CODE) {
-    const ageDiff = age - bioAge;
-    const diffStr = ageDiff > 0 ? `年轻${ageDiff}岁 🎉` : ageDiff < 0 ? `偏大${Math.abs(ageDiff)}岁` : '相当';
+    const ageDiff2 = age - bioAge;
+    const diffStr = ageDiff2 > 0 ? `年轻${ageDiff2}岁 🎉` : ageDiff2 < 0 ? `偏大${Math.abs(ageDiff2)}岁` : '相当';
     const subject = `【缓龄报告】${name||'新客户'} | ${contact||'未留联系'} | ${derivedStatus} | ${assessmentCode||''}`.slice(0,60);
     const body =
 `============================
@@ -111,17 +114,15 @@ ${report}
 ⚡ 请通过微信1V1发送完整报告给该客户
 ============================`;
 
-    try {
-      await sendSmtpEmail163(ADMIN_EMAIL, EMAIL_AUTH_CODE, ADMIN_EMAIL, subject, body);
-      console.log('Email sent OK');
-    } catch(e) {
-      console.log('Email failed:', e.message);
-    }
+    // fire-and-forget：不 await，不阻塞返回
+    sendSmtpEmail163(ADMIN_EMAIL, EMAIL_AUTH_CODE, ADMIN_EMAIL, subject, body)
+      .then(() => console.log('Email sent OK'))
+      .catch(e => console.log('Email failed:', e.message));
   } else {
     console.log('EMAIL_163_AUTH_CODE not set, skipping email');
   }
 
-  return okResp({ report, saved: true });
+  return okResp({ report, saved: dbSaved, dbError });
 };
 
 // ─── DeepSeek API 调用 ────────────────────────────────────────────────────────
