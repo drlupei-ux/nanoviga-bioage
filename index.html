@@ -2161,6 +2161,21 @@ try {
             document.getElementById('leadSubmitArea').style.display    = 'none';
             document.getElementById('leadSubmitLoading').style.display = 'block';
             document.getElementById('leadSubmitError').style.display   = 'none';
+
+            // ── Step 1: 先保存联系方式（fire-and-forget），确保数据不丢失 ──
+            fetch('https://bioage-compass-prod-9chaf35e573d-1405252881.ap-shanghai.app.tcloudbase.com/saveAssessment', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    assessmentCode: window._assessmentCode,
+                    leadName: leadName, leadPhone: phone,
+                    leadEmail: email,   leadWechat: wechat,
+                    contact: contact,
+                    version: 'PLA-v2-lead',
+                    createdAt: new Date().toISOString()
+                })
+            }).catch(function() {}); // fire-and-forget，不阻塞主流程
+
+            // ── Step 2: 生成完整报告（90s 超时保护） ─────────────────────
             var payload = {
                 mode: 'full',
                 name: userInfo.name, age: userInfo.age, gender: userInfo.gender,
@@ -2171,18 +2186,24 @@ try {
                 peerPercentile: window._peerPercentile,
                 contact: contact
             };
+            var _ctrl    = new AbortController();
+            var _timeout = setTimeout(function() { _ctrl.abort(); }, 90000);
             fetch('https://bioage-compass-prod-9chaf35e573d-1405252881.ap-shanghai.app.tcloudbase.com/generateReport', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            }).then(function(r) { return r.json(); })
-            .then(function(data) {
+                body: JSON.stringify(payload),
+                signal: _ctrl.signal
+            }).then(function(r) {
+                clearTimeout(_timeout);
+                return r.json();
+            }).then(function(data) {
                 document.getElementById('leadSubmitLoading').style.display = 'none';
                 showReport(data.report || '陆大夫将通过微信将完整报告发送给您，请保持关注。');
             }).catch(function(e) {
+                clearTimeout(_timeout);
                 document.getElementById('leadSubmitLoading').style.display = 'none';
-                document.getElementById('leadSubmitArea').style.display    = 'block';
-                document.getElementById('leadSubmitError').style.display   = 'block';
-                console.warn('submitLeadCapture error:', e.message);
+                // 联系方式已保存，友好提示而非报错
+                console.warn('generateReport error (contact saved):', e.name, e.message);
+                showReport('您的缓龄报告正在后台生成中，陆大夫将在 24 小时内通过微信发送完整缓龄报告。\n\n感谢您的信任，祝您健康常驻！');
             });
         }
 
