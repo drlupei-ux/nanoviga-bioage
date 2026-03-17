@@ -921,6 +921,65 @@
             letter-spacing: 0.5px;
             white-space: nowrap;
         }
+
+        /* ─── S8: AI 计算动画屏 ───────────────────────── */
+        .calculating-screen {
+            min-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 48px 24px;
+        }
+        .calculating-spinner {
+            width: 56px; height: 56px;
+            border: 2px solid rgba(200,169,110,0.12);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: calcSpin 1s linear infinite;
+            margin-bottom: 28px;
+        }
+        @keyframes calcSpin { to { transform: rotate(360deg); } }
+        .calculating-title {
+            font-size: 18px; color: var(--cream);
+            letter-spacing: 1px; margin-bottom: 8px; font-weight: 300;
+        }
+        .calculating-hint {
+            font-size: 12px; color: var(--cream-dim);
+            letter-spacing: 0.5px; margin-bottom: 28px;
+        }
+        .calculating-bar-wrap {
+            width: 220px; height: 2px;
+            background: rgba(200,169,110,0.10);
+            border-radius: 2px; overflow: hidden;
+        }
+        .calculating-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--gold), var(--jade-light));
+            border-radius: 2px;
+            width: 0%;
+            transition: width 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        /* ─── M2: 精英百分位进度条 ───────────────────── */
+        .peer-bar-wrap {
+            width: 100%; height: 4px;
+            background: rgba(58,158,126,0.12);
+            border-radius: 2px; overflow: hidden;
+            margin: 8px 0 5px;
+        }
+        .peer-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--jade), var(--jade-light));
+            border-radius: 2px;
+            width: 0%;
+            transition: width 1.2s ease 0.3s;
+        }
+        .peer-bar-label {
+            font-size: 10px; color: var(--cream-dim);
+            letter-spacing: 0.3px; line-height: 1.4;
+        }
     </style>
 </head>
 <body>
@@ -1022,6 +1081,16 @@
                 </div>
             </div>
 
+            <!-- S8: AI 计算动画屏 -->
+            <div id="calculatingScreen" class="calculating-screen" style="display:none;">
+                <div class="calculating-spinner"></div>
+                <div class="calculating-title">AI 正在分析您的生物年龄</div>
+                <div class="calculating-hint">综合 6 维健康数据 · 对标精英参照人群</div>
+                <div class="calculating-bar-wrap">
+                    <div id="calcBarFill" class="calculating-bar-fill"></div>
+                </div>
+            </div>
+
             <div id="resultScreen" class="result-screen" style="display:none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 15px;">
                     <h2 style="font-size: 18px; font-weight: 300; flex: 1;">您的评估简报</h2>
@@ -1054,7 +1123,7 @@
                 <div class="dimension-scores" id="dimensionScores"></div>
 
                 <div class="recommendations">
-                    <h3>可逆性分析与建议 (Reversibility Analysis)</h3>
+                    <h3>核心优化因素 (Risk Signals)</h3>
                     <ul id="recommendationsList"></ul>
                 </div>
 
@@ -1280,7 +1349,10 @@
                     <div class="kpi-card">
                         <div class="kpi-label">同龄排名</div>
                         <div class="kpi-value" id="dashPeerRank">--</div>
-                        <div class="kpi-sub">同龄人中</div>
+                        <div class="peer-bar-wrap">
+                            <div id="dashPeerBar" class="peer-bar-fill"></div>
+                        </div>
+                        <div class="peer-bar-label" id="dashPeerBarLabel">同龄精英中</div>
                     </div>
                     <div class="kpi-card">
                         <div class="kpi-label">缓龄状态</div>
@@ -1897,12 +1969,27 @@ try {
 })();
 // ─────────────────────────────────────────────────────
 
-            try {
-                showDashboard(bioAge, actualAge, dimensionScores, totalScore);
-            } catch(e) {
-                console.error("显示结果出错:", e);
-                alert("结果显示异常，请刷新页面后重试。错误: " + e.message);
-            }
+            // ── S8: 显示计算动画 1.5s ──────────────────────────────
+            document.getElementById('questionContainer').style.display  = 'none';
+            document.getElementById('basicInfoScreen').style.display    = 'none';
+            document.getElementById('calculatingScreen').style.display  = 'flex';
+            // 触发进度条动画（需延迟一帧让 display:flex 生效）
+            requestAnimationFrame(function() {
+                requestAnimationFrame(function() {
+                    var fill = document.getElementById('calcBarFill');
+                    if (fill) fill.style.width = '100%';
+                });
+            });
+
+            setTimeout(function() {
+                document.getElementById('calculatingScreen').style.display = 'none';
+                try {
+                    showDashboard(bioAge, actualAge, dimensionScores, totalScore);
+                } catch(e) {
+                    console.error("显示结果出错:", e);
+                    alert("结果显示异常，请刷新页面后重试。错误: " + e.message);
+                }
+            }, 1500);
         }
 
         // ─── showDashboard (新主结果页) ─────────────────────────────────
@@ -1931,8 +2018,17 @@ try {
             var paceLabel = paceNum < 0.9 ? '优秀节奏' : paceNum <= 1.0 ? '健康节奏' : '偏快节奏';
             document.getElementById('dashAgingPaceLabel').textContent = paceLabel;
 
-            // KPI 3: Peer Rank
-            document.getElementById('dashPeerRank').textContent = '前' + window._peerPercentile + '%';
+            // KPI 3: Peer Rank + progress bar
+            var pp = window._peerPercentile;
+            document.getElementById('dashPeerRank').textContent = '前' + pp + '%';
+            document.getElementById('dashPeerBarLabel').textContent = '比同龄精英超过 ' + (100 - pp) + '% 的人';
+            // animate bar (delay 1 frame so element is visible)
+            requestAnimationFrame(function() {
+                requestAnimationFrame(function() {
+                    var bar = document.getElementById('dashPeerBar');
+                    if (bar) bar.style.width = (100 - pp) + '%';
+                });
+            });
 
             // KPI 4: Status
             var st = window._agingStatus;
