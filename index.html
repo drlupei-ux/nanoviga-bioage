@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BioAge Compass - 精准长寿评估</title>
+    <title>BioAge Compass - AI缓龄评估系统</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Noto+Serif+SC:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         /* ─── CSS Variables ─────────────────────────────── */
@@ -927,7 +927,7 @@
     <div class="container">
         <div class="header">
             <h1>BioAge Compass</h1>
-            <p class="subtitle">精准长寿评估系统</p>
+            <p class="subtitle">AI 缓龄评估系统 · AI Aging Optimization System</p>
         </div>
 
         <div class="content">
@@ -935,13 +935,13 @@
                 <div style="min-height:80vh; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:48px 0 40px; text-align:center;">
 
                     <h2 class="hero-title" style="margin-bottom:32px;">
-                        你的年龄只是一个数字<br>真正重要的是身体年龄
+                        您的身体<br>比您以为的老了几岁？
                     </h2>
 
                     <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-bottom:44px;">
-                        <span class="mini-stat">⏱ 10 分钟</span>
-                        <span class="mini-stat">📐 7 大维度</span>
-                        <span class="mini-stat">⚡ 即时报告</span>
+                        <span class="mini-stat">⏱ 5 分钟</span>
+                        <span class="mini-stat">🔓 无需注册</span>
+                        <span class="mini-stat">⚡ 即时生成</span>
                     </div>
 
                     <button class="btn-primary" id="startAssessmentBtn" style="max-width:320px; margin:0 auto;">
@@ -1324,13 +1324,18 @@
                  ══════════════════════════════════════════════════ -->
             <div id="leadCaptureScreen" class="lead-capture-screen" style="display:none;">
 
-                <h2 class="lead-capture-headline">解锁完整缓龄报告</h2>
+                <h2 class="lead-capture-headline">解锁完整缓龄评估报告</h2>
                 <p class="lead-capture-sub">
                     免费获取个性化缓龄分析，仅需留下联系方式<br>
                     报告将由陆大夫团队通过微信1V1发送给您
                 </p>
 
                 <div class="lead-capture-form" id="leadCaptureForm">
+                    <div class="lead-field-group">
+                        <label class="lead-field-required" for="leadName">姓名</label>
+                        <input type="text" id="leadName" class="lead-input"
+                               placeholder="请输入您的姓名" maxlength="30">
+                    </div>
                     <div class="lead-field-group">
                         <label class="lead-field-required" for="leadPhone">手机号</label>
                         <input type="tel" id="leadPhone" class="lead-input"
@@ -2036,16 +2041,24 @@ try {
 
         // ─── submitLeadCapture ───────────────────────────────────────────
         function submitLeadCapture() {
+            var leadName = (document.getElementById('leadName').value  || '').trim();
             var phone  = (document.getElementById('leadPhone').value  || '').trim();
             var email  = (document.getElementById('leadEmail').value  || '').trim();
             var wechat = (document.getElementById('leadWechat').value || '').trim();
+            if (!leadName) {
+                document.getElementById('leadName').style.borderColor = '#C26B5A';
+                document.getElementById('leadName').focus();
+                return;
+            }
             if (!phone) {
+                document.getElementById('leadName').style.borderColor = '';
                 document.getElementById('leadPhone').style.borderColor = '#C26B5A';
                 document.getElementById('leadPhone').focus();
                 return;
             }
+            document.getElementById('leadName').style.borderColor  = '';
             document.getElementById('leadPhone').style.borderColor = '';
-            var contactParts = [phone];
+            var contactParts = [leadName, phone];
             if (email)  contactParts.push('邮箱:' + email);
             if (wechat) contactParts.push('微信:' + wechat);
             var contact = contactParts.join(' | ');
