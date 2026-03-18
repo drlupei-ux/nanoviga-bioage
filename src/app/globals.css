@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Custom scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 4px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: #CBD5E1; border-radius: 9999px; }
+
+/* ── Base resets ──────────────────────────────────────────────────── */
+* { -webkit-font-smoothing: antialiased; }
+
+html, body {
+  @apply bg-clinical-bg text-clinical-navy;
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+/* ── Utility classes ─────────────────────────────────────────────── */
+@layer utilities {
+  .font-display {
+    font-family: var(--font-playfair), 'Georgia', serif;
+  }
+
+  /* Fade-up entrance */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-up {
+    animation: fadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* Stagger helpers */
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
+
+  /* Count-up shimmer for score number */
+  @keyframes shimmer {
+    0%   { opacity: 0.4; }
+    50%  { opacity: 1;   }
+    100% { opacity: 0.4; }
+  }
+  .animate-shimmer {
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+}
+
+/* ── Clinical card base ──────────────────────────────────────────── */
+@layer components {
+  .clinical-card {
+    @apply bg-white rounded-2xl border border-clinical-border p-5 shadow-card;
+  }
+  .clinical-section-label {
+    @apply text-xs tracking-[3px] uppercase text-clinical-secondary font-semibold mb-4;
+  }
+}
