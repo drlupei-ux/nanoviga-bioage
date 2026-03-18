@@ -62,20 +62,42 @@ exports.main = async (event, context) => {
 
   const report = await callDeepSeek(DEEPSEEK_KEY, prompt, 1500);
 
-  // 保存到 CloudBase 数据库
+  // 保存到 CloudBase 数据库（使用内置 HTTP API，无需 npm）
   let dbSaved = false, dbError = null;
   try {
-    const tcb = require('@cloudbase/node-sdk');
-    const app = tcb.init({ env: process.env.TCB_ENV_ID || 'bioage-compass-prod-9chaf35e573d' });
-    await app.database().collection('report_submissions').add({
-      name: name||'', age: age||0, gender: gender||'',
-      bioAge: bioAge||0, score: score||0,
-      dimensionScores: dimensionScores||{},
-      contact: contact||'', assessmentCode: assessmentCode||'',
-      report, createdAt: new Date().toISOString(), status: 'pending'
+    const envId   = process.env.TCB_ENV_ID || 'bioage-compass-prod-9chaf35e573d';
+    const token   = process.env.TCB_TOKEN || process.env.TENCENTCLOUD_SECRETID || '';
+    const dbUrl   = `https://${envId}.ap-shanghai.app.tcloudbase.com/database`;
+    const payload = JSON.stringify({
+      collectionName: 'report_submissions',
+      data: {
+        name: name||'', age: age||0, gender: gender||'',
+        bioAge: bioAge||0, score: score||0,
+        dimensionScores: dimensionScores||{},
+        contact: contact||'', assessmentCode: assessmentCode||'',
+        report, createdAt: new Date().toISOString(), status: 'pending'
+      }
     });
-    dbSaved = true;
-    console.log('Saved to DB');
+    // 使用 CloudBase 云函数内置身份直接调用数据库
+    const tcb = (() => { try { return require('@cloudbase/node-sdk'); } catch(e) { return null; } })();
+    if (tcb) {
+      const app = tcb.init({ env: envId });
+      await app.database().collection('report_submissions').add(JSON.parse(payload).data);
+      dbSaved = true;
+      console.log('Saved to DB via SDK');
+    } else {
+      // 降级：通过内置 HTTP endpoint 保存
+      await new Promise((res, rej) => {
+        const u = new URL(`https://${envId}-1405252881.ap-shanghai.app.tcloudbase.com/saveAssessment`);
+        const body = JSON.stringify({ _collection: 'report_submissions', ...JSON.parse(payload).data });
+        const req = https.request({ hostname: u.hostname, path: u.pathname, method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+        }, r => { let d=''; r.on('data',c=>d+=c); r.on('end',()=>res(d)); });
+        req.on('error', rej); req.write(body); req.end();
+      });
+      dbSaved = true;
+      console.log('Saved to DB via HTTP fallback');
+    }
   } catch(e) { dbError = e.message; console.log('DB error:', e.message); }
 
   // ── 先立即返回报告给用户，SMTP 在后台异步发送 ──────────────────────────────
