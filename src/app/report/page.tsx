@@ -36,7 +36,6 @@ export default function ReportPage() {
     setLoading(true);
 
     const payload = {
-      mode:            "full",
       name:            name.trim(),
       age:             results?.actualAge,
       gender:          results?.profile?.gender,
@@ -49,14 +48,11 @@ export default function ReportPage() {
     };
 
     try {
-      const res = await fetch(
-        "https://bioage-compass-prod-9chaf35e573d-1405252881.ap-shanghai.app.tcloudbase.com/generateReport",
-        {
-          method:  "POST",
-          headers: { "Content-Type": "application/json" },
-          body:    JSON.stringify(payload),
-        }
-      );
+      const res = await fetch("/api/generate-report", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(payload),
+      });
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setStage("success");
