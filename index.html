@@ -568,7 +568,17 @@
             padding: 10px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.4);
         }
-        .wechat-qr-img { width: 150px; height: 150px; display: block; border-radius: 8px; }
+        .wechat-qr-img {
+            width: 150px; height: 150px; display: block; border-radius: 8px;
+            /* ── 手机端长按识别优化 ── */
+            -webkit-touch-callout: default !important; /* iOS 长按弹出菜单 */
+            touch-action: manipulation;                /* 避免手势冲突 */
+            pointer-events: auto;                      /* 确保可点击/长按 */
+            -webkit-user-select: none;
+            user-select: none;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+        }
         .code-reminder {
             font-size: 13px;
             padding: 10px 14px;
@@ -1344,9 +1354,10 @@
                                         <h4>扫码添加「陆大夫逆龄管理」微信</h4>
                                         <p style="margin:4px 0 12px;">微信号：Charlie20850</p>
                                         <div class="qr-wrapper">
-                                            <img src="wechat-qr.png"
+                                            <img src="https://wechat-qrcode-nano-1405252881.cos.ap-shanghai.myqcloud.com/wechat-qr.png"
                                                  alt="陆大夫逆龄管理 微信二维码"
                                                  class="wechat-qr-img"
+                                                 draggable="false"
                                                  onerror="this.style.display='none';document.getElementById('qrFallback').style.display='block'">
                                             <div id="qrFallback" style="display:none; padding:20px; background:var(--bg3); border-radius:10px; text-align:center;">
                                                 <p style="font-size:32px; margin:0;">💬</p>
@@ -1696,8 +1707,10 @@
                         扫码添加陆大夫微信，获取报告详细解读<br>及个性化缓龄干预方案
                     </p>
                     <div class="qr-wrapper" style="display:inline-block; margin-bottom:12px;">
-                        <img src="wechat-qr.png" alt="陆大夫微信二维码" class="wechat-qr-img"
+                        <img src="https://wechat-qrcode-nano-1405252881.cos.ap-shanghai.myqcloud.com/wechat-qr.png"
+                             alt="陆大夫微信二维码" class="wechat-qr-img"
                              style="width:160px; border-radius:8px;"
+                             draggable="false"
                              onerror="this.style.display='none'">
                     </div>
                     <p style="font-size:13px; color:var(--cream-dim);">微信号：Charlie20850</p>
