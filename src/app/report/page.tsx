@@ -1,11 +1,12 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAssessment } from "@/context/AssessmentContext";
 import { AssessmentHeader } from "@/components/AssessmentHeader";
 import { CTAButton } from "@/components/CTAButton";
 import { CheckCircle2, FileText, Phone, User } from "lucide-react";
 import Image from "next/image";
+import type { AssessmentResults } from "@/types/assessment";
 
 const BENEFITS = [
   "完整的7维深度分析报告（PDF格式）",
@@ -19,22 +20,28 @@ export default function ReportPage() {
   const router  = useRouter();
   const { results } = useAssessment();
 
-  // Resolve assessment data: prefer live context, fall back to sessionStorage
-  // This handles the case where user navigates directly to /report or refreshes
-  const resolvedResults = results ?? (() => {
+  // ── Resolve assessment data after mount to avoid SSR/client hydration mismatch ──
+  const [resolvedResults, setResolvedResults] = useState<AssessmentResults | null>(null);
+  useEffect(() => {
+    if (results) { setResolvedResults(results); return; }
     try {
-      const saved = typeof window !== "undefined"
-        ? sessionStorage.getItem("nanoviga_results")
-        : null;
-      return saved ? JSON.parse(saved) : null;
-    } catch { return null; }
-  })();
+      const saved = sessionStorage.getItem("nanoviga_results");
+      if (saved) setResolvedResults(JSON.parse(saved));
+    } catch {}
+  }, [results]);
 
   const [stage,   setStage]   = useState<Stage>("form");
-  const [name,    setName]    = useState(resolvedResults?.profile?.name ?? "");
+  const [name,    setName]    = useState("");
   const [phone,   setPhone]   = useState("");
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState("");
+
+  // Pre-fill name once resolvedResults arrives (client-only, after mount)
+  useEffect(() => {
+    if (resolvedResults?.profile?.name && !name) {
+      setName(resolvedResults.profile.name);
+    }
+  }, [resolvedResults]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
