@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAssessment } from "@/context/AssessmentContext";
 import { DOMAIN_LABELS, getScoreRange } from "@/types/assessment";
@@ -9,6 +9,9 @@ import { RadarHealth } from "@/components/RadarHealth";
 import { FindingCard } from "@/components/FindingCard";
 import { RecommendationCard } from "@/components/RecommendationCard";
 import { CTAButton } from "@/components/CTAButton";
+
+const SAVE_URL =
+  "https://bioage-compass-prod-9chaf35e573d-1405252881.ap-shanghai.app.tcloudbase.com/saveAssessment";
 
 // ── 根据各维度分数生成优先干预建议 ────────────────────────────────────────────
 function buildRecommendations(scores: Record<string, number>) {
@@ -103,6 +106,7 @@ function buildRecommendations(scores: Record<string, number>) {
 export default function ResultsPage() {
   const router  = useRouter();
   const { results, setResults } = useAssessment();
+  const savedRef = useRef(false); // prevent double-fire in React StrictMode
 
   // Guard: if context is empty (React race condition or page refresh),
   // try sessionStorage before redirecting home
@@ -118,6 +122,30 @@ export default function ResultsPage() {
       router.replace("/");
     }
   }, [results, router, setResults]);
+
+  // ── Fire-and-forget: persist assessment to CloudBase on first render ──
+  useEffect(() => {
+    if (!results || savedRef.current) return;
+    savedRef.current = true;
+    fetch(SAVE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name:            results.profile?.name ?? "",
+        age:             results.actualAge,
+        gender:          results.profile?.gender ?? "",
+        bioAge:          results.bioAge,
+        score:           Math.round(results.totalScore),
+        dimensionScores: results.dimensionScores,
+        assessmentCode:  results.assessmentCode,
+        agingRate:       results.agingRate,
+        peerPercentile:  results.peerPercentile,
+        agingStatus:     results.agingStatus?.label ?? "",
+        version:         "PLA-v3-next",
+        createdAt:       results.completedAt ?? new Date().toISOString(),
+      }),
+    }).catch(() => {}); // silent fail — data is always in sessionStorage
+  }, [results]);
 
   if (!results) return null;
 
