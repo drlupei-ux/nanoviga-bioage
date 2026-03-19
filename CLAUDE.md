@@ -68,7 +68,7 @@ Copy uses `navigator.clipboard.writeText()` with `execCommand('copy')` fallback.
 
 HTTP endpoints (no auth required):
 ```
-POST .../saveAssessment   — saves assessment to `bioage_assessments` collection
+POST .../saveAssessment   — saves assessment to `assessments` collection
 POST .../generateReport   — calls DeepSeek AI, saves to `report_submissions`, sends email
 ```
 
