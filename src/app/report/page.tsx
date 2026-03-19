@@ -171,9 +171,14 @@ export default function ReportPage() {
           <h2 className="font-display text-2xl text-clinical-navy mb-1">
             获取您的完整分析报告
           </h2>
-          <p className="text-sm text-clinical-secondary mb-6 leading-relaxed">
+          <p className="text-sm text-clinical-secondary mb-3 leading-relaxed">
             填写以下信息，专业医生将通过微信向您1对1发送完整深度分析报告及个性化干预计划。
           </p>
+          {/* 限时免费标注 */}
+          <div className="inline-flex items-center gap-2 bg-clinical-jade/10 border border-clinical-jade/30 rounded-full px-3 py-1.5 mb-5">
+            <span className="w-1.5 h-1.5 rounded-full bg-clinical-jade animate-pulse" />
+            <span className="text-[11px] text-clinical-jade font-medium">限时免费体验 · 通常价值 ¥399</span>
+          </div>
 
           {/* 报告内容清单 */}
           <div className="clinical-card mb-6 p-4 space-y-2.5">

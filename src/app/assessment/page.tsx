@@ -283,7 +283,11 @@ export default function AssessmentPage() {
     setAnswer(qIndex, score);
     const next = qIndex + 1;
     if (next >= questions.length) {
-      const res = calculateResults(profile!, [...answers.slice(0, qIndex), score]);
+      // Build complete answer array: context answers[0..qIndex-1] + current score
+      const allAnswers = [...answers.slice(0, qIndex), score];
+      const res = calculateResults(profile!, allAnswers);
+      // Write to sessionStorage BEFORE navigation to survive React context race condition
+      try { sessionStorage.setItem("nanoviga_results", JSON.stringify(res)); } catch {}
       setResults(res);
       router.push("/results");
     } else {

@@ -102,11 +102,22 @@ function buildRecommendations(scores: Record<string, number>) {
 // ── 结果页面 ───────────────────────────────────────────────────────────────────
 export default function ResultsPage() {
   const router  = useRouter();
-  const { results } = useAssessment();
+  const { results, setResults } = useAssessment();
 
+  // Guard: if context is empty (React race condition or page refresh),
+  // try sessionStorage before redirecting home
   useEffect(() => {
-    if (!results) router.replace("/");
-  }, [results, router]);
+    if (!results) {
+      try {
+        const saved = sessionStorage.getItem("nanoviga_results");
+        if (saved) {
+          setResults(JSON.parse(saved));
+          return; // wait for re-render with restored results
+        }
+      } catch {}
+      router.replace("/");
+    }
+  }, [results, router, setResults]);
 
   if (!results) return null;
 
@@ -221,10 +232,10 @@ export default function ResultsPage() {
             size="lg"
             onClick={() => router.push("/report")}
           >
-            获取深度分析报告
+            获取深度分析报告 →
           </CTAButton>
           <p className="text-[10px] text-clinical-muted mt-3">
-            专业医生将在24小时内与您联系。
+            限时免费 · 专业医生将在24小时内通过微信与您联系。
           </p>
         </section>
 
