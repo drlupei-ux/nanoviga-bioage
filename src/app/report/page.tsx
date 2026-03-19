@@ -19,8 +19,19 @@ export default function ReportPage() {
   const router  = useRouter();
   const { results } = useAssessment();
 
+  // Resolve assessment data: prefer live context, fall back to sessionStorage
+  // This handles the case where user navigates directly to /report or refreshes
+  const resolvedResults = results ?? (() => {
+    try {
+      const saved = typeof window !== "undefined"
+        ? sessionStorage.getItem("nanoviga_results")
+        : null;
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  })();
+
   const [stage,   setStage]   = useState<Stage>("form");
-  const [name,    setName]    = useState(results?.profile?.name ?? "");
+  const [name,    setName]    = useState(resolvedResults?.profile?.name ?? "");
   const [phone,   setPhone]   = useState("");
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState("");
@@ -35,16 +46,17 @@ export default function ReportPage() {
     setError("");
     setLoading(true);
 
+    // Use resolvedResults (context or sessionStorage) for assessment data
     const payload = {
       name:            name.trim(),
-      age:             results?.actualAge,
-      gender:          results?.profile?.gender,
-      bioAge:          results?.bioAge,
-      score:           Math.round(results?.totalScore ?? 50),
-      dimensionScores: results?.dimensionScores ?? {},
+      age:             resolvedResults?.actualAge,
+      gender:          resolvedResults?.profile?.gender,
+      bioAge:          resolvedResults?.bioAge,
+      score:           Math.round(resolvedResults?.totalScore ?? 50),
+      dimensionScores: resolvedResults?.dimensionScores ?? {},
       contact:         phone.trim(),
       phone:           phone.trim(),
-      assessmentCode:  results?.assessmentCode,
+      assessmentCode:  resolvedResults?.assessmentCode,
     };
 
     try {
@@ -90,13 +102,13 @@ export default function ReportPage() {
             </p>
 
             {/* 评估编号卡片 */}
-            {results?.assessmentCode && (
+            {resolvedResults?.assessmentCode && (
               <div className="bg-clinical-surface border border-clinical-jade/30 rounded-2xl px-4 py-3 mb-6">
                 <p className="text-[9px] tracking-[3px] uppercase text-clinical-jade font-medium mb-1">
                   您的评估编号
                 </p>
                 <p className="font-display text-xl text-clinical-navy tracking-widest">
-                  {results.assessmentCode}
+                  {resolvedResults.assessmentCode}
                 </p>
                 <p className="text-[10px] text-clinical-muted mt-1">
                   添加微信时请备注此编号，方便精准匹配您的报告
@@ -194,13 +206,13 @@ export default function ReportPage() {
           </div>
 
           {/* 生物年龄摘要 */}
-          {results && (
+          {resolvedResults && (
             <div className="flex items-center justify-between bg-clinical-surface border border-clinical-border rounded-2xl px-4 py-3 mb-6">
               <div>
                 <p className="text-[9px] uppercase tracking-widest text-clinical-muted">您的PAI评估结果</p>
                 <p className="font-display text-lg text-clinical-navy mt-0.5">
-                  生物年龄 <strong className="text-clinical-jade">{results.bioAge}</strong>
-                  <span className="text-clinical-muted text-sm font-normal"> / 实际 {results.actualAge} 岁</span>
+                  生物年龄 <strong className="text-clinical-jade">{resolvedResults.bioAge}</strong>
+                  <span className="text-clinical-muted text-sm font-normal"> / 实际 {resolvedResults.actualAge} 岁</span>
                 </p>
               </div>
               <FileText className="w-5 h-5 text-clinical-muted shrink-0" strokeWidth={1.5} />
