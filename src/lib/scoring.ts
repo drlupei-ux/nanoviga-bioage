@@ -6,7 +6,7 @@ export function computeAge(birthYear: number, birthMonth: number): number {
   const now = new Date();
   let age = now.getFullYear() - birthYear;
   if (now.getMonth() + 1 < birthMonth) age -= 1;
-  return Math.max(18, Math.min(80, age));
+  return Math.max(18, Math.min(110, age));
 }
 
 export function computeBMIAdjustment(height: number, weight: number): number {
