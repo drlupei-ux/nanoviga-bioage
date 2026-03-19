@@ -68,15 +68,12 @@ export default function ReportPage() {
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      // Fire-and-forget: update assessments record with contact info
-      fetch(
-        "https://bioage-compass-prod-9chaf35e573d-1405252881.ap-shanghai.app.tcloudbase.com/saveAssessment",
-        {
-          method:  "POST",
-          headers: { "Content-Type": "application/json" },
-          body:    JSON.stringify({ ...payload, hasContact: true }),
-        }
-      ).catch(() => {});
+      // Fire-and-forget: update assessments record with contact info (proxied)
+      fetch("/api/save-assessment", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ ...payload, hasContact: true }),
+      }).catch(() => {});
 
       setStage("success");
     } catch {

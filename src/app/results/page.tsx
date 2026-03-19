@@ -10,8 +10,7 @@ import { FindingCard } from "@/components/FindingCard";
 import { RecommendationCard } from "@/components/RecommendationCard";
 import { CTAButton } from "@/components/CTAButton";
 
-const SAVE_URL =
-  "https://bioage-compass-prod-9chaf35e573d-1405252881.ap-shanghai.app.tcloudbase.com/saveAssessment";
+const SAVE_URL = "/api/save-assessment"; // proxied to avoid browser CORS
 
 // ── 根据各维度分数生成优先干预建议 ────────────────────────────────────────────
 function buildRecommendations(scores: Record<string, number>) {
