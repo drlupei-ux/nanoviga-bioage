@@ -31,7 +31,7 @@ const VARIANT_STYLES = {
 const SIZE_STYLES = {
   sm: "h-9 px-4 text-xs rounded-xl gap-1.5",
   md: "h-11 px-6 text-sm rounded-xl gap-2",
-  lg: "h-13 px-8 text-sm rounded-2xl gap-2",
+  lg: "h-14 px-8 text-sm rounded-2xl gap-2",
 };
 
 export function CTAButton({

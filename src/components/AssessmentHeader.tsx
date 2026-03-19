@@ -28,19 +28,29 @@ export function AssessmentHeader({ progress, stepLabel, hideRight }: Props) {
         </div>
       </div>
 
-      {/* Progress bar — center */}
+      {/* Progress bar — desktop: center; mobile: absolute strip at header bottom */}
       {showProgress && (
-        <div className="flex-1 min-w-0 mx-4 hidden sm:block">
-          <div className="h-[1.5px] bg-clinical-border rounded-full overflow-hidden relative">
+        <>
+          {/* Desktop bar */}
+          <div className="flex-1 min-w-0 mx-4 hidden sm:block">
+            <div className="h-[1.5px] bg-clinical-border rounded-full overflow-hidden relative">
+              <div
+                className="h-full bg-gradient-to-r from-clinical-jade to-clinical-gold rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <p className="text-[9px] text-clinical-muted tracking-widest text-center mt-1.5 uppercase">
+              Assessment in Progress
+            </p>
+          </div>
+          {/* Mobile thin strip at bottom of header */}
+          <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-clinical-border sm:hidden">
             <div
-              className="h-full bg-gradient-to-r from-clinical-jade to-clinical-gold rounded-full transition-all duration-500 ease-out"
+              className="h-full bg-gradient-to-r from-clinical-jade to-clinical-gold transition-all duration-500 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="text-[9px] text-clinical-muted tracking-widest text-center mt-1.5 uppercase">
-            Assessment in Progress
-          </p>
-        </div>
+        </>
       )}
 
       {/* Step counter — right */}
@@ -51,8 +61,9 @@ export function AssessmentHeader({ progress, stepLabel, hideRight }: Props) {
           </span>
         </div>
       )}
+      {/* "Assessment Report" — desktop only */}
       {!showProgress && !hideRight && (
-        <div className="ml-auto shrink-0">
+        <div className="ml-auto shrink-0 hidden sm:block">
           <span className="text-[10px] text-clinical-muted tracking-widest uppercase">
             Assessment Report
           </span>

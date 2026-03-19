@@ -149,7 +149,14 @@ export default function ResultsPage() {
     <div className="min-h-screen bg-clinical-bg">
       <AssessmentHeader hideRight />
 
-      <main className="max-w-xl mx-auto px-4 pt-20 pb-20">
+      {/* ── 手机端固定底部CTA ── 用户不需要滚到底才能行动 ── */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden bg-white/95 backdrop-blur-sm border-t border-clinical-border px-4 pt-3 pb-safe-4">
+        <CTAButton fullWidth size="lg" onClick={() => router.push("/report")}>
+          获取深度分析报告 →
+        </CTAButton>
+      </div>
+
+      <main className="max-w-xl mx-auto px-4 pt-20 pb-28 sm:pb-20">
 
         {/* ── 生物年龄核心展示 ──────────────────────── */}
         <section className="pt-10 pb-8 animate-fade-up">

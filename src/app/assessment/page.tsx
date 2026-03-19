@@ -51,7 +51,8 @@ function ProfileForm({ onDone }: { onDone: (p: Parameters<ReturnType<typeof useA
     });
   }
 
-  const fieldClass = "w-full h-10 px-3 rounded-xl border border-clinical-border bg-white text-sm text-clinical-navy placeholder:text-clinical-muted focus:outline-none focus:ring-2 focus:ring-clinical-jade/40 transition";
+  // text-base (16px) prevents iOS Safari from auto-zooming on input focus
+  const fieldClass = "w-full h-12 px-3 rounded-xl border border-clinical-border bg-white text-base text-clinical-navy placeholder:text-clinical-muted focus:outline-none focus:ring-2 focus:ring-clinical-jade/40 transition";
 
   return (
     <div className="min-h-screen bg-clinical-bg flex flex-col">
@@ -312,7 +313,7 @@ export default function AssessmentPage() {
       {/* 返回按钮 */}
       <button
         onClick={handleBack}
-        className="fixed bottom-6 left-5 flex items-center gap-1 text-[11px] text-clinical-muted hover:text-clinical-secondary transition-colors"
+        className="fixed bottom-safe-6 left-5 flex items-center gap-1 text-[11px] text-clinical-muted hover:text-clinical-secondary transition-colors"
       >
         <ChevronLeft className="w-3.5 h-3.5" />
         上一题

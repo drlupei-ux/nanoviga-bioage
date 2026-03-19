@@ -75,8 +75,9 @@ export default function ReportPage() {
     }
   }
 
+  // text-base (16px) prevents iOS Safari from auto-zooming on input focus
   const fieldClass =
-    "w-full h-10 px-3 rounded-xl border border-clinical-border bg-white text-sm text-clinical-navy placeholder:text-clinical-muted focus:outline-none focus:ring-2 focus:ring-clinical-jade/40 transition";
+    "w-full h-12 px-3 rounded-xl border border-clinical-border bg-white text-base text-clinical-navy placeholder:text-clinical-muted focus:outline-none focus:ring-2 focus:ring-clinical-jade/40 transition";
 
   // ── 成功页面：显示微信二维码 ────────────────────────────────────────────
   if (stage === "success") {
