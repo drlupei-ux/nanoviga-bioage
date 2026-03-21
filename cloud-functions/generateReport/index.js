@@ -43,7 +43,10 @@ exports.main = async (event, context) => {
   const ageDiff = (age || 0) - (bioAge || 0);
   const derivedStatus = ageDiff >= 8 ? '逆龄' : ageDiff >= 3 ? '缓慢衰老' : ageDiff >= -2 ? '正常衰老' : '加速衰老';
   const agingPaceStr = agingPace ? `${agingPace}x` : ((bioAge && age) ? (bioAge/age).toFixed(2) + 'x' : 'N/A');
-  const peerRankStr  = peerPercentile ? `前${peerPercentile}%` : 'N/A';
+  const computedPeerPercentile = (peerPercentile != null && peerPercentile !== '')
+    ? peerPercentile
+    : (bioAge && age ? Math.max(1, Math.min(99, Math.round(50 - (age - bioAge) * 3.5))) : null);
+  const peerRankStr  = computedPeerPercentile ? `前${computedPeerPercentile}%` : 'N/A';
 
   const prompt =
     `你是一位专业的抗衰老健康顾问。请根据以下PLA评估数据，为用户生成一份完整缓龄报告（约600字）。\n\n` +
