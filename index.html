@@ -1216,6 +1216,14 @@
         /* ─── Adjust content for fixed topbar ──────── */
         .content { padding-top: 20px !important; }
         body { padding-top: 60px; }
+
+        @media (max-width: 480px) {
+            .topbar { padding: 10px 16px; }
+            .logo-text { font-size: 11px; letter-spacing: 0.5px; }
+            .logo-sub { font-size: 8px; letter-spacing: 0.5px; }
+            .logo-mark { width: 26px; height: 26px; font-size: 11px; }
+            .step-counter { min-width: 36px; font-size: 9px; }
+        }
     </style>
 </head>
 <body>
@@ -2726,6 +2734,8 @@ try {
                 score:           window._reportScore,
                 dimensionScores: window._reportDimensionScores,
                 assessmentCode:  window._assessmentCode,
+                agingPace:       window._agingPace,
+                peerPercentile:  window._peerPercentile,
                 contact:         contact
             };
 
