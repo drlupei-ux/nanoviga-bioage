@@ -286,6 +286,9 @@ export default function ResultsPage() {
             本报告基于自述生活方式指标生成，不构成医疗诊断。
             如需专业健康建议，请咨询有资质的临床医师。
           </p>
+          <p className="text-[9px] text-clinical-muted mt-4 tracking-[3px] font-medium">
+            生命罗盘 · 陆大夫抗衰管理
+          </p>
         </div>
       </main>
     </div>

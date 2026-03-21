@@ -5,7 +5,6 @@ import { useAssessment } from "@/context/AssessmentContext";
 import { AssessmentHeader } from "@/components/AssessmentHeader";
 import { CTAButton } from "@/components/CTAButton";
 import { CheckCircle2, FileText, Phone, User } from "lucide-react";
-import Image from "next/image";
 import type { AssessmentResults } from "@/types/assessment";
 
 const BENEFITS = [
@@ -140,20 +139,17 @@ export default function ReportPage() {
                 扫码添加微信 · 1对1报告发送
               </p>
 
-              {/* 二维码图片 */}
+              {/* 二维码图片 — 使用原生 img 标签，避免 Next.js 图片优化影响微信长按识别 */}
               <div className="flex justify-center mb-4">
-                <div className="w-56 relative rounded-2xl overflow-hidden border border-clinical-border bg-white">
-                  <Image
-                    src="/wechat-qr.jpg"
-                    alt="陆大夫逆龄管理 微信二维码"
-                    width={672}
-                    height={596}
-                    className="w-full h-auto"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
-                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/wechat-qr.jpg"
+                  alt="陆大夫逆龄管理 微信二维码"
+                  className="w-56 h-auto rounded-2xl border border-clinical-border bg-white"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                  }}
+                />
               </div>
 
               <p className="text-xs text-clinical-secondary font-medium mb-1">

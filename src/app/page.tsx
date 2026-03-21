@@ -31,7 +31,10 @@ export default function LandingPage() {
       <main className="flex-1 flex flex-col items-center justify-center px-5 pt-24 pb-16">
         <div className="max-w-md w-full text-center animate-fade-up">
 
-          {/* Eyebrow */}
+          {/* Brand + Eyebrow */}
+          <p className="text-sm font-semibold text-clinical-navy tracking-[3px] mb-1">
+            生命罗盘
+          </p>
           <p className="text-[10px] tracking-[5px] uppercase text-clinical-jade font-medium mb-6">
             表型年龄指数 · PAI
           </p>
