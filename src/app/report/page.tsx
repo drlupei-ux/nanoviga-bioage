@@ -64,6 +64,8 @@ export default function ReportPage() {
       contact:         phone.trim(),
       phone:           phone.trim(),
       assessmentCode:  resolvedResults?.assessmentCode,
+      agingPace:       resolvedResults?.agingRate,
+      peerPercentile:  resolvedResults?.peerPercentile,
     };
 
     try {

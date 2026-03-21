@@ -14,6 +14,8 @@ export async function POST(req: NextRequest) {
     assessmentCode?: string;
     phone?: string;
     contact?: string;
+    agingPace?: number;
+    peerPercentile?: number;
   };
 
   try {
@@ -22,7 +24,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { name, age, gender, bioAge, score, dimensionScores, assessmentCode, phone, contact } = body;
+  const { name, age, gender, bioAge, score, dimensionScores, assessmentCode, phone, contact, agingPace, peerPercentile } = body;
 
   if (!name || !age || !gender || bioAge === undefined || score === undefined || !dimensionScores) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -41,6 +43,8 @@ export async function POST(req: NextRequest) {
     dimensionScores,
     contact:         phone ?? contact ?? "",
     assessmentCode:  assessmentCode ?? "",
+    agingPace,
+    peerPercentile,
   };
 
   fetch(CLOUDBASE_URL, {

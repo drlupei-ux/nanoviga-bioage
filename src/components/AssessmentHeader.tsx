@@ -18,7 +18,7 @@ export function AssessmentHeader({ progress, stepLabel, hideRight }: Props) {
         <div className="w-7 h-7 rounded-full border border-clinical-gold flex items-center justify-content-center">
           <span className="text-clinical-gold font-display text-xs leading-none w-full text-center">B</span>
         </div>
-        <div className="hidden sm:block">
+        <div>
           <div className="text-clinical-navy font-semibold text-xs tracking-[2px] leading-none">
             Bioage Compass 生命罗盘
           </div>
