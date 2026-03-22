@@ -79,6 +79,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `tailwind.config.ts` | `clinical-*` 颜色 token 值不得改动 |
 | `globals.css` | `.clinical-card`、`.clinical-section-label`、`.pb-safe*` 不得改动 |
 
+### 强制测试门控（Gate）
+
+每次开发循环必须按序执行：
+
+1. `PYTHONPATH=. python3 preflight_check.py` — 结构检查通过
+2. `PYTHONPATH=. python3 tests/run_tests.py` — 全部 PASS
+3. 输出逻辑须经 `risk_engine.evaluate_risk()` 评估 — R2+ 需说明，R3 禁止上线
+4. 任何测试失败 → **停止开发** → 修复 → 重新验证 → 才能继续
+
 ### Commit 规范
 
 格式：`<type>(<scope>): <说明>`，type 为 `fix/feat/docs/style`（`refactor` 需特殊审批）。每次 commit 前必须运行 `npm run build` 确认无 TS 错误。
@@ -127,6 +136,15 @@ npm run dev      # 开发服务器 http://localhost:3000
 npm run build    # 生产构建（部署前必须通过）
 npm run lint     # ESLint
 ```
+
+**测试与风控（每次开发前必须全部通过）：**
+
+```bash
+PYTHONPATH=. python3 preflight_check.py      # 结构完整性检查
+PYTHONPATH=. python3 tests/run_tests.py      # 风控引擎测试（3用例，全 PASS 才能继续）
+```
+
+> `python` 命令不可用，必须用 `python3`，且需设置 `PYTHONPATH=.`。
 
 > `next.config` 必须为 `.js`（CommonJS）— Next.js 14.2.5 不支持 `.ts` 配置文件。
 
@@ -247,6 +265,9 @@ curl -s -X POST 'https://bioage-compass-prod-9chaf35e573d-1405252881.ap-shanghai
 | `src/app/api/generate-report/route.ts` | Vercel → CloudBase 报告生成代理（fire-and-forget） |
 | `src/app/api/save-assessment/route.ts` | Vercel → CloudBase 数据保存代理（await） |
 | `cloud-functions/generateReport/index.js` | 云函数源码（需手动通过控制台部署） |
+| `risk/risk_engine.py` | 风控引擎：`evaluate_risk(text)` → `{score, level}`，R0–R3 四级 |
+| `tests/run_tests.py` | 风控测试套件（3用例：安全建议 / 用药风险 / 危险结论） |
+| `preflight_check.py` | 上线前结构检查（验证 CLAUDE.md + 风控 + 测试文件存在） |
 
 ---
 
