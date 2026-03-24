@@ -50,6 +50,7 @@ const REPORT_ITEMS = [
 
 export default function LandingPage() {
   const router = useRouter();
+  const handleStart = () => router.push("/assessment");
 
   return (
     <div className="min-h-screen bg-clinical-bg flex flex-col">
@@ -96,7 +97,7 @@ export default function LandingPage() {
             <CTAButton
               size="lg"
               fullWidth
-              onClick={() => router.push("/assessment")}
+              onClick={handleStart}
               className="mb-3"
             >
               开始免费评估
@@ -168,8 +169,9 @@ export default function LandingPage() {
 
           {/* ── CBA 升级引导卡 ─────────────────────────────────────────────── */}
           <div className="animate-fade-up3 mb-8">
-            <div
-              className="rounded-2xl border border-clinical-jade/30 bg-gradient-to-br from-clinical-jade/5 to-clinical-jade/10 px-4 py-4 cursor-pointer"
+            <button
+              type="button"
+              className="w-full text-left rounded-2xl border border-clinical-jade/30 bg-gradient-to-br from-clinical-jade/5 to-clinical-jade/10 px-4 py-4"
               onClick={() => router.push("/cba")}
             >
               <p className="text-xs tracking-[3px] uppercase text-clinical-jade font-medium mb-2">
@@ -179,18 +181,18 @@ export default function LandingPage() {
                 想知道血液里的衰老信号？
               </p>
               <p className="text-sm text-clinical-secondary leading-relaxed mb-3">
-                上传体检报告 → PhenoAge 生化生物年龄 + 6维器官精准评估
+                上传体检报告 → PhenoAge 生化生物年龄 + 5维器官精准评估
               </p>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-clinical-jade">CBA 临床生化评估 ¥199</span>
                 <ArrowRight className="w-4 h-4 text-clinical-jade" strokeWidth={1.5} />
               </div>
-            </div>
+            </button>
           </div>
 
           {/* ── 底部 CTA ──────────────────────────────────────────────────── */}
           <div className="animate-fade-up3 mb-6">
-            <CTAButton size="lg" fullWidth onClick={() => router.push("/assessment")}>
+            <CTAButton size="lg" fullWidth onClick={handleStart}>
               开始免费评估
             </CTAButton>
           </div>
