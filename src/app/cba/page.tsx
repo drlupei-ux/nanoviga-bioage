@@ -11,7 +11,7 @@ import { CheckCircle2, FlaskConical, Heart, Target, Microscope } from "lucide-re
 
 const REPORT_ITEMS = [
   "PhenoAge 生物年龄（精确到0.1岁，误差±1.5年）",
-  "6维器官年龄雷达图（代谢 · 炎症 · 肾 · 肝 · 心血管 · 血液）",
+  "5维健康雷达图（代谢活力 · 炎症免疫 · 心血管韧性 · 神经睡眠 · 器官储备）",
   "衰老最快的器官系统 + 可逆性深度分析",
   "同龄排名百分位（您超过了多少同龄人）",
   "3 / 6 / 12 个月精准干预计划",
@@ -21,8 +21,8 @@ const REPORT_ITEMS = [
 const VALUE_CARDS = [
   {
     icon: FlaskConical,
-    title: "6维器官年龄",
-    desc:  "代谢 · 炎症 · 肾 · 肝\n心血管 · 血液",
+    title: "5维器官年龄",
+    desc:  "代谢 · 炎症 · 心血管\n睡眠 · 器官储备",
   },
   {
     icon: Heart,
@@ -79,7 +79,7 @@ export default function CBALandingPage() {
               您的血常规不只是"正常 / 异常"
             </p>
             <p className="text-base text-clinical-secondary leading-loose mb-6">
-              它精确记录了 <strong className="text-clinical-navy">6 个器官系统</strong>的生物年龄。<br />
+              它精确记录了 <strong className="text-clinical-navy">5 个健康维度</strong>的生物年龄。<br />
               哪个器官正在悄悄老化？哪个还有逆转余地？
             </p>
 
