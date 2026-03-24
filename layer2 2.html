@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生物学评估 · 体检报告上传 | 陆大夫</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --ink-light: #444;
+    --ink-faint: #888;
+    --gold: #b8860b;
+    --gold-light: #d4a017;
+    --cream: #faf8f3;
+    --white: #ffffff;
+    --border: #e8e2d4;
+    --green: #27ae60;
+    --blue: #2980b9;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .header {
+    text-align: center;
+    padding: 32px 0 28px;
+    border-bottom: 2px solid var(--gold);
+    margin-bottom: 32px;
+  }
+  .header h1 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 24px;
+    font-weight: 300;
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+  }
+  .header p {
+    font-size: 13px;
+    color: var(--ink-faint);
+    letter-spacing: 1px;
+  }
+  
+  .card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 24px;
+    margin-bottom: 20px;
+  }
+  .card h2 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 17px;
+    margin-bottom: 16px;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .card-icon {
+    font-size: 20px;
+  }
+  
+  .info-list {
+    list-style: none;
+    margin-top: 16px;
+  }
+  .info-item {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--ink-light);
+  }
+  .info-item:last-child { border-bottom: none; }
+  .info-item-icon {
+    font-size: 14px;
+    color: var(--gold);
+    margin-top: 2px;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  .form-label {
+    font-size: 13px;
+    color: var(--ink);
+    margin-bottom: 8px;
+    display: block;
+    font-weight: 500;
+  }
+  .form-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus { border-color: var(--gold); }
+  
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 32px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--cream);
+  }
+  .upload-zone:hover {
+    border-color: var(--gold);
+    background: #fffdf7;
+  }
+  .upload-zone.dragging {
+    border-color: var(--gold);
+    background: #fffdf7;
+  }
+  .upload-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+  }
+  .upload-text {
+    font-size: 14px;
+    color: var(--ink-light);
+    margin-bottom: 6px;
+  }
+  .upload-hint {
+    font-size: 11px;
+    color: var(--ink-faint);
+  }
+  
+  .file-list {
+    margin-top: 16px;
+  }
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--cream);
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+  .file-icon {
+    font-size: 24px;
+  }
+  .file-info {
+    flex: 1;
+  }
+  .file-name {
+    font-size: 13px;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+  .file-size {
+    font-size: 11px;
+    color: var(--ink-faint);
+  }
+  .file-remove {
+    font-size: 18px;
+    color: var(--ink-faint);
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .file-remove:hover { color: #c0392b; }
+  
+  .btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--ink);
+    color: var(--white);
+    border: 2px solid var(--gold);
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: 'Noto Serif SC', serif;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn:hover {
+    background: var(--gold);
+    color: var(--ink);
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .success-panel {
+    display: none;
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .success-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+  }
+  .success-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 20px;
+    margin-bottom: 12px;
+    color: var(--green);
+  }
+  .success-text {
+    font-size: 14px;
+    color: var(--ink-light);
+    line-height: 1.8;
+    margin-bottom: 24px;
+  }
+  
+  .price-tag {
+    display: inline-block;
+    background: rgba(184,134,11,0.1);
+    color: var(--gold);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-left: 8px;
+  }
+  
+  .timeline {
+    margin-top: 20px;
+  }
+  .timeline-item {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .timeline-dot {
+    width: 24px;
+    height: 24px;
+    background: var(--gold);
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .timeline-content {
+    flex: 1;
+    padding-top: 2px;
+  }
+  .timeline-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 3px;
+  }
+  .timeline-desc {
+    font-size: 12px;
+    color: var(--ink-faint);
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>第二层 · 生物学评估</h1>
+    <p>Biological Biomarker Assessment</p>
+  </div>
+  
+  <div id="upload-form">
+    <!-- 服务说明 -->
+    <div class="card">
+      <h2><span class="card-icon">🔬</span> 服务内容<span class="price-tag">¥699</span></h2>
+      <ul class="info-list">
+        <li class="info-item">
+          <span class="info-item-icon">✓</span>
+          <span>基于你的血液生化指标，计算精确生物年龄（误差±1岁）</span>
+        </li>
+        <li class="info-item">
+          <span class="info-item-icon">✓</span>
+          <span>分析炎症、代谢、心血管、激素四大系统老化速度</span>
+        </li>
+        <li class="info-item">
+          <span class="info-item-icon">✓</span>
+          <span>生成12页专业报告 + 陆大夫15分钟1对1视频解读</span>
+        </li>
+        <li class="info-item">
+          <span class="info-item-icon">✓</span>
+          <span>提供个性化干预方案（营养、运动、补充剂）</span>
+        </li>
+      </ul>
+    </div>
+    
+    <!-- 需要上传的报告 -->
+    <div class="card">
+      <h2><span class="card-icon">📋</span> 需要上传的检测报告</h2>
+      <ul class="info-list">
+        <li class="info-item">
+          <span class="info-item-icon">①</span>
+          <span><strong>血常规</strong>（必须）：血红蛋白、白细胞、血小板等</span>
+        </li>
+        <li class="info-item">
+          <span class="info-item-icon">②</span>
+          <span><strong>生化全套</strong>（必须）：血糖、血脂、肝肾功能、尿酸等</span>
+        </li>
+        <li class="info-item">
+          <span class="info-item-icon">③</span>
+          <span><strong>炎症指标</strong>（推荐）：CRP、ESR、铁蛋白等</span>
+        </li>
+        <li class="info-item">
+          <span class="info-item-icon">④</span>
+          <span><strong>激素检测</strong>（可选）：甲状腺、性激素、皮质醇等</span>
+        </li>
+      </ul>
+      <p style="font-size:11px;color:var(--ink-faint);margin-top:12px;font-style:italic;">
+        ⚠️ 报告需在6个月内，如无近期体检，我们可推荐合作检测机构
+      </p>
+    </div>
+    
+    <!-- 个人信息 -->
+    <div class="card">
+      <h2><span class="card-icon">👤</span> 基本信息</h2>
+      <div class="form-group">
+        <label class="form-label">姓名（仅用于报告生成）</label>
+        <input type="text" class="form-input" id="userName" placeholder="请输入姓名">
+      </div>
+      <div class="form-group">
+        <label class="form-label">手机号（用于发送报告和预约解读）</label>
+        <input type="tel" class="form-input" id="userPhone" placeholder="请输入手机号">
+      </div>
+      <div class="form-group">
+        <label class="form-label">微信号（必填，用于1对1解读沟通）</label>
+        <input type="text" class="form-input" id="userWechat" placeholder="请输入微信号">
+      </div>
+    </div>
+    
+    <!-- 上传区域 -->
+    <div class="card">
+      <h2><span class="card-icon">📤</span> 上传体检报告</h2>
+      <input type="file" id="fileInput" accept="image/*,application/pdf" multiple style="display:none">
+      <div class="upload-zone" id="uploadZone">
+        <div class="upload-icon">📄</div>
+        <div class="upload-text">点击上传 或 拖拽文件到这里</div>
+        <div class="upload-hint">支持 JPG、PNG、PDF 格式，单个文件不超过10MB</div>
+      </div>
+      <div class="file-list" id="fileList"></div>
+    </div>
+    
+    <!-- 交付流程 -->
+    <div class="card">
+      <h2><span class="card-icon">⏱️</span> 交付流程</h2>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-dot">1</div>
+          <div class="timeline-content">
+            <div class="timeline-title">上传报告并支付</div>
+            <div class="timeline-desc">提交后24小时内收到确认消息</div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot">2</div>
+          <div class="timeline-content">
+            <div class="timeline-title">陆大夫审核与计算</div>
+            <div class="timeline-desc">3-5个工作日完成数据分析</div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot">3</div>
+          <div class="timeline-content">
+            <div class="timeline-title">发送报告 + 预约解读</div>
+            <div class="timeline-desc">PDF报告 + 15分钟视频解读（微信视频通话）</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 提交按钮 -->
+    <button class="btn" id="submitBtn" disabled>提交报告并支付 ¥699</button>
+  </div>
+  
+  <!-- 成功页面 -->
+  <div id="successPanel" class="success-panel">
+    <div class="success-icon">✅</div>
+    <h3 class="success-title">报告已成功提交！</h3>
+    <p class="success-text">
+      我们已收到您的体检报告<br>
+      陆大夫将在24小时内通过微信与您确认<br>
+      预计3-5个工作日完成分析并发送完整报告
+    </p>
+    <button class="btn" onclick="window.location.href='https://nanoviga.com'">返回首页</button>
+  </div>
+</div>
+
+<!-- CloudBase SDK -->
+<script src="https://imgcache.qq.com/qcloud/cloudbase-js-sdk/1.7.0/cloudbase.full.js"></script>
+<script>
+  // CloudBase 配置
+  const CLOUDBASE_ENV_ID = 'bioage-prod-0g1fctv0d133967d'; // 替换为你的环境ID
+  
+  const app = cloudbase.init({ env: CLOUDBASE_ENV_ID });
+  const auth = app.auth();
+  const db = app.database();
+  const storage = app.uploadFile;
+  
+  // 文件管理
+  let uploadedFiles = [];
+  
+  // 元素
+  const uploadZone = document.getElementById('uploadZone');
+  const fileInput = document.getElementById('fileInput');
+  const fileList = document.getElementById('fileList');
+  const submitBtn = document.getElementById('submitBtn');
+  const userName = document.getElementById('userName');
+  const userPhone = document.getElementById('userPhone');
+  const userWechat = document.getElementById('userWechat');
+  
+  // 点击上传
+  uploadZone.addEventListener('click', () => fileInput.click());
+  
+  // 拖拽上传
+  uploadZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadZone.classList.add('dragging');
+  });
+  uploadZone.addEventListener('dragleave', () => {
+    uploadZone.classList.remove('dragging');
+  });
+  uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadZone.classList.remove('dragging');
+    handleFiles(e.dataTransfer.files);
+  });
+  
+  // 文件选择
+  fileInput.addEventListener('change', (e) => {
+    handleFiles(e.target.files);
+  });
+  
+  // 处理文件
+  function handleFiles(files) {
+    Array.from(files).forEach(file => {
+      if (file.size > 10 * 1024 * 1024) {
+        alert('文件 ' + file.name + ' 超过10MB，请压缩后上传');
+        return;
+      }
+      uploadedFiles.push(file);
+      renderFileList();
+    });
+  }
+  
+  // 渲染文件列表
+  function renderFileList() {
+    fileList.innerHTML = uploadedFiles.map((file, idx) => `
+      <div class="file-item">
+        <div class="file-icon">${file.type.includes('pdf') ? '📕' : '📷'}</div>
+        <div class="file-info">
+          <div class="file-name">${file.name}</div>
+          <div class="file-size">${(file.size / 1024).toFixed(0)} KB</div>
+        </div>
+        <div class="file-remove" onclick="removeFile(${idx})">✕</div>
+      </div>
+    `).join('');
+    validateForm();
+  }
+  
+  // 删除文件
+  function removeFile(idx) {
+    uploadedFiles.splice(idx, 1);
+    renderFileList();
+  }
+  
+  // 表单验证
+  function validateForm() {
+    const valid = userName.value.trim() 
+      && userPhone.value.trim() 
+      && userWechat.value.trim()
+      && uploadedFiles.length > 0;
+    submitBtn.disabled = !valid;
+  }
+  
+  userName.addEventListener('input', validateForm);
+  userPhone.addEventListener('input', validateForm);
+  userWechat.addEventListener('input', validateForm);
+  
+  // 提交
+  submitBtn.addEventListener('click', async () => {
+    submitBtn.disabled = true;
+    submitBtn.textContent = '上传中...';
+    
+    try {
+      // 匿名登录
+      await auth.anonymousAuthProvider().signIn();
+      
+      // 上传文件到云存储
+      const fileUrls = [];
+      for (let file of uploadedFiles) {
+        const res = await app.uploadFile({
+          cloudPath: `reports/${Date.now()}_${file.name}`,
+          filePath: file
+        });
+        fileUrls.push(res.fileID);
+      }
+      
+      // 保存到数据库
+      await db.collection('layer2_assessments').add({
+        userName: userName.value.trim(),
+        userPhone: userPhone.value.trim(),
+        userWechat: userWechat.value.trim(),
+        reportFiles: fileUrls,
+        status: 'pending',
+        createdAt: new Date(),
+        source: new URLSearchParams(window.location.search).get('from') || 'direct'
+      });
+      
+      // 显示成功页面
+      document.getElementById('upload-form').style.display = 'none';
+      document.getElementById('successPanel').style.display = 'block';
+      
+    } catch (err) {
+      alert('提交失败：' + err.message);
+      submitBtn.disabled = false;
+      submitBtn.textContent = '提交报告并支付 ¥699';
+    }
+  });
+</script>
+
+</body>
+</html>

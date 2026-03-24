@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAssessment } from "@/context/AssessmentContext";
-import { DOMAIN_LABELS, getScoreRange } from "@/types/assessment";
+import { getScoreRange } from "@/types/assessment";
 import { mapL1ToFivePillars } from "@/lib/dimensionMapping";
 import { AssessmentHeader } from "@/components/AssessmentHeader";
 import { HeroScore } from "@/components/HeroScore";
@@ -207,8 +207,8 @@ export default function ResultsPage() {
           {statItems.map(({ label, value, unit }) => (
             <div key={label} className="clinical-card text-center p-4">
               <p className="font-display text-xl text-clinical-navy tabular-nums">{value}</p>
-              <p className="text-[9px] text-clinical-muted uppercase tracking-wide mt-0.5">{unit}</p>
-              <p className="text-[10px] text-clinical-secondary mt-1 font-medium">{label}</p>
+              <p className="text-xs text-clinical-muted uppercase tracking-wide mt-0.5">{unit}</p>
+              <p className="text-xs text-clinical-secondary mt-1 font-medium">{label}</p>
             </div>
           ))}
         </section>
@@ -216,7 +216,7 @@ export default function ResultsPage() {
         {/* ── 雷达图 ────────────────────────────────── */}
         <section className="clinical-card mb-6 animate-fade-up delay-200">
           <p className="clinical-section-label">五维健康档案</p>
-          <RadarHealth dimensionScores={mapL1ToFivePillars(dimensionScores)} />
+          <RadarHealth dimensionScores={fivePillarScores} />
         </section>
 
         {/* ── 各维度评估 ────────────────────────────── */}
@@ -269,7 +269,7 @@ export default function ResultsPage() {
           {/* 关联编号提示 */}
           <div className="flex items-center gap-2 mb-4">
             <div className="flex-1 h-px bg-clinical-border" />
-            <span className="text-[10px] text-clinical-muted tracking-wider shrink-0">
+            <span className="text-xs text-clinical-muted tracking-wider shrink-0">
               将与评估编号 {assessmentCode} 关联
             </span>
             <div className="flex-1 h-px bg-clinical-border" />
@@ -289,7 +289,7 @@ export default function ResultsPage() {
 
         {/* ── 页脚信息 ──────────────────────────────── */}
         <div className="mt-10 text-center">
-          <p className="text-[10px] text-clinical-muted leading-loose">
+          <p className="text-xs text-clinical-muted leading-loose">
             评估完成：{formattedDate}
             {profile?.name && ` · ${profile.name}`}
             <br />
@@ -302,18 +302,18 @@ export default function ResultsPage() {
             onClick={copyCode}
             className="mt-3 inline-flex flex-col items-center gap-1 bg-clinical-surface border border-clinical-border rounded-2xl px-5 py-3 cursor-pointer hover:border-clinical-jade/40 transition-colors"
           >
-            <span className="text-[9px] tracking-[3px] uppercase text-clinical-muted">您的评估编号</span>
+            <span className="text-xs tracking-[3px] uppercase text-clinical-muted">您的评估编号</span>
             <span className="font-display text-lg text-clinical-navy tracking-widest">{assessmentCode}</span>
-            <span className="text-[10px] text-clinical-jade font-medium">
+            <span className="text-xs text-clinical-jade font-medium">
               {copied ? "✓ 已复制" : "点击复制 — 添加微信时请备注此编号"}
             </span>
           </button>
 
-          <p className="text-[9px] text-clinical-muted mt-4 max-w-xs mx-auto leading-relaxed">
+          <p className="text-xs text-clinical-muted mt-4 max-w-xs mx-auto leading-relaxed">
             本报告基于自述生活方式指标生成，不构成医疗诊断。
             如需专业健康建议，请咨询有资质的临床医师。
           </p>
-          <p className="text-[9px] text-clinical-muted mt-4 tracking-[3px] font-medium">
+          <p className="text-xs text-clinical-muted mt-4 tracking-[3px] font-medium">
             生命罗盘 · 陆大夫抗衰管理
           </p>
         </div>
