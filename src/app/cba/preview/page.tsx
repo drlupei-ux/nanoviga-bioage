@@ -282,7 +282,7 @@ export default function CBAPreviewPage() {
                 </div>
 
                 <p className="text-xs text-clinical-muted mb-4">
-                  ¥399 · 微信支付 · 支付成功后点击下方按钮
+                  ¥199 · 微信支付 · 支付成功后点击下方按钮
                 </p>
 
                 <CTAButton
