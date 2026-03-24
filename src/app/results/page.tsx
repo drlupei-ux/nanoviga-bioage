@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAssessment } from "@/context/AssessmentContext";
 import { DOMAIN_LABELS, getScoreRange } from "@/types/assessment";
+import { mapL1ToFivePillars } from "@/lib/dimensionMapping";
 import { AssessmentHeader } from "@/components/AssessmentHeader";
 import { HeroScore } from "@/components/HeroScore";
 import { RadarHealth } from "@/components/RadarHealth";
@@ -218,8 +219,8 @@ export default function ResultsPage() {
 
         {/* ── 雷达图 ────────────────────────────────── */}
         <section className="clinical-card mb-6 animate-fade-up delay-200">
-          <p className="clinical-section-label">七维健康档案</p>
-          <RadarHealth dimensionScores={dimensionScores} />
+          <p className="clinical-section-label">五维健康档案</p>
+          <RadarHealth dimensionScores={mapL1ToFivePillars(dimensionScores)} />
         </section>
 
         {/* ── 各维度评估 ────────────────────────────── */}
