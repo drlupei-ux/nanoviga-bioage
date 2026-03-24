@@ -1,5 +1,6 @@
 "use client";
 // [CHANGE 2026-03-23] 原因：CBA 预览页+双模式支付弹窗（联动/独立），器官年龄模糊预览+解锁门控 | 影响范围：src/app/cba/preview/page.tsx（新建）
+// [CHANGE 2026-03-24] 原因：价格¥399→¥199、QR码路径更新、text-xs/[10px]→text-xs适配45+ | 影响范围：src/app/cba/preview/page.tsx
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -118,7 +119,7 @@ export default function CBAPreviewPage() {
         <div className="max-w-sm w-full animate-fade-up">
 
           {/* ── 页头 ─────────────────────────────────────────────────────── */}
-          <p className="text-[10px] tracking-[5px] uppercase text-clinical-jade font-medium mb-4">
+          <p className="text-xs tracking-[5px] uppercase text-clinical-jade font-medium mb-4">
             评估预览
           </p>
           <h2 className="font-display text-2xl text-clinical-navy mb-1">
@@ -136,7 +137,7 @@ export default function CBAPreviewPage() {
                 <p className="text-xs text-clinical-navy font-medium">解锁后查看精确数值</p>
               </div>
             </div>
-            <p className="text-[9px] uppercase tracking-[3px] text-clinical-muted mb-1">生物年龄区间</p>
+            <p className="text-xs uppercase tracking-[3px] text-clinical-muted mb-1">生物年龄区间</p>
             <p className="font-display text-4xl text-clinical-navy mb-1 blur-sm select-none">
               {Math.floor(resolved.phenoAge - 1.5)}–{Math.ceil(resolved.phenoAge + 1.5)} 岁
             </p>
@@ -153,7 +154,7 @@ export default function CBAPreviewPage() {
                 <p className="text-xs text-clinical-navy font-medium">解锁后查看器官雷达图</p>
               </div>
             </div>
-            <p className="text-[9px] uppercase tracking-[3px] text-clinical-muted mb-3">6维器官年龄雷达</p>
+            <p className="text-xs uppercase tracking-[3px] text-clinical-muted mb-3">6维器官年龄雷达</p>
             <div className="h-44 blur-sm pointer-events-none select-none">
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart data={radarData} outerRadius={60}>
@@ -177,7 +178,7 @@ export default function CBAPreviewPage() {
 
           {/* ── 器官维度预览列表（只显示风险等级，不显示具体岁数）──────── */}
           <div className="clinical-card p-4 mb-6">
-            <p className="text-[9px] uppercase tracking-[3px] text-clinical-muted mb-3">
+            <p className="text-xs uppercase tracking-[3px] text-clinical-muted mb-3">
               器官维度风险概览
             </p>
             <div className="space-y-2">
@@ -189,14 +190,14 @@ export default function CBAPreviewPage() {
                     <span className="text-sm text-clinical-navy">{dim}</span>
                     <div className="flex items-center gap-2">
                       <span
-                        className="text-[11px] font-medium"
+                        className="text-xs font-medium"
                         style={{ color: ORGAN_RISK_HEX[riskLevel] }}
                       >
                         {ORGAN_RISK_LABELS[riskLevel]}
                       </span>
                       <div className="flex items-center gap-1">
                         <Lock className="w-3 h-3 text-clinical-muted" strokeWidth={1.5} />
-                        <span className="text-[10px] text-clinical-muted">具体年龄已锁定</span>
+                        <span className="text-xs text-clinical-muted">具体年龄已锁定</span>
                       </div>
                     </div>
                   </div>
@@ -208,9 +209,9 @@ export default function CBAPreviewPage() {
           {/* ── 解锁 CTA ──────────────────────────────────────────────────── */}
           <CTAButton size="lg" fullWidth onClick={() => setShowModal(true)} className="mb-2">
             <Unlock className="w-4 h-4 shrink-0" strokeWidth={1.5} />
-            解锁完整评估报告 &nbsp;¥399
+            解锁完整评估报告 &nbsp;¥199
           </CTAButton>
-          <p className="text-[10px] text-clinical-muted text-center leading-relaxed mb-6">
+          <p className="text-xs text-clinical-muted text-center leading-relaxed mb-6">
             支付后 24 小时内通过微信发送完整报告
           </p>
 
@@ -236,7 +237,7 @@ export default function CBAPreviewPage() {
             {/* 弹窗头部 */}
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-display text-lg text-clinical-navy">
-                {paymentStage === "qr" ? "微信扫码支付 ¥399" : "✓ 确认支付"}
+                {paymentStage === "qr" ? "微信扫码支付 ¥199" : "✓ 确认支付"}
               </h3>
               <button
                 type="button"
@@ -259,8 +260,8 @@ export default function CBAPreviewPage() {
                 <div className="flex justify-center mb-4">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/wechat-pay-399.png"
-                    alt="微信收款码 ¥399"
+                    src="/wechat-pay-199.png"
+                    alt="微信收款码 ¥199"
                     className="w-52 h-auto rounded-2xl border border-clinical-border bg-white"
                     onError={e => {
                       (e.target as HTMLImageElement).style.display = "none";
@@ -280,7 +281,7 @@ export default function CBAPreviewPage() {
                   </div>
                 </div>
 
-                <p className="text-[11px] text-clinical-muted mb-4">
+                <p className="text-xs text-clinical-muted mb-4">
                   ¥399 · 微信支付 · 支付成功后点击下方按钮
                 </p>
 
@@ -300,13 +301,13 @@ export default function CBAPreviewPage() {
                 {/* 模式 A：联动（有 l1RefCode）—— 只展示编号 + 手机后4位 */}
                 {isLinked && (
                   <div className="bg-clinical-jade-lt border border-clinical-jade/30 rounded-2xl px-4 py-3">
-                    <p className="text-[9px] tracking-[3px] uppercase text-clinical-jade font-medium mb-1">
+                    <p className="text-xs tracking-[3px] uppercase text-clinical-jade font-medium mb-1">
                       您的 L1 评估编号
                     </p>
                     <p className="font-display text-xl text-clinical-navy tracking-widest">
                       {resolved.l1RefCode}
                     </p>
-                    <p className="text-[10px] text-clinical-muted mt-1">
+                    <p className="text-xs text-clinical-muted mt-1">
                       此编号将与生化报告绑定，陆大夫直接通过微信发送综合报告
                     </p>
                   </div>
@@ -316,7 +317,7 @@ export default function CBAPreviewPage() {
                 {!isLinked && (
                   <>
                     <div>
-                      <label className="block text-[10px] uppercase tracking-widest text-clinical-muted mb-1.5">
+                      <label className="block text-xs uppercase tracking-widest text-clinical-muted mb-1.5">
                         姓名 *
                       </label>
                       <input
@@ -328,10 +329,10 @@ export default function CBAPreviewPage() {
                     </div>
 
                     <div className="bg-clinical-amber-lt border border-clinical-amber/20 rounded-2xl px-3 py-2.5">
-                      <p className="text-[11px] text-clinical-amber font-medium mb-1">
+                      <p className="text-xs text-clinical-amber font-medium mb-1">
                         请先添加陆大夫微信，再提交
                       </p>
-                      <p className="text-[10px] text-clinical-secondary leading-relaxed">
+                      <p className="text-xs text-clinical-secondary leading-relaxed">
                         报告将通过微信 1对1 发送，请确保已添加好友。
                       </p>
                       <div className="flex justify-center mt-3">
@@ -349,7 +350,7 @@ export default function CBAPreviewPage() {
 
                 {/* 手机后4位（两种模式都需要）*/}
                 <div>
-                  <label className="block text-[10px] uppercase tracking-widest text-clinical-muted mb-1.5">
+                  <label className="block text-xs uppercase tracking-widest text-clinical-muted mb-1.5">
                     手机号后 4 位 *
                   </label>
                   <input
@@ -361,7 +362,7 @@ export default function CBAPreviewPage() {
                     value={phoneSuffix}
                     onChange={e => setPhoneSuffix(e.target.value.replace(/\D/g, "").slice(0, 4))}
                   />
-                  <p className="text-[10px] text-clinical-muted mt-1 leading-relaxed">
+                  <p className="text-xs text-clinical-muted mt-1 leading-relaxed">
                     {isLinked
                       ? "管理员将通过 L1 编号匹配您的微信联系人，手机后4位用于核验支付身份。"
                       : "管理员通过微信收款记录（显示手机尾号）核验支付，与报告精准匹配。"}
@@ -385,7 +386,7 @@ export default function CBAPreviewPage() {
 
                 <button
                   type="button"
-                  className="w-full text-[11px] text-clinical-muted underline underline-offset-2 py-1"
+                  className="w-full text-xs text-clinical-muted underline underline-offset-2 py-1"
                   onClick={() => setPaymentStage("qr")}
                 >
                   ← 返回查看收款二维码
