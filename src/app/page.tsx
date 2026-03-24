@@ -191,10 +191,19 @@ export default function LandingPage() {
           </div>
 
           {/* ── 底部 CTA ──────────────────────────────────────────────────── */}
-          <div className="animate-fade-up3 mb-6">
+          <div className="animate-fade-up3 mb-3">
             <CTAButton size="lg" fullWidth onClick={handleStart}>
               开始免费评估
             </CTAButton>
+          </div>
+          <div className="animate-fade-up3 mb-6">
+            <button
+              type="button"
+              className="w-full h-12 rounded-2xl border border-clinical-jade/40 text-clinical-jade text-sm font-medium hover:bg-clinical-jade/5 transition-colors"
+              onClick={() => router.push("/cba")}
+            >
+              已有体检报告？解锁器官级生物年龄 ¥199 →
+            </button>
           </div>
 
           {/* Disclaimer */}
