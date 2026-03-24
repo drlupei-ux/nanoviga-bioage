@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useRef } from "react";
+// [CHANGE 2026-03-24] 原因：展示层5维统一 — 各维度评估结果、干预建议、编号复制 | 影响范围：src/app/results/page.tsx
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAssessment } from "@/context/AssessmentContext";
 import { DOMAIN_LABELS, getScoreRange } from "@/types/assessment";
@@ -13,14 +14,30 @@ import { CTAButton } from "@/components/CTAButton";
 
 const SAVE_URL = "/api/save-assessment"; // proxied to avoid browser CORS
 
-// ── 根据各维度分数生成优先干预建议 ────────────────────────────────────────────
+// ── 根据5维得分生成优先干预建议 ────────────────────────────────────────────
 function buildRecommendations(scores: Record<string, number>) {
   const RECS: Record<string, {
     title:       string;
     description: string;
     timeframe:   string;
   }[]> = {
-    "运动能力": [
+    "代谢活力": [
+      {
+        title: "抗炎饮食模式调整",
+        description:
+          "采用以全食、植物为主、富含omega-3的饮食模式，降低与加速衰老相关的系统性炎症标志物，改善细胞能量代谢。",
+        timeframe: "生物标志物改善：3个月",
+      },
+    ],
+    "炎症免疫": [
+      {
+        title: "结构化压力恢复训练",
+        description:
+          "每天10分钟正念冥想或腹式呼吸练习。长期压力升高皮质醇，加速端粒缩短与免疫性衰老，建议同步减少环境毒素暴露。",
+        timeframe: "心率变异度（HRV）可测改善：6～8周",
+      },
+    ],
+    "心血管韧性": [
       {
         title: "结构化有氧训练方案",
         description:
@@ -34,23 +51,7 @@ function buildRecommendations(scores: Record<string, number>) {
         timeframe: "可观察改善：8～12周",
       },
     ],
-    "身心平衡": [
-      {
-        title: "结构化压力恢复训练",
-        description:
-          "每天10分钟正念冥想或腹式呼吸练习。长期压力升高皮质醇，加速端粒缩短与免疫性衰老。",
-        timeframe: "心率变异度（HRV）可测改善：6～8周",
-      },
-    ],
-    "营养代谢": [
-      {
-        title: "抗炎饮食模式调整",
-        description:
-          "采用以全食、植物为主、富含omega-3的饮食模式，降低与加速衰老相关的系统性炎症标志物。",
-        timeframe: "生物标志物改善：3个月",
-      },
-    ],
-    "睡眠质量": [
+    "神经睡眠": [
       {
         title: "睡眠结构优化",
         description:
@@ -58,28 +59,12 @@ function buildRecommendations(scores: Record<string, number>) {
         timeframe: "昼夜节律重建：2～3周",
       },
     ],
-    "遗传因素": [
+    "器官储备": [
       {
         title: "强化预防性筛查",
         description:
-          "启动每年一次的全面代谢与心血管指标检测。早期发现可显著改变遗传风险轨迹。",
+          "启动每年一次的全面代谢与心血管指标检测。早期发现可显著改变遗传风险轨迹，建议同步评估感官功能。",
         timeframe: "建议30天内安排检查",
-      },
-    ],
-    "环境因素": [
-      {
-        title: "环境毒素暴露管理",
-        description:
-          "评估并减少空气污染物、内分泌干扰物和紫外线暴露。这些是氧化应激负荷的可干预因素。",
-        timeframe: "可立即启动防护措施",
-      },
-    ],
-    "感官衰老": [
-      {
-        title: "感官健康综合检查",
-        description:
-          "安排眼科与听力评估。未经干预的感官退化与认知加速衰老密切相关，建议尽早筛查。",
-        timeframe: "建议60天内预约",
       },
     ],
   };
@@ -95,7 +80,7 @@ function buildRecommendations(scores: Record<string, number>) {
       range === "attention" ? "High" : range === "average" ? "Moderate" : "Supporting";
     const recs = RECS[dim] ?? [];
     recs.forEach((r) => {
-      ranked.push({ domain: DOMAIN_LABELS[dim] ?? dim, impact, ...r });
+      ranked.push({ domain: dim, impact, ...r });
     });
   });
 
@@ -147,6 +132,8 @@ export default function ResultsPage() {
     }).catch(() => {}); // silent fail — data is always in sessionStorage
   }, [results]);
 
+  const [copied, setCopied] = useState(false);
+
   if (!results) return null;
 
   const {
@@ -162,7 +149,15 @@ export default function ResultsPage() {
     completedAt,
   } = results;
 
-  const recommendations = buildRecommendations(dimensionScores);
+  const fivePillarScores = mapL1ToFivePillars(dimensionScores);
+  const recommendations  = buildRecommendations(fivePillarScores);
+
+  function copyCode() {
+    navigator.clipboard.writeText(assessmentCode).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {});
+  }
   const formattedDate   = new Date(completedAt).toLocaleDateString("zh-CN", {
     year: "numeric", month: "long", day: "numeric",
   });
@@ -227,7 +222,7 @@ export default function ResultsPage() {
         <section className="mb-6 animate-fade-up delay-300">
           <p className="clinical-section-label">各维度评估结果</p>
           <div className="space-y-3">
-            {Object.entries(dimensionScores).map(([dim, score]) => (
+            {Object.entries(fivePillarScores).map(([dim, score]) => (
               <FindingCard key={dim} dimension={dim} score={score} />
             ))}
           </div>
@@ -280,10 +275,23 @@ export default function ResultsPage() {
             评估完成：{formattedDate}
             {profile?.name && ` · ${profile.name}`}
             <br />
-            评估编号：<strong className="text-clinical-secondary">{assessmentCode}</strong>
-            {" "}· 实际年龄：<strong className="text-clinical-secondary">{actualAge} 岁</strong>
+            实际年龄：<strong className="text-clinical-secondary">{actualAge} 岁</strong>
           </p>
-          <p className="text-[9px] text-clinical-muted mt-3 max-w-xs mx-auto leading-relaxed">
+
+          {/* 评估编号 — 可点击复制 */}
+          <button
+            type="button"
+            onClick={copyCode}
+            className="mt-3 inline-flex flex-col items-center gap-1 bg-clinical-surface border border-clinical-border rounded-2xl px-5 py-3 cursor-pointer hover:border-clinical-jade/40 transition-colors"
+          >
+            <span className="text-[9px] tracking-[3px] uppercase text-clinical-muted">您的评估编号</span>
+            <span className="font-display text-lg text-clinical-navy tracking-widest">{assessmentCode}</span>
+            <span className="text-[10px] text-clinical-jade font-medium">
+              {copied ? "✓ 已复制" : "点击复制 — 添加微信时请备注此编号"}
+            </span>
+          </button>
+
+          <p className="text-[9px] text-clinical-muted mt-4 max-w-xs mx-auto leading-relaxed">
             本报告基于自述生活方式指标生成，不构成医疗诊断。
             如需专业健康建议，请咨询有资质的临床医师。
           </p>

@@ -7,10 +7,11 @@ import { CTAButton } from "@/components/CTAButton";
 import { CheckCircle2, FileText, Phone, User } from "lucide-react";
 import type { AssessmentResults } from "@/types/assessment";
 
+// [CHANGE 2026-03-24] 原因：展示层5维统一 — 报告页文案、字体适配45+ | 影响范围：src/app/report/page.tsx
 const BENEFITS = [
-  "完整的7维深度分析报告（PDF格式）",
+  "完整的5维深度分析报告",
   "3/6/12个月个性化行动计划",
-  "有机会获得与专业医生1对1咨询",
+  "专业医生1对1微信解读",
 ];
 
 type Stage = "form" | "success";
@@ -121,13 +122,13 @@ export default function ReportPage() {
             {/* 评估编号卡片 */}
             {resolvedResults?.assessmentCode && (
               <div className="bg-clinical-surface border border-clinical-jade/30 rounded-2xl px-4 py-3 mb-6">
-                <p className="text-[9px] tracking-[3px] uppercase text-clinical-jade font-medium mb-1">
+                <p className="text-xs tracking-[3px] uppercase text-clinical-jade font-medium mb-1">
                   您的评估编号
                 </p>
                 <p className="font-display text-xl text-clinical-navy tracking-widest">
                   {resolvedResults.assessmentCode}
                 </p>
-                <p className="text-[10px] text-clinical-muted mt-1">
+                <p className="text-xs text-clinical-muted mt-1">
                   添加微信时请备注此编号，方便精准匹配您的报告
                 </p>
               </div>
@@ -135,7 +136,7 @@ export default function ReportPage() {
 
             {/* 微信二维码卡片 */}
             <div className="clinical-card p-6 mb-6">
-              <p className="text-[9px] tracking-[4px] uppercase text-clinical-muted mb-4">
+              <p className="text-xs tracking-[4px] uppercase text-clinical-muted mb-4">
                 扫码添加微信 · 1对1报告发送
               </p>
 
@@ -155,14 +156,14 @@ export default function ReportPage() {
               <p className="text-xs text-clinical-secondary font-medium mb-1">
                 陆大夫逆龄管理
               </p>
-              <p className="text-[11px] text-clinical-muted leading-relaxed">
+              <p className="text-xs text-clinical-muted leading-relaxed">
                 扫一扫上面的二维码，加我为朋友
               </p>
             </div>
 
             {/* 提示说明 */}
             <div className="bg-clinical-surface border border-clinical-border rounded-2xl px-4 py-3 mb-6 text-left">
-              <p className="text-[10px] text-clinical-muted leading-relaxed">
+              <p className="text-xs text-clinical-muted leading-relaxed">
                 <span className="text-clinical-jade font-medium">· </span>添加后请备注：<strong className="text-clinical-secondary">姓名 + 手机后4位 + 评估编号</strong><br />
                 <span className="text-clinical-jade font-medium">· </span>报告将在工作日24小时内发送<br />
                 <span className="text-clinical-jade font-medium">· </span>如有问题可直接微信咨询
@@ -191,7 +192,7 @@ export default function ReportPage() {
         <div className="max-w-sm w-full animate-fade-up">
 
           {/* 头部文案 */}
-          <p className="text-[10px] tracking-[5px] uppercase text-clinical-jade font-medium mb-4">
+          <p className="text-xs tracking-[5px] uppercase text-clinical-jade font-medium mb-4">
             深度报告申请
           </p>
           <h2 className="font-display text-2xl text-clinical-navy mb-1">
@@ -203,12 +204,12 @@ export default function ReportPage() {
           {/* 限时免费标注 */}
           <div className="inline-flex items-center gap-2 bg-clinical-jade/10 border border-clinical-jade/30 rounded-full px-3 py-1.5 mb-5">
             <span className="w-1.5 h-1.5 rounded-full bg-clinical-jade animate-pulse" />
-            <span className="text-[11px] text-clinical-jade font-medium">限时免费体验 · 通常价值 ¥399</span>
+            <span className="text-xs text-clinical-jade font-medium">限时免费体验 · 通常价值 ¥399</span>
           </div>
 
           {/* 报告内容清单 */}
           <div className="clinical-card mb-6 p-4 space-y-2.5">
-            <p className="text-[9px] uppercase tracking-[3px] text-clinical-muted mb-3">
+            <p className="text-xs uppercase tracking-[3px] text-clinical-muted mb-3">
               报告包含内容
             </p>
             {BENEFITS.map((b) => (
@@ -223,7 +224,7 @@ export default function ReportPage() {
           {resolvedResults && (
             <div className="flex items-center justify-between bg-clinical-surface border border-clinical-border rounded-2xl px-4 py-3 mb-6">
               <div>
-                <p className="text-[9px] uppercase tracking-widest text-clinical-muted">您的PAI评估结果</p>
+                <p className="text-xs uppercase tracking-widest text-clinical-muted">您的生物年龄评估结果</p>
                 <p className="font-display text-lg text-clinical-navy mt-0.5">
                   生物年龄 <strong className="text-clinical-jade">{resolvedResults.bioAge}</strong>
                   <span className="text-clinical-muted text-sm font-normal"> / 实际 {resolvedResults.actualAge} 岁</span>

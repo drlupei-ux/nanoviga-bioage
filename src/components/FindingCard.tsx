@@ -1,4 +1,5 @@
 "use client";
+// [CHANGE 2026-03-24] 原因：展示层5维统一 — FindingCard支持5维品牌维度 | 影响范围：src/components/FindingCard.tsx
 import {
   Activity,
   Brain,
@@ -7,6 +8,8 @@ import {
   Dna,
   Wind,
   Eye,
+  Shield,
+  Heart,
   LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,6 +19,7 @@ import {
 } from "@/types/assessment";
 
 const ICON_MAP: Record<string, LucideIcon> = {
+  // 7维（内部）
   "运动能力": Activity,
   "身心平衡": Brain,
   "营养代谢": Leaf,
@@ -23,6 +27,12 @@ const ICON_MAP: Record<string, LucideIcon> = {
   "遗传因素": Dna,
   "环境因素": Wind,
   "感官衰老": Eye,
+  // 5维（展示层）
+  "代谢活力":   Leaf,
+  "炎症免疫":   Shield,
+  "心血管韧性": Heart,
+  "神经睡眠":   Moon,
+  "器官储备":   Dna,
 };
 
 const FINDING_COPY: Record<string, Record<"optimal" | "average" | "attention", string>> = {
@@ -60,6 +70,32 @@ const FINDING_COPY: Record<string, Record<"optimal" | "average" | "attention", s
     optimal:   "感觉功能保存良好，与健康生物衰老轨迹一致。",
     average:   "轻微感觉变化，属实际年龄正常范围，建议保持定期检查。",
     attention: "感觉灵敏度出现明显变化，建议安排眼科和听力专科评估。",
+  },
+  // 5维展示层文案
+  "代谢活力": {
+    optimal:   "代谢功能处于最优状态，饮食质量与营养摄入支持良好的细胞能量代谢。",
+    average:   "代谢指标基本正常，优化饮食结构与微量营养素密度可进一步改善。",
+    attention: "检测到代谢效率下降信号，建议进行营养评估与饮食调整，优先干预。",
+  },
+  "炎症免疫": {
+    optimal:   "免疫调节与应激管理均处于良好水平，全身性炎症负荷低。",
+    average:   "存在轻度炎症信号，建议增加抗炎食物摄入并关注压力管理。",
+    attention: "检测到慢性低度炎症风险，可能加速组织老化，建议积极干预。",
+  },
+  "心血管韧性": {
+    optimal:   "心肺耐力与循环功能维护良好，是预测健康寿命最强的生理指标之一。",
+    average:   "心血管功能处于正常范围，规律有氧训练可显著提升长寿指标。",
+    attention: "检测到心肺功能不足或体力活动缺乏，建议制定渐进式有氧运动方案。",
+  },
+  "神经睡眠": {
+    optimal:   "睡眠结构支持有效的神经修复与认知恢复，神经系统功能优秀。",
+    average:   "睡眠和认知功能在正常范围，优化昼夜节律可进一步提升恢复质量。",
+    attention: "检测到睡眠紊乱或感觉退化信号，建议进行专科评估，及时干预。",
+  },
+  "器官储备": {
+    optimal:   "家族健康史与遗传背景未显示明显风险因素，器官储备功能良好。",
+    average:   "存在部分遗传风险指标，建议定期进行预防性筛查以降低风险。",
+    attention: "检测到较明显的遗传风险因素，建议加强定期临床监测与预防干预。",
   },
 };
 
