@@ -151,6 +151,7 @@ export default function ResultsPage() {
 
   const fivePillarScores = mapL1ToFivePillars(dimensionScores);
   const recommendations  = buildRecommendations(fivePillarScores);
+  const weakestPillar    = Object.entries(fivePillarScores).sort(([, a], [, b]) => a - b)[0][0];
 
   function copyCode() {
     navigator.clipboard.writeText(assessmentCode).then(() => {
@@ -247,25 +248,42 @@ export default function ResultsPage() {
         </section>
 
         {/* ── 升级CTA ───────────────────────────────── */}
-        <section className="clinical-card text-center animate-fade-up delay-500">
-          <p className="text-[10px] tracking-[4px] uppercase text-clinical-jade font-medium mb-2">
-            深度分析报告
+        <section className="clinical-card animate-fade-up delay-500">
+          <p className="text-xs tracking-[4px] uppercase text-clinical-jade font-medium mb-3">
+            下一步 · L2 精密评估
           </p>
-          <h3 className="font-display text-xl text-clinical-navy mb-2">
-            器官年龄评估
+          <h3 className="font-display text-xl text-clinical-navy mb-3">
+            用血液数据验证您的评估结论
           </h3>
-          <p className="text-[12px] text-clinical-secondary leading-relaxed mb-5 max-w-xs mx-auto">
-            通过体检报告结合 PhenoAge 算法，以及专业医生判断，精确量化您的生物学器官年龄。
-          </p>
+
+          {/* 动态弱项说明 */}
+          <div className="bg-clinical-surface border border-clinical-border rounded-xl px-4 py-3 mb-4">
+            <p className="text-sm text-clinical-secondary leading-relaxed">
+              您的评估显示{" "}
+              <strong className="text-clinical-navy">{weakestPillar}</strong>{" "}
+              是当前最需关注的维度。
+              CBA 将从血液生化层面交叉验证这一发现，精确量化 5 个器官系统的生物年龄。
+            </p>
+          </div>
+
+          {/* 关联编号提示 */}
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex-1 h-px bg-clinical-border" />
+            <span className="text-[10px] text-clinical-muted tracking-wider shrink-0">
+              将与评估编号 {assessmentCode} 关联
+            </span>
+            <div className="flex-1 h-px bg-clinical-border" />
+          </div>
+
           <CTAButton
             fullWidth
             size="lg"
-            onClick={() => router.push("/report")}
+            onClick={() => router.push(`/cba?ref=${assessmentCode}`)}
           >
-            获取深度分析报告 →
+            解锁器官级生物年龄 ¥199 →
           </CTAButton>
-          <p className="text-[10px] text-clinical-muted mt-3">
-            限时免费 · 专业医生将在24小时内通过微信与您联系。
+          <p className="text-xs text-clinical-muted mt-3 text-center">
+            无需额外抽血 · 使用您现有体检报告 · 24小时内报告送达
           </p>
         </section>
 
