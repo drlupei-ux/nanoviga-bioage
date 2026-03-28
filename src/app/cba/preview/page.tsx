@@ -1,6 +1,7 @@
 "use client";
 // [CHANGE 2026-03-23] 原因：CBA 预览页+双模式支付弹窗（联动/独立），器官年龄模糊预览+解锁门控 | 影响范围：src/app/cba/preview/page.tsx（新建）
 // [CHANGE 2026-03-24] 原因：价格¥399→¥199、QR码路径更新、text-xs/[10px]→text-xs适配45+ | 影响范围：src/app/cba/preview/page.tsx
+// [CHANGE 2026-03-28] 原因：联动提交时从sessionStorage读取PLA数据随payload发送，避免云函数DB查询失败 | 影响范围：src/app/cba/preview/page.tsx
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -67,9 +68,36 @@ export default function CBAPreviewPage() {
     setSubmitting(true);
     setSubmitError("");
 
+    // 联动时从 sessionStorage 读取 PLA 数据，随 payload 一起发送给云函数
+    // 避免云函数内部 DB 查询可能遭遇的权限/时序问题
+    let l1PlaData: {
+      assessmentCode: string; bioAge: number; age: number; score: number;
+      dimensionScores: Record<string, number>; agingRate?: number; peerPercentile?: number;
+    } | null = null;
+    if (isLinked) {
+      try {
+        const saved = sessionStorage.getItem("nanoviga_results");
+        if (saved) {
+          const pla = JSON.parse(saved);
+          if (pla?.assessmentCode === (resolved.l1RefCode ?? l1RefCode)) {
+            l1PlaData = {
+              assessmentCode:  pla.assessmentCode,
+              bioAge:          pla.bioAge,
+              age:             pla.actualAge,
+              score:           Math.round(pla.totalScore),
+              dimensionScores: pla.dimensionScores,
+              agingRate:       pla.agingRate,
+              peerPercentile:  pla.peerPercentile,
+            };
+          }
+        }
+      } catch { /* sessionStorage 不可用时静默跳过 */ }
+    }
+
     const payload = {
       assessmentCode: resolved.assessmentCode,
       l1RefCode:      resolved.l1RefCode ?? null,
+      l1PlaData:      l1PlaData ?? undefined,
       name:           isLinked ? undefined : name.trim(),
       phoneSuffix,
       actualAge:      resolved.actualAge,

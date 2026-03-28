@@ -1,0 +1,13 @@
+{
+  "envId": "bioage-compass-prod-9chaf35e573d",
+  "functionRoot": ".",
+  "functions": [
+    {
+      "name": "analyzeCBA",
+      "timeout": 60,
+      "runtime": "Nodejs18.15",
+      "handler": "index.main",
+      "installDependency": true
+    }
+  ]
+}

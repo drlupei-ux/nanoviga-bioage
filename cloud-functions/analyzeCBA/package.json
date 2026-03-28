@@ -1,0 +1,9 @@
+{
+  "name": "analyzeCBA",
+  "version": "1.0.0",
+  "description": "CBA cloud function - biomarker extraction, report generation, email notification",
+  "main": "index.js",
+  "dependencies": {
+    "@cloudbase/node-sdk": "^2.0.0"
+  }
+}

@@ -1,4 +1,5 @@
 // [CHANGE 2026-03-23] 原因：CBA 提交 API 路由，保存到 CloudBase + fire-and-forget 报告生成 | 影响范围：src/app/api/cba/submit/route.ts（新建）
+// [CHANGE 2026-03-28] 原因：透传 l1PlaData（PLA评估数据），供云函数直接使用无需DB查询 | 影响范围：src/app/api/cba/submit/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
 const CLOUDBASE_URL =
@@ -8,6 +9,7 @@ export async function POST(req: NextRequest) {
   let body: {
     assessmentCode?:  string;
     l1RefCode?:       string | null;
+    l1PlaData?:       Record<string, unknown> | null;
     name?:            string;
     phoneSuffix?:     string;
     actualAge?:       number;
@@ -24,7 +26,7 @@ export async function POST(req: NextRequest) {
   }
 
   const {
-    assessmentCode, l1RefCode, name, phoneSuffix,
+    assessmentCode, l1RefCode, l1PlaData, name, phoneSuffix,
     actualAge, gender, phenoAge, organAges, biomarkers,
   } = body;
 
@@ -36,6 +38,7 @@ export async function POST(req: NextRequest) {
     mode:           "cba_submit",
     assessmentCode,
     l1RefCode:      l1RefCode ?? null,
+    l1PlaData:      l1PlaData ?? null,
     name:           name ?? null,
     phoneSuffix,
     actualAge,
