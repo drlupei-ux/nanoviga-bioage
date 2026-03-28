@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   let body: {
     assessmentCode?:  string;
     l1RefCode?:       string | null;
-    l1PlaData?:       Record<string, unknown> | null;
+    l1PlaData?:       { assessmentCode: string; bioAge: number; age: number; score: number; dimensionScores: Record<string, number>; agingRate?: number; peerPercentile?: number; name?: string | null } | null;
     name?:            string;
     phoneSuffix?:     string;
     actualAge?:       number;

@@ -38,9 +38,11 @@ exports.main = async (event, context) => {
   // ── 模式2：提交处理（保存 DB + 查询 PLA + 生成报告 + 邮件通知）──────────────
   if (mode === 'cba_submit') {
     const {
-      assessmentCode, l1RefCode, l1PlaData, name, phoneSuffix,
+      assessmentCode, l1RefCode, l1PlaData, name: rawName, phoneSuffix,
       actualAge, gender, phenoAge, organAges, biomarkers, submittedAt
     } = data;
+    // 联动用户：姓名优先从 l1PlaData.name（PLA sessionStorage 带来），其次用 rawName
+    const name = rawName || (l1PlaData && l1PlaData.name) || null;
 
     // 初始化 TCB SDK（云函数内置身份，不传显式凭证避免覆盖）
     let tcbApp = null;

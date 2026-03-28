@@ -70,16 +70,21 @@ export default function CBAPreviewPage() {
 
     // 联动时从 sessionStorage 读取 PLA 数据，随 payload 一起发送给云函数
     // 避免云函数内部 DB 查询可能遭遇的权限/时序问题
+    // effectiveRef: 优先用 CBAResults 内嵌的 l1RefCode（刷新后也能恢复），
+    //               降级用 CBAContext 的 l1RefCode（正常导航时）
+    const effectiveRef = resolved.l1RefCode ?? l1RefCode;
     let l1PlaData: {
       assessmentCode: string; bioAge: number; age: number; score: number;
       dimensionScores: Record<string, number>; agingRate?: number; peerPercentile?: number;
+      name?: string | null;
     } | null = null;
-    if (isLinked) {
+    if (effectiveRef) {
       try {
         const saved = sessionStorage.getItem("nanoviga_results");
         if (saved) {
           const pla = JSON.parse(saved);
-          if (pla?.assessmentCode === (resolved.l1RefCode ?? l1RefCode)) {
+          // 严格匹配 assessmentCode，防止使用过期 PLA 数据
+          if (pla?.assessmentCode === effectiveRef) {
             l1PlaData = {
               assessmentCode:  pla.assessmentCode,
               bioAge:          pla.bioAge,
@@ -88,6 +93,7 @@ export default function CBAPreviewPage() {
               dimensionScores: pla.dimensionScores,
               agingRate:       pla.agingRate,
               peerPercentile:  pla.peerPercentile,
+              name:            pla.profile?.name ?? null,  // 联动用户姓名（preview不单独收集）
             };
           }
         }
@@ -96,7 +102,7 @@ export default function CBAPreviewPage() {
 
     const payload = {
       assessmentCode: resolved.assessmentCode,
-      l1RefCode:      resolved.l1RefCode ?? null,
+      l1RefCode:      effectiveRef ?? null,
       l1PlaData:      l1PlaData ?? undefined,
       name:           isLinked ? undefined : name.trim(),
       phoneSuffix,
