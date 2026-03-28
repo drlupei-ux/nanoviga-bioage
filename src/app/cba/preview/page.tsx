@@ -1,7 +1,7 @@
 "use client";
 // [CHANGE 2026-03-23] 原因：CBA 预览页+双模式支付弹窗（联动/独立），器官年龄模糊预览+解锁门控 | 影响范围：src/app/cba/preview/page.tsx（新建）
 // [CHANGE 2026-03-24] 原因：价格¥399→¥199、QR码路径更新、text-xs/[10px]→text-xs适配45+ | 影响范围：src/app/cba/preview/page.tsx
-// [CHANGE 2026-03-28] 原因：联动提交时从sessionStorage读取PLA数据随payload发送，避免云函数DB查询失败 | 影响范围：src/app/cba/preview/page.tsx
+// [CHANGE 2026-03-28] 原因：effectiveRef提升到组件级，isLinked统一派生，修复刷新后context丢失导致联动断裂 | 影响范围：src/app/cba/preview/page.tsx
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -50,8 +50,10 @@ export default function CBAPreviewPage() {
   const [submitting,     setSubmitting]     = useState(false);
   const [submitError,    setSubmitError]    = useState("");
 
-  // 联动模式（有 l1RefCode）
-  const isLinked = !!l1RefCode;
+  // effectiveRef: 优先用 CBAResults 内嵌值（刷新后 sessionStorage 恢复），降级用 context 值
+  // isLinked 统一从 effectiveRef 派生，保证 UI 渲染逻辑与提交逻辑语义一致
+  const effectiveRef = resolved?.l1RefCode ?? l1RefCode;
+  const isLinked = !!effectiveRef;
 
   // ── 支付后提交 ────────────────────────────────────────────────────────────
   async function handleConfirmSubmit(e: React.FormEvent) {
@@ -70,9 +72,7 @@ export default function CBAPreviewPage() {
 
     // 联动时从 sessionStorage 读取 PLA 数据，随 payload 一起发送给云函数
     // 避免云函数内部 DB 查询可能遭遇的权限/时序问题
-    // effectiveRef: 优先用 CBAResults 内嵌的 l1RefCode（刷新后也能恢复），
-    //               降级用 CBAContext 的 l1RefCode（正常导航时）
-    const effectiveRef = resolved.l1RefCode ?? l1RefCode;
+    // effectiveRef 在组件级已计算（resolved?.l1RefCode ?? l1RefCode）
     let l1PlaData: {
       assessmentCode: string; bioAge: number; age: number; score: number;
       dimensionScores: Record<string, number>; agingRate?: number; peerPercentile?: number;
@@ -102,7 +102,7 @@ export default function CBAPreviewPage() {
 
     const payload = {
       assessmentCode: resolved.assessmentCode,
-      l1RefCode:      effectiveRef ?? null,
+      l1RefCode:      effectiveRef,
       l1PlaData:      l1PlaData ?? undefined,
       name:           isLinked ? undefined : name.trim(),
       phoneSuffix,
