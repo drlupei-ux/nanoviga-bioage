@@ -161,6 +161,27 @@ exports.main = async (event, context) => {
   return errResp('Unknown mode: ' + mode);
 };
 
+// ─── CBA 6D 临床维度 → 5D 品牌展示维度映射 ───────────────────────────────────
+// 前端 calculateCBAResults 输出 6 个临床维度；报告/邮件统一使用 5 个品牌维度
+// 若已是 5D（含"代谢活力"键）则直接透传，兼容测试 payload
+function mapCba6DTo5D(organAges) {
+  if (!organAges) return null;
+  if ('代谢活力' in organAges) return organAges;          // 已是 5D，直接返回
+  const o = organAges;
+  const renal   = o['肾脏功能'];
+  const hepatic = o['肝脏功能'];
+  const organReserve = (renal != null && hepatic != null)
+    ? Math.round((Number(renal) + Number(hepatic)) / 2)
+    : (renal ?? hepatic ?? null);
+  return {
+    '代谢活力':   o['代谢健康'],
+    '炎症免疫':   o['炎症状态'],
+    '心血管韧性': o['心血管健康'],
+    '神经睡眠':   o['血液健康'],   // 血液携氧能力 → 神经/睡眠功能
+    '器官储备':   organReserve,    // 肾脏+肝脏功能均值
+  };
+}
+
 // ─── PLA 7D 内部维度 → 5D 品牌展示维度映射 ──────────────────────────────────
 // 与前端 src/lib/dimensionMapping.ts mapL1ToFivePillars() 保持一致
 function mapPlaTo5D(dimensionScores) {
@@ -209,8 +230,9 @@ async function generateCBAReport(key, { assessmentCode, l1RefCode, name, actualA
   const genderStr  = gender === 'male' ? '男' : '女';
   const ageDiff    = actualAge - phenoAge;
   const diffStr    = ageDiff > 0 ? `比实际年龄年轻 ${ageDiff.toFixed(1)} 岁` : ageDiff < 0 ? `比实际年龄偏大 ${Math.abs(ageDiff).toFixed(1)} 岁` : '与实际年龄相当';
-  const organLines = organAges
-    ? Object.entries(organAges).map(([dim, age]) => `${dim}: 器官年龄 ${age} 岁（差值 ${Number(age)-actualAge > 0 ? '+' : ''}${Number(age)-actualAge} 岁）`).join('\n')
+  const organAges5D = mapCba6DTo5D(organAges);
+  const organLines = organAges5D
+    ? Object.entries(organAges5D).map(([dim, age]) => `${dim}: 器官年龄 ${age} 岁（差值 ${Number(age)-actualAge > 0 ? '+' : ''}${Number(age)-actualAge} 岁）`).join('\n')
     : '';
   const bioLines = biomarkers
     ? Object.entries(biomarkers).filter(([,v]) => v !== null).map(([k, v]) => `${k}: ${v}`).join('  |  ')
@@ -244,11 +266,11 @@ async function generateCBAReport(key, { assessmentCode, l1RefCode, name, actualA
     `你是一位专业的抗衰老临床医生。请根据以下 CBA（临床生化生物年龄）评估数据，为用户生成一份完整的器官级生物年龄分析报告（约750字）。${plaSection}\n\n` +
     `用户信息：${name || '用户'}，${actualAge}岁，${genderStr}\n` +
     `PhenoAge 生物年龄：${phenoAge}岁（${diffStr}）\n` +
-    `6维器官年龄：\n${organLines}\n` +
+    `5维器官年龄：\n${organLines}\n` +
     `关键生化指标：${bioLines}\n\n` +
     `报告必须包含以下5个部分，每部分使用加粗标题：\n\n` +
     `1. **核心发现**：PhenoAge 与实际年龄差距解读，整体衰老状态评级\n\n` +
-    `2. **6维器官年龄深度分析**：逐一解读每个维度，分析关键指标临床意义\n\n` +
+    `2. **5维器官年龄深度分析**：逐一解读每个品牌维度（代谢活力/炎症免疫/心血管韧性/神经睡眠/器官储备），分析关键指标临床意义\n\n` +
     `3. **衰老速度与同龄排名**：与同龄人群对比，通俗表达百分位意义\n\n` +
     `4. **优先干预路径**（ROI从高到低）：3个干预维度，每个给出2条具体建议${plaData ? '；若PLA数据印证了某项风险，需明确说明' : ''}\n\n` +
     `5. **3/6/12个月复查计划**：分阶段复查指标与节点${plaData ? '\n\n6. **PLA×CBA 双维度交叉洞察**：基于两套数据得出的综合结论，说明互相印证或反差之处，以及比单独评估更精准的具体发现' : ''}\n\n` +
@@ -266,8 +288,9 @@ function buildEmailSubject({ name, phoneSuffix, l1RefCode, assessmentCode, pheno
 // ─── 邮件内容构建（含 PLA 融合摘要）────────────────────────────────────────────
 function buildEmailBody({ assessmentCode, l1RefCode, name, phoneSuffix, actualAge, gender, phenoAge, organAges, biomarkers, report, plaData }) {
   const genderStr  = gender === 'male' ? '男' : '女';
-  const organLines = organAges
-    ? Object.entries(organAges).map(([dim, age]) => `  ${dim}：${age}岁（${Number(age)-actualAge > 0 ? '+' : ''}${Number(age)-actualAge}岁）`).join('\n')
+  const organAges5D = mapCba6DTo5D(organAges);
+  const organLines = organAges5D
+    ? Object.entries(organAges5D).map(([dim, age]) => `  ${dim}：${age}岁（${Number(age)-actualAge > 0 ? '+' : ''}${Number(age)-actualAge}岁）`).join('\n')
     : '  （无数据）';
   const bioLines = biomarkers
     ? Object.entries(biomarkers).filter(([,v]) => v !== null).map(([k, v]) => `  ${k}: ${v}`).join('\n')
@@ -304,7 +327,7 @@ PhenoAge 生物年龄：${phenoAge}岁
 实际年龄：${actualAge}岁
 差值：${(actualAge - phenoAge) > 0 ? '年轻' : '偏大'}${Math.abs(actualAge - phenoAge).toFixed(1)}岁
 
-6维器官年龄：
+5维器官年龄：
 ${organLines}
 
 关键生化指标：
