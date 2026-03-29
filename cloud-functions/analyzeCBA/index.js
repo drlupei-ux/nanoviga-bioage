@@ -132,11 +132,13 @@ exports.main = async (event, context) => {
     }
 
     // 3. 生成 DeepSeek 完整报告（融合 PLA 数据）
+    // 6D→5D 映射在此一次性完成，report 和 email 共享同一映射结果
+    const organAges5D = mapCba6DTo5D(organAges);
     let report = '';
     try {
       report = await generateCBAReport(DEEPSEEK_KEY, {
         assessmentCode, l1RefCode, name, actualAge, gender,
-        phenoAge, organAges, biomarkers, plaData
+        phenoAge, organAges: organAges5D, biomarkers, plaData
       });
     } catch(e) { console.log('Report gen error:', e.message); report = '（报告生成失败，请管理员手动触发）'; }
 
@@ -144,7 +146,7 @@ exports.main = async (event, context) => {
     let emailResult = 'skipped';
     if (EMAIL_AUTH_CODE) {
       const subject = buildEmailSubject({ name, phoneSuffix, l1RefCode, assessmentCode, phenoAge, actualAge });
-      const body    = buildEmailBody({ assessmentCode, l1RefCode, name, phoneSuffix, actualAge, gender, phenoAge, organAges, biomarkers, report, plaData });
+      const body    = buildEmailBody({ assessmentCode, l1RefCode, name, phoneSuffix, actualAge, gender, phenoAge, organAges: organAges5D, biomarkers, report, plaData });
       try {
         await sendSmtpEmail163(ADMIN_EMAIL, EMAIL_AUTH_CODE, ADMIN_EMAIL, subject, body);
         emailResult = 'sent';
@@ -170,6 +172,7 @@ function mapCba6DTo5D(organAges) {
   const o = organAges;
   const renal   = o['肾脏功能'];
   const hepatic = o['肝脏功能'];
+  // 器官储备 = 肾脏+肝脏均值；若仅有其一则以单值代入（不影响量级，仅降低精度）
   const organReserve = (renal != null && hepatic != null)
     ? Math.round((Number(renal) + Number(hepatic)) / 2)
     : (renal ?? hepatic ?? null);
@@ -230,9 +233,9 @@ async function generateCBAReport(key, { assessmentCode, l1RefCode, name, actualA
   const genderStr  = gender === 'male' ? '男' : '女';
   const ageDiff    = actualAge - phenoAge;
   const diffStr    = ageDiff > 0 ? `比实际年龄年轻 ${ageDiff.toFixed(1)} 岁` : ageDiff < 0 ? `比实际年龄偏大 ${Math.abs(ageDiff).toFixed(1)} 岁` : '与实际年龄相当';
-  const organAges5D = mapCba6DTo5D(organAges);
-  const organLines = organAges5D
-    ? Object.entries(organAges5D).map(([dim, age]) => `${dim}: 器官年龄 ${age} 岁（差值 ${Number(age)-actualAge > 0 ? '+' : ''}${Number(age)-actualAge} 岁）`).join('\n')
+  // organAges already mapped to 5D by caller; use directly
+  const organLines = organAges
+    ? Object.entries(organAges).map(([dim, age]) => `${dim}: 器官年龄 ${age} 岁（差值 ${Number(age)-actualAge > 0 ? '+' : ''}${Number(age)-actualAge} 岁）`).join('\n')
     : '';
   const bioLines = biomarkers
     ? Object.entries(biomarkers).filter(([,v]) => v !== null).map(([k, v]) => `${k}: ${v}`).join('  |  ')
@@ -288,9 +291,9 @@ function buildEmailSubject({ name, phoneSuffix, l1RefCode, assessmentCode, pheno
 // ─── 邮件内容构建（含 PLA 融合摘要）────────────────────────────────────────────
 function buildEmailBody({ assessmentCode, l1RefCode, name, phoneSuffix, actualAge, gender, phenoAge, organAges, biomarkers, report, plaData }) {
   const genderStr  = gender === 'male' ? '男' : '女';
-  const organAges5D = mapCba6DTo5D(organAges);
-  const organLines = organAges5D
-    ? Object.entries(organAges5D).map(([dim, age]) => `  ${dim}：${age}岁（${Number(age)-actualAge > 0 ? '+' : ''}${Number(age)-actualAge}岁）`).join('\n')
+  // organAges already mapped to 5D by caller; use directly
+  const organLines = organAges
+    ? Object.entries(organAges).map(([dim, age]) => `  ${dim}：${age}岁（${Number(age)-actualAge > 0 ? '+' : ''}${Number(age)-actualAge}岁）`).join('\n')
     : '  （无数据）';
   const bioLines = biomarkers
     ? Object.entries(biomarkers).filter(([,v]) => v !== null).map(([k, v]) => `  ${k}: ${v}`).join('\n')
