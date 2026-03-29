@@ -103,11 +103,11 @@ exports.main = async (event, context) => {
     }
   } catch(e) { dbError = e.message; console.log('DB error:', e.message); }
 
-  // ── 先立即返回报告给用户，SMTP 在后台异步发送 ──────────────────────────────
-  // 注：fire-and-forget 模式，不 await，避免 SMTP 延迟阻塞 HTTP 响应
+  // [CHANGE 2026-03-27] 原因：fire-and-forget 导致云函数返回后 SMTP 连接被终止，邮件静默丢失 | 影响范围：cloud-functions/generateReport/index.js
+  let emailResult = 'skipped';
   if (EMAIL_AUTH_CODE) {
     const ageDiff2 = age - bioAge;
-    const diffStr = ageDiff2 > 0 ? `年轻${ageDiff2}岁 🎉` : ageDiff2 < 0 ? `偏大${Math.abs(ageDiff2)}岁` : '相当';
+    const diffStr = ageDiff2 > 0 ? `年轻${ageDiff2}岁` : ageDiff2 < 0 ? `偏大${Math.abs(ageDiff2)}岁` : '相当';
     const subject = `【缓龄报告】${name||'新客户'} | ${contact||'未留联系'} | ${derivedStatus} | ${assessmentCode||''}`.slice(0,60);
     const body =
 `============================
@@ -139,15 +139,19 @@ ${report}
 ⚡ 请通过微信1V1发送完整报告给该客户
 ============================`;
 
-    // fire-and-forget：不 await，不阻塞返回
-    sendSmtpEmail163(ADMIN_EMAIL, EMAIL_AUTH_CODE, ADMIN_EMAIL, subject, body)
-      .then(() => console.log('Email sent OK'))
-      .catch(e => console.log('Email failed:', e.message));
+    try {
+      await sendSmtpEmail163(ADMIN_EMAIL, EMAIL_AUTH_CODE, ADMIN_EMAIL, subject, body);
+      emailResult = 'sent';
+      console.log('Email sent OK');
+    } catch(e) {
+      emailResult = 'failed: ' + e.message;
+      console.log('Email failed:', e.message);
+    }
   } else {
     console.log('EMAIL_163_AUTH_CODE not set, skipping email');
   }
 
-  return okResp({ report, saved: dbSaved, dbError });
+  return okResp({ report, saved: dbSaved, dbError, emailResult });
 };
 
 // ─── DeepSeek API 调用 ────────────────────────────────────────────────────────
@@ -254,7 +258,7 @@ function sendSmtpEmail163(fromEmail, authCode, toEmail, subject, textBody) {
 
     socket.on('error', finish);
     socket.on('close', () => finish(null));
-    setTimeout(() => { console.log('SMTP timeout'); finish(null); }, 25000);
+    setTimeout(() => { console.log('SMTP timeout'); finish(new Error('SMTP timeout')); }, 25000);
   });
 }
 
