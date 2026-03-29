@@ -50,6 +50,7 @@
 | **LIMIT-03** | PLA 联动依赖 `sessionStorage`（同浏览器/同标签页），跨设备或新标签页时回退 DB 查询；若 DB 权限受限，`plaLinked: false` | P2 | 在 `/cba` 落地页落入 DB 查询时读取 assessments 集合 |
 | **LIMIT-04** | CBA 预览页（器官年龄模糊卡）展示的是 6 维临床标签（`代谢健康 / 炎症状态 / 肾脏功能…`），与品牌 5 维体系视觉不一致 | P2 | 在 `preview/page.tsx` 加入 `mapCba6DTo5D()` 展示层转换 |
 | **LIMIT-05** | Vercel 10 s 超时：PLA `full` 报告生成约 15 s，采用 fire-and-forget，用户侧无感知，但邮件发送依赖云函数运行完成 | P3 | 升级 Vercel Pro 或将报告生成移至 CloudBase 函数直接调用 |
+| ~~CloudBase 超时~~ | ~~SMTP 25s + DeepSeek ~10s 可能超出函数限制~~ | ~~已验证无问题~~ | `generateReport` 300s / `analyzeCBA` 60s，均已足够，**误报已关闭** |
 | **LIMIT-06** | OCR 提取准确率依赖图片质量，模糊/截图/多页 PDF 可能需用户手动补填 | P3 | 提示用户上传规范，增加字段级置信度校验 |
 | **LIMIT-07** | L3 FMA / L4 ECA 未开发，升级路径暂无下游承接 | Backlog | 参见产品路线图 `BioAge_Compass_Project_Blueprint.md` |
 
