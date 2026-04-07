@@ -1,5 +1,6 @@
 "use client";
 // [CHANGE 2026-03-24] 原因：展示层5维统一 — 各维度评估结果、干预建议、编号复制 | 影响范围：src/app/results/page.tsx
+// [CHANGE 2026-04-07] 原因：转化优化v1.1，首屏标题+风险时间轴+锁定洞察模块 | 影响范围：src/app/results/page.tsx
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAssessment } from "@/context/AssessmentContext";
@@ -11,6 +12,7 @@ import { RadarHealth } from "@/components/RadarHealth";
 import { FindingCard } from "@/components/FindingCard";
 import { RecommendationCard } from "@/components/RecommendationCard";
 import { CTAButton } from "@/components/CTAButton";
+import { Lock } from "lucide-react";
 
 const SAVE_URL = "/api/save-assessment"; // proxied to avoid browser CORS
 
@@ -182,8 +184,19 @@ export default function ResultsPage() {
 
       <main className="max-w-xl mx-auto px-4 pt-20 pb-28 sm:pb-20">
 
+        {/* ── 首屏标题（关键窗口期）──────────────────── */}
+        <div className="pt-10 pb-4 text-center animate-fade-up">
+          <p className="text-xs clinical-section-label mb-2">关键窗口期</p>
+          <h2 className="text-lg font-semibold text-clinical-navy mb-1">
+            你的身体正在发生变化
+          </h2>
+          <p className="text-sm text-clinical-secondary leading-relaxed">
+            当前状态优于平均水平，但部分系统已开始出现下降趋势
+          </p>
+        </div>
+
         {/* ── 生物年龄核心展示 ──────────────────────── */}
-        <section className="pt-10 pb-8 animate-fade-up">
+        <section className="pb-8 animate-fade-up">
           <HeroScore bioAge={bioAge} actualAge={actualAge} assessmentCode={assessmentCode} />
         </section>
 
@@ -247,13 +260,65 @@ export default function ResultsPage() {
           </div>
         </section>
 
+        {/* ── 趋势预测（风险时间轴）─────────────────── */}
+        <section className="clinical-card mb-6 animate-fade-up delay-500">
+          <p className="clinical-section-label mb-3">趋势预测</p>
+          <h3 className="text-base font-semibold text-clinical-navy mb-4">
+            如果继续当前状态
+          </h3>
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <span className="text-xs font-medium text-clinical-amber bg-clinical-amber-lt border border-clinical-amber/25 px-2 py-0.5 rounded-full shrink-0 mt-0.5">
+                3年内
+              </span>
+              <p className="text-sm text-clinical-secondary">可能出现明显变化</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-xs font-medium text-clinical-danger bg-clinical-danger-lt border border-clinical-danger/25 px-2 py-0.5 rounded-full shrink-0 mt-0.5">
+                5年内
+              </span>
+              <p className="text-sm text-clinical-secondary">进入下降阶段</p>
+            </div>
+          </div>
+        </section>
+
+        {/* ── 锁定洞察模块（待解锁，引导CBA）────────── */}
+        <section className="clinical-card mb-6 border-clinical-amber/30 animate-fade-up delay-500">
+          <p className="clinical-section-label mb-3">待解锁</p>
+          <h3 className="text-base font-semibold text-clinical-navy mb-4">
+            你还没有看到的关键信息
+          </h3>
+          <ul className="space-y-3 mb-5">
+            {[
+              "哪个器官正在最先老化",
+              "是否存在早期风险信号",
+              "未来3–5年的变化趋势",
+              "最优干预优先级",
+            ].map((item) => (
+              <li key={item} className="flex items-center gap-3 text-sm text-clinical-secondary/60">
+                <span className="w-4 h-4 rounded-full border border-clinical-secondary/30 flex items-center justify-center shrink-0">
+                  <Lock className="w-2.5 h-2.5" />
+                </span>
+                {item}
+              </li>
+            ))}
+          </ul>
+          <CTAButton
+            fullWidth
+            size="lg"
+            onClick={() => router.push(`/cba?ref=${assessmentCode}`)}
+          >
+            查看完整分析与行动方案 ¥199 →
+          </CTAButton>
+        </section>
+
         {/* ── 升级CTA ───────────────────────────────── */}
         <section className="clinical-card animate-fade-up delay-500">
           <p className="text-xs tracking-[4px] uppercase text-clinical-jade font-medium mb-3">
             下一步 · L2 精密评估
           </p>
           <h3 className="font-display text-xl text-clinical-navy mb-3">
-            用血液数据验证您的评估结论
+            你的器官年龄，只展示了表面
           </h3>
 
           {/* 动态弱项说明 */}

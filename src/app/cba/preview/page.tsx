@@ -2,6 +2,7 @@
 // [CHANGE 2026-03-23] 原因：CBA 预览页+双模式支付弹窗（联动/独立），器官年龄模糊预览+解锁门控 | 影响范围：src/app/cba/preview/page.tsx（新建）
 // [CHANGE 2026-03-24] 原因：价格¥399→¥199、QR码路径更新、text-xs/[10px]→text-xs适配45+ | 影响范围：src/app/cba/preview/page.tsx
 // [CHANGE 2026-03-28] 原因：effectiveRef提升到组件级，isLinked统一派生，修复刷新后context丢失导致联动断裂 | 影响范围：src/app/cba/preview/page.tsx
+// [CHANGE 2026-04-07] 原因：转化优化v1.1，标题/风险标签/锁定内容模块/支付弹窗文案 | 影响范围：src/app/cba/preview/page.tsx
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -157,10 +158,10 @@ export default function CBAPreviewPage() {
             评估预览
           </p>
           <h2 className="font-display text-2xl text-clinical-navy mb-1">
-            您的器官生物年龄
+            你的器官年龄，只展示了表面
           </h2>
           <p className="text-sm text-clinical-secondary mb-5 leading-relaxed">
-            以下为基础预览。解锁完整报告后获取精确数值、深度分析及干预计划。
+            当前结果未包含关键风险与趋势分析
           </p>
 
           {/* ── PhenoAge 模糊展示 ─────────────────────────────────────────── */}
@@ -240,10 +241,33 @@ export default function CBAPreviewPage() {
             </div>
           </div>
 
+          {/* ── 锁定内容模块 ──────────────────────────────────────────── */}
+          <div className="clinical-card mb-4 border-clinical-amber/30">
+            <p className="clinical-section-label mb-3">待解锁</p>
+            <h3 className="text-base font-semibold text-clinical-navy mb-4">
+              你还没看到的内容
+            </h3>
+            <ul className="space-y-3">
+              {[
+                "精确器官年龄（已计算但未展示）",
+                "哪项指标在拉高你的衰老速度",
+                "是否存在提前老化信号",
+                "未来3–5年趋势",
+              ].map((item) => (
+                <li key={item} className="flex items-center gap-3 text-sm text-clinical-secondary/60">
+                  <span className="w-4 h-4 rounded-full border border-clinical-secondary/30 flex items-center justify-center shrink-0">
+                    <Lock className="w-2.5 h-2.5" />
+                  </span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+
           {/* ── 解锁 CTA ──────────────────────────────────────────────────── */}
           <CTAButton size="lg" fullWidth onClick={() => setShowModal(true)} className="mb-2">
             <Unlock className="w-4 h-4 shrink-0" strokeWidth={1.5} />
-            解锁完整评估报告 &nbsp;¥199
+            查看完整分析与行动方案 ¥199 →
           </CTAButton>
           <p className="text-xs text-clinical-muted text-center leading-relaxed mb-6">
             支付后 24 小时内通过微信发送完整报告
@@ -271,7 +295,7 @@ export default function CBAPreviewPage() {
             {/* 弹窗头部 */}
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-display text-lg text-clinical-navy">
-                {paymentStage === "qr" ? "微信扫码支付 ¥199" : "✓ 确认支付"}
+                {paymentStage === "qr" ? "你距离完整答案，只差这一步" : "✓ 确认支付"}
               </h3>
               <button
                 type="button"
@@ -285,6 +309,16 @@ export default function CBAPreviewPage() {
             {/* ── 阶段1：展示收款二维码 ────────────────────────────────── */}
             {paymentStage === "qr" && (
               <div className="text-center">
+                {/* 解锁内容预告 */}
+                <div className="mb-4 text-left space-y-2">
+                  <p className="text-xs clinical-section-label">解锁后你将获得</p>
+                  {["最先老化的器官", "未来3年变化趋势", "干预优先级", "可执行行动路径"].map((item) => (
+                    <div key={item} className="flex items-center gap-2 text-sm text-clinical-secondary">
+                      <span className="text-clinical-jade font-medium">✓</span>
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
                 <p className="text-sm text-clinical-secondary mb-4 leading-relaxed">
                   请使用微信扫描下方二维码完成支付。<br />
                   <strong className="text-clinical-navy">备注：CBA评估</strong>

@@ -37,10 +37,11 @@ export function getScoreRange(score: number): ScoreRange {
   return "attention";
 }
 
+// [CHANGE 2026-04-07] 原因：转化优化v1.1，禁用"优秀"等正面标签，改为张力叙事 | 影响范围：FindingCard.tsx
 export const RANGE_LABELS: Record<ScoreRange, string> = {
-  optimal:   "优秀",
-  average:   "正常范围",
-  attention: "需关注",
+  optimal:   "当前稳定，但已接近下降阈值",
+  average:   "目前正常，但存在潜在波动风险",
+  attention: "暂无明显异常，但恢复能力开始下降",
 };
 
 export const RANGE_COLORS: Record<ScoreRange, string> = {

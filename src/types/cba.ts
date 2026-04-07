@@ -122,9 +122,10 @@ export function getOrganRiskLevel(delta: number): OrganRiskLevel {
   return "high";
 }
 
+// [CHANGE 2026-04-07] 原因：转化优化v1.1，optimal/normal改为张力叙事 | 影响范围：cba/preview/page.tsx
 export const ORGAN_RISK_LABELS: Record<OrganRiskLevel, string> = {
-  optimal:  "优秀",
-  normal:   "正常",
+  optimal:  "稳定，但接近变化临界点",
+  normal:   "正常，但存在潜在波动",
   elevated: "偏高",
   high:     "需关注",
 };

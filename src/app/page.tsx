@@ -1,5 +1,6 @@
 "use client";
 // [CHANGE 2026-03-24] 原因：落地页统一改版 — 5维展示、45+字号适配、CBA联动引导 | 影响范围：src/app/page.tsx
+// [CHANGE 2026-04-07] 原因：转化优化v1.1，决策驱动叙事，删除算法说明区块 | 影响范围：src/app/page.tsx
 
 import { useRouter } from "next/navigation";
 import { AssessmentHeader } from "@/components/AssessmentHeader";
@@ -69,16 +70,18 @@ export default function LandingPage() {
             </div>
 
             <h1 className="font-display text-[38px] sm:text-[44px] leading-[1.1] text-clinical-navy mb-4">
-              您的身体，
+              你的身体，
               <br />
-              <em className="not-italic text-clinical-gold">实际几岁？</em>
+              <em className="not-italic text-clinical-gold">正在变化——</em>
+              <br />
+              但你还没发现
             </h1>
 
             <p className="text-base text-clinical-secondary leading-loose mb-2">
-              5大健康维度 · 29项临床指标
+              体检正常 ≠ 没问题
             </p>
             <p className="text-base text-clinical-secondary leading-loose mb-6">
-              科学估算您真实的<strong className="text-clinical-navy">生物学年龄</strong>
+              大多数人的身体变化，是在<strong className="text-clinical-navy">无感中发生</strong>的
             </p>
 
             {/* Trust pills */}
@@ -100,7 +103,7 @@ export default function LandingPage() {
               onClick={handleStart}
               className="mb-3"
             >
-              开始免费评估
+              查看我未来10年的变化 →
             </CTAButton>
             <p className="text-xs text-clinical-muted">
               无需注册账号 · 评估结果即时呈现
@@ -121,15 +124,6 @@ export default function LandingPage() {
                 <p className="text-[11px] text-clinical-muted leading-snug">{desc}</p>
               </div>
             ))}
-          </div>
-
-          {/* ── 科学背书 ───────────────────────────────────────────────────── */}
-          <div className="animate-fade-up2 bg-clinical-surface border border-clinical-border rounded-2xl px-4 py-3 mb-6 text-center">
-            <p className="text-xs tracking-[3px] uppercase text-clinical-muted mb-1">科学基础</p>
-            <p className="text-sm text-clinical-secondary leading-relaxed">
-              基于 <strong className="text-clinical-navy">Klemera-Doubal 生物年龄框架</strong><br />
-              涵盖 <strong className="text-clinical-navy">5大衰老决定因素</strong> · 29项临床验证指标
-            </p>
           </div>
 
           {/* ── 报告包含内容 ──────────────────────────────────────────────── */}
@@ -193,7 +187,7 @@ export default function LandingPage() {
           {/* ── 底部 CTA ──────────────────────────────────────────────────── */}
           <div className="animate-fade-up3 mb-3">
             <CTAButton size="lg" fullWidth onClick={handleStart}>
-              开始免费评估
+              查看我未来10年的变化 →
             </CTAButton>
           </div>
           <div className="animate-fade-up3 mb-6">

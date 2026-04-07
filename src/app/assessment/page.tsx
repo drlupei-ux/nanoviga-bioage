@@ -1,4 +1,5 @@
 "use client";
+// [CHANGE 2026-04-07] 原因：转化优化v1.1，ProfileForm文案+问卷上下文提示 | 影响范围：src/app/assessment/page.tsx
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAssessment } from "@/context/AssessmentContext";
@@ -64,10 +65,10 @@ function ProfileForm({ onDone }: { onDone: (p: Parameters<ReturnType<typeof useA
             基本信息
           </p>
           <h2 className="font-display text-2xl text-clinical-navy mb-1">
-            建立您的健康档案
+            确认你的起点（30秒）
           </h2>
           <p className="text-sm text-clinical-secondary mb-8 leading-relaxed">
-            以下信息用于校准您的表型年龄指数，所有数据仅存储在本设备。
+            我们将基于这些信息，预测你未来的身体变化轨迹
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -259,6 +260,15 @@ function QuestionCard({
   );
 }
 
+// 每3–5题的上下文提示（转化优化v1.1）
+const QUESTION_HINTS: Record<number, string> = {
+  2:  "这一项，会影响你的代谢年龄变化",
+  7:  "大多数人在这一项上低估了风险",
+  13: "这一项，是衰老速度的隐性驱动因素",
+  19: "这一项与你未来3年的变化趋势直接相关",
+  25: "即将完成 · 结果将揭示你最需要关注的系统",
+};
+
 // ── 主页面 ─────────────────────────────────────────────────────────────────────
 export default function AssessmentPage() {
   const router = useRouter();
@@ -303,6 +313,13 @@ export default function AssessmentPage() {
 
   return (
     <div className="relative">
+      {QUESTION_HINTS[qIndex] && (
+        <div className="fixed top-[72px] left-0 right-0 z-30 flex justify-center px-5 pointer-events-none">
+          <div className="max-w-md w-full px-4 py-2 rounded-lg bg-clinical-navy/5 border border-clinical-navy/10 text-xs text-clinical-navy/60 text-center">
+            {QUESTION_HINTS[qIndex]}
+          </div>
+        </div>
+      )}
       <QuestionCard
         index={qIndex}
         total={questions.length}
