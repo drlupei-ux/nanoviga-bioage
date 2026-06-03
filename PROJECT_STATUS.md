@@ -4,19 +4,21 @@
 
 ---
 
-## 待部署变更（已编码 + 本地验证通过，尚未上线）
+## 2026-06-03 上线变更（已部署 + 验证通过 ✅）
 
-> 2026-06-03 完成编码，`npm run build` ✓ / 风控门控 3/3 ✓ / `node --check analyzeCBA` ✓。**需部署 + 配置后生效。**
+| # | 变更 | 涉及文件 | 状态 |
+|---|---|---|---|
+| **#1** | 内测期**取消 ¥199 收款码**：CBA 弹窗直接进入留资表单；CTA/文案改"内测免费 + 48h"；清理残留"支付"措辞 | `src/app/cba/preview/page.tsx` | ✅ 已上线（Vercel `clinical`，commit `8a696de`） |
+| **#2** | **截图真正可解读**：弃用非视觉的 `deepseek-chat`，改 **腾讯云 OCR（图→文）+ DeepSeek（文→21 项 JSON）**；TC3 签名手写、**无 npm 依赖**。前端移除 PDF、上限 5 张、文案改"截图/照片" | `cloud-functions/analyzeCBA/index.js`、`src/app/cba/upload/page.tsx` | ✅ 已上线 + 端到端验证 |
+| **#3** | **医生复核（微信对照，零存储）**：管理员邮件指标段标注"⚠️ AI 提取，待陆医生对照微信原图复核"；前端提交后提示用户把化验原图发微信 | `cloud-functions/analyzeCBA/index.js`、`src/app/cba/preview/page.tsx` | ✅ 已上线 |
 
-| # | 变更 | 涉及文件 | 部署方式 | 前置 |
-|---|---|---|---|---|
-| **#1** | 内测期**取消 ¥199 收款码**：CBA 弹窗直接进入留资表单；CTA/文案改"内测免费 + 48h"；清理残留"支付"措辞 | `src/app/cba/preview/page.tsx` | `git push origin main:clinical`（Vercel） | 无 |
-| **#2** | **截图真正可解读**：弃用非视觉的 `deepseek-chat`，改 **腾讯云 OCR（图→文）+ DeepSeek（文→21 项 JSON）**；TC3 签名手写、**无 npm 依赖**。前端移除 PDF、上限 5 张、文案改"截图/照片" | `cloud-functions/analyzeCBA/index.js`、`src/app/cba/upload/page.tsx` | 云函数走控制台手动部署（§8）+ 前端 push | **需配置 `TENCENT_SECRET_ID` / `TENCENT_SECRET_KEY` 环境变量**（开通腾讯云 OCR） |
-| **#3** | **医生复核（微信对照，零存储）**：管理员邮件指标段标注"⚠️ AI 提取，待陆医生对照微信原图复核"；前端提交后提示用户把化验原图发微信 | `cloud-functions/analyzeCBA/index.js`、`src/app/cba/preview/page.tsx` | 同 #2 | 无 |
+**关键配置（已完成）：** `analyzeCBA` 已配 `TENCENT_SECRET_ID` / `TENCENT_SECRET_KEY` 环境变量；腾讯云**通用印刷体识别 OCR 服务已开通**（此前 `FailedOperation.UnOpenError` 即未开通所致）。
 
-**部署后验证：** `/cba/upload` 传真实化验截图 → 看是否自动预填；提交后看管理员邮件指标段是否标注"待复核"。失败时查 `analyzeCBA` 日志：`OCR API error`=密钥/开通问题，`OCR 未识别出文字`=图片质量。
+**验证记录：** `extract` 端点实测 → OCR 识别置信度 100 → DeepSeek 正确结构化为 `{albumin:42, creatinine:85, glucose:5.2, alt:22, hdl:1.4}`，与测试图一致。邮件管道 `mode:"full"` 实测送达管理员 163 **收件箱**（非垃圾箱），授权码有效。
 
-**邮件管道：** 2026-06-03 已用 `mode:"full"` 实测，报告生成 + 邮件**送达管理员 163 收件箱**（非垃圾箱），授权码有效。#2/#3 的"医生收到 AI 值"交付链确认通畅。
+**OCR 用量：** 通用印刷体识别免费额度约 1,000 次/月，内测期注意「套餐用量」页监控。
+
+**待办（你方，非阻塞）：** ① 用一张**真实化验截图**走一遍 `/cba/upload` 验收（合成图已验证，真图更稳）；② `generateReport` 2026-05-31 CLINICAL_REASONING 块仍未进 git，建议单独提交对齐线上。
 
 ---
 
