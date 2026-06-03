@@ -11,7 +11,7 @@ import { AssessmentHeader } from "@/components/AssessmentHeader";
 import { CTAButton } from "@/components/CTAButton";
 import { CBA_ORGAN_DIMENSIONS, getOrganRiskLevel, ORGAN_RISK_LABELS, ORGAN_RISK_HEX } from "@/types/cba";
 import type { CBAResults } from "@/types/cba";
-import { Lock, Unlock, AlertCircle, QrCode, X } from "lucide-react";
+import { Lock, Unlock, AlertCircle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   RadarChart, PolarGrid, PolarAngleAxis, Radar,
@@ -45,7 +45,8 @@ export default function CBAPreviewPage() {
 
   // ── 支付弹窗状态 ─────────────────────────────────────────────────────────
   const [showModal,      setShowModal]      = useState(false);
-  const [paymentStage,   setPaymentStage]   = useState<PaymentStage>("qr");
+  // [CHANGE 2026-06-03] 内测期取消 ¥199 收费：弹窗直接进入留资表单，移除收款码阶段（保留 type 便于日后恢复）| 影响：支付弹窗
+  const [paymentStage] = useState<PaymentStage>("confirm");
   const [phoneSuffix,    setPhoneSuffix]    = useState("");
   const [name,           setName]           = useState("");
   const [submitting,     setSubmitting]     = useState(false);
@@ -267,10 +268,10 @@ export default function CBAPreviewPage() {
           {/* ── 解锁 CTA ──────────────────────────────────────────────────── */}
           <CTAButton size="lg" fullWidth onClick={() => setShowModal(true)} className="mb-2">
             <Unlock className="w-4 h-4 shrink-0" strokeWidth={1.5} />
-            查看完整分析与行动方案 ¥199 →
+            获取完整解读报告（内测免费）→
           </CTAButton>
           <p className="text-xs text-clinical-muted text-center leading-relaxed mb-6">
-            支付后 24 小时内通过微信发送完整报告
+            提交后 48 小时内由陆医生审核并通过微信发送
           </p>
 
           <CTAButton
@@ -295,7 +296,7 @@ export default function CBAPreviewPage() {
             {/* 弹窗头部 */}
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-display text-lg text-clinical-navy">
-                {paymentStage === "qr" ? "你距离完整答案，只差这一步" : "✓ 确认支付"}
+                获取完整解读报告
               </h3>
               <button
                 type="button"
@@ -306,63 +307,7 @@ export default function CBAPreviewPage() {
               </button>
             </div>
 
-            {/* ── 阶段1：展示收款二维码 ────────────────────────────────── */}
-            {paymentStage === "qr" && (
-              <div className="text-center">
-                {/* 解锁内容预告 */}
-                <div className="mb-4 text-left space-y-2">
-                  <p className="text-xs clinical-section-label">解锁后你将获得</p>
-                  {["最先老化的器官", "未来3年变化趋势", "干预优先级", "可执行行动路径"].map((item) => (
-                    <div key={item} className="flex items-center gap-2 text-sm text-clinical-secondary">
-                      <span className="text-clinical-jade font-medium">✓</span>
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-sm text-clinical-secondary mb-4 leading-relaxed">
-                  请使用微信扫描下方二维码完成支付。<br />
-                  <strong className="text-clinical-navy">备注：CBA评估</strong>
-                </p>
-
-                {/* 微信收款二维码 */}
-                <div className="flex justify-center mb-4">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/wechat-pay-199.png"
-                    alt="微信收款码 ¥199"
-                    className="w-52 h-auto rounded-2xl border border-clinical-border bg-white"
-                    onError={e => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                      const placeholder = document.getElementById("pay-qr-placeholder");
-                      if (placeholder) placeholder.style.display = "flex";
-                    }}
-                  />
-                  {/* 占位符（图片未就绪时显示）*/}
-                  <div
-                    id="pay-qr-placeholder"
-                    className="hidden w-52 h-52 rounded-2xl border-2 border-dashed border-clinical-border flex-col items-center justify-center gap-2"
-                  >
-                    <QrCode className="w-10 h-10 text-clinical-muted" strokeWidth={1} />
-                    <p className="text-xs text-clinical-muted text-center leading-relaxed px-2">
-                      微信收款二维码<br />（待管理员上传）
-                    </p>
-                  </div>
-                </div>
-
-                <p className="text-xs text-clinical-muted mb-4">
-                  ¥199 · 微信支付 · 支付成功后点击下方按钮
-                </p>
-
-                <CTAButton
-                  fullWidth size="lg"
-                  onClick={() => setPaymentStage("confirm")}
-                >
-                  我已完成支付 →
-                </CTAButton>
-              </div>
-            )}
-
-            {/* ── 阶段2：留资确认表单（双模式）────────────────────────── */}
+            {/* ── 留资确认表单（双模式）────────────────────────── */}
             {paymentStage === "confirm" && (
               <form onSubmit={handleConfirmSubmit} className="space-y-4">
 
@@ -432,8 +377,15 @@ export default function CBAPreviewPage() {
                   />
                   <p className="text-xs text-clinical-muted mt-1 leading-relaxed">
                     {isLinked
-                      ? "管理员将通过 L1 编号匹配您的微信联系人，手机后4位用于核验支付身份。"
-                      : "管理员通过微信收款记录（显示手机尾号）核验支付，与报告精准匹配。"}
+                      ? "陆医生将通过 L1 编号匹配您的微信联系人，手机后 4 位用于核对身份。"
+                      : "陆医生通过手机尾号与您的微信联系人核对，确保报告精准送达。"}
+                  </p>
+                </div>
+
+                {/* [CHANGE 2026-06-03] #3：提示把化验原图发微信，供陆医生对照复核 AI 提取值 */}
+                <div className="bg-clinical-jade-lt border border-clinical-jade/20 rounded-2xl px-3 py-2.5">
+                  <p className="text-xs text-clinical-secondary leading-relaxed">
+                    📎 提交后，请将<strong className="text-clinical-navy">化验报告原始截图</strong>通过微信发给陆医生，便于核对指标、确保报告准确。
                   </p>
                 </div>
 
@@ -451,14 +403,6 @@ export default function CBAPreviewPage() {
                 >
                   {submitting ? "提交中…" : "提交，开始生成报告 →"}
                 </CTAButton>
-
-                <button
-                  type="button"
-                  className="w-full text-xs text-clinical-muted underline underline-offset-2 py-1"
-                  onClick={() => setPaymentStage("qr")}
-                >
-                  ← 返回查看收款二维码
-                </button>
               </form>
             )}
           </div>

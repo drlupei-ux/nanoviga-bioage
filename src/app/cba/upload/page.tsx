@@ -59,11 +59,11 @@ export default function CBAUploadPage() {
 
   function addFiles(incoming: File[]) {
     const accepted = incoming.filter(f =>
-      ["image/jpeg", "image/png", "image/webp", "application/pdf"].includes(f.type)
+      ["image/jpeg", "image/png", "image/webp"].includes(f.type)
     );
     setFiles(prev => {
       const combined = [...prev, ...accepted];
-      return combined.slice(0, 10); // 最多10个文件
+      return combined.slice(0, 5); // [CHANGE 2026-06-03] 最多5张，与云函数 OCR 处理上限一致
     });
   }
 
@@ -181,7 +181,7 @@ export default function CBAUploadPage() {
                 上传体检报告
               </h2>
               <p className="text-sm text-clinical-secondary mb-5 leading-relaxed">
-                支持血常规、生化全套、血脂等多张报告（JPG / PNG / PDF）。<br />
+                支持血常规、生化全套、血脂等多张报告截图或照片（JPG / PNG）。<br />
                 AI 自动识别指标，您可在下一步确认修改。
               </p>
 
@@ -199,7 +199,7 @@ export default function CBAUploadPage() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/jpeg,image/png,image/webp,application/pdf"
+                  accept="image/jpeg,image/png,image/webp"
                   multiple
                   className="hidden"
                   onChange={e => addFiles(Array.from(e.target.files ?? []))}
@@ -207,7 +207,7 @@ export default function CBAUploadPage() {
                 <Upload className="w-8 h-8 text-clinical-jade" strokeWidth={1.5} />
                 <div className="text-center">
                   <p className="text-sm font-medium text-clinical-navy">拖拽或点击上传</p>
-                  <p className="text-[11px] text-clinical-muted mt-0.5">JPG · PNG · PDF，最多10个文件</p>
+                  <p className="text-[11px] text-clinical-muted mt-0.5">JPG · PNG 截图/照片，最多 5 张</p>
                 </div>
               </div>
 

@@ -1,6 +1,34 @@
 # BioAge Compass — 项目状态文档
 
-> 下次开发从此文件开始。最后更新：2026-03-29
+> 下次开发从此文件开始。最后更新：2026-06-03
+
+---
+
+## 待部署变更（已编码 + 本地验证通过，尚未上线）
+
+> 2026-06-03 完成编码，`npm run build` ✓ / 风控门控 3/3 ✓ / `node --check analyzeCBA` ✓。**需部署 + 配置后生效。**
+
+| # | 变更 | 涉及文件 | 部署方式 | 前置 |
+|---|---|---|---|---|
+| **#1** | 内测期**取消 ¥199 收款码**：CBA 弹窗直接进入留资表单；CTA/文案改"内测免费 + 48h"；清理残留"支付"措辞 | `src/app/cba/preview/page.tsx` | `git push origin main:clinical`（Vercel） | 无 |
+| **#2** | **截图真正可解读**：弃用非视觉的 `deepseek-chat`，改 **腾讯云 OCR（图→文）+ DeepSeek（文→21 项 JSON）**；TC3 签名手写、**无 npm 依赖**。前端移除 PDF、上限 5 张、文案改"截图/照片" | `cloud-functions/analyzeCBA/index.js`、`src/app/cba/upload/page.tsx` | 云函数走控制台手动部署（§8）+ 前端 push | **需配置 `TENCENT_SECRET_ID` / `TENCENT_SECRET_KEY` 环境变量**（开通腾讯云 OCR） |
+| **#3** | **医生复核（微信对照，零存储）**：管理员邮件指标段标注"⚠️ AI 提取，待陆医生对照微信原图复核"；前端提交后提示用户把化验原图发微信 | `cloud-functions/analyzeCBA/index.js`、`src/app/cba/preview/page.tsx` | 同 #2 | 无 |
+
+**部署后验证：** `/cba/upload` 传真实化验截图 → 看是否自动预填；提交后看管理员邮件指标段是否标注"待复核"。失败时查 `analyzeCBA` 日志：`OCR API error`=密钥/开通问题，`OCR 未识别出文字`=图片质量。
+
+**邮件管道：** 2026-06-03 已用 `mode:"full"` 实测，报告生成 + 邮件**送达管理员 163 收件箱**（非垃圾箱），授权码有效。#2/#3 的"医生收到 AI 值"交付链确认通畅。
+
+---
+
+## 当前阶段（运营）
+
+| 字段 | 值 |
+|---|---|
+| **阶段** | Clinical Beta —— 用户获取与案例采集 |
+| **入口** | WeChat QR code（陆医生微信） |
+| **引导工作流** | ✅ 已完成 —— `workflows/WF_Clinical_Beta_Onboarding.md`（配套文案 `content/CNT_Beta_Onboarding_Messages.md`） |
+| **运营模式** | 全人工、无 CRM、无自动化；案例库 = 单表格 + 每例一份 `outputs/OUT_BCA-XXXX_*.md` |
+| **下一里程碑** | **首批 10 例真实案例** |
 
 ---
 
@@ -106,4 +134,4 @@ PYTHONPATH=. python3 tests/run_tests.py
 
 ---
 
-*BioAge Compass v0.1.0-beta · 陆大夫独立开发 · 2026-03-29*
+*BioAge Compass v0.1.0-beta · 陆医生独立开发 · 2026-06-03*
