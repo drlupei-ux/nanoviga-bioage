@@ -1,6 +1,25 @@
 # BioAge Compass — 项目状态文档
 
-> 下次开发从此文件开始。最后更新：2026-06-03
+> 下次开发从此文件开始。最后更新：2026-06-07
+
+---
+
+## 2026-06-07 生产事故修复（已部署 + 验证 ✅）
+
+> 真实用户测试发现两处运行时故障。经 CloudBase 实时诊断（`tcb fn invoke` + 生产 `curl`）定位根因，commit `d82d711`，已 `git push origin main:clinical` 部署。**仅前端/代理改动，云函数与工作流未动。**
+
+| # | 问题 | 根因 | 修复 | 涉及文件 |
+|---|---|---|---|---|
+| **#1** | 截图 OCR「不工作」——上传后指标不回填 | **响应契约不一致**：`analyzeCBA` 成功返回 `{code:0,biomarkers}`（无 `ok` 字段），而 `upload` 页以 `if(json.ok && json.biomarkers)` 判定 → OCR 结果被前端**静默丢弃**。云函数 OCR 链路本身完全正常。 | `analyze` 代理路由整形为 `{ok: code===0, biomarkers}` 契约（云函数/前端逻辑均未改） | `src/app/api/cba/analyze/route.ts` |
+| **#2** | ¥199 仍可见 | 06-03 仅清理了 `preview` 弹窗收款码；首页/CBA落地页/results 共 **6 处 ¥199 文案标签**从未移除 | 6 处 ¥199 → `内测免费`；CBA 落地页"支付后"→"提交后" | `src/app/page.tsx`、`src/app/cba/page.tsx`、`src/app/results/page.tsx` |
+
+**诊断证据：** 直接 `tcb fn invoke` 与生产 HTTP `curl`（前端代理所用 URL）均返回 `{"code":0,"biomarkers":{"albumin":42,"creatinine":85,"glucose":5.2,"alt":22,"hdl":1.4}}`、HTTP 200；环境变量 `TENCENT_SECRET_ID/KEY`、`DEEPSEEK_API_KEY` 均在位；云函数部署时间 06-03 22:15（确为 OCR 版本）。证明故障在前端契约层，**非云函数**。
+
+**验证：** `npm run build` ✓ · `preflight_check.py` ✓ · `tests/run_tests.py` 3/3 ✓ · 生产 `nanoviga.com/` 与 `/cba` 已确认无 ¥199、显示"内测免费"、"提交后"。
+
+**教训：** 06-03 #2 的"端到端验证"实为**端点级**（curl `extract` 端点），从未走真实 UI，`upload` 页 `json.ok` 门控缺陷因此漏检。**今后 OCR/提取类改动必须走一遍真实 `/cba/upload` UI 验收。**
+
+**待办（你方）：** 用一张真实化验截图走一遍 `/cba/upload`，确认指标自动回填（前端契约已修、后端已证健康，预期通过）。
 
 ---
 
@@ -9,7 +28,7 @@
 | # | 变更 | 涉及文件 | 状态 |
 |---|---|---|---|
 | **#1** | 内测期**取消 ¥199 收款码**：CBA 弹窗直接进入留资表单；CTA/文案改"内测免费 + 48h"；清理残留"支付"措辞 | `src/app/cba/preview/page.tsx` | ✅ 已上线（Vercel `clinical`，commit `8a696de`） |
-| **#2** | **截图真正可解读**：弃用非视觉的 `deepseek-chat`，改 **腾讯云 OCR（图→文）+ DeepSeek（文→21 项 JSON）**；TC3 签名手写、**无 npm 依赖**。前端移除 PDF、上限 5 张、文案改"截图/照片" | `cloud-functions/analyzeCBA/index.js`、`src/app/cba/upload/page.tsx` | ✅ 已上线 + 端到端验证 |
+| **#2** | **截图真正可解读**：弃用非视觉的 `deepseek-chat`，改 **腾讯云 OCR（图→文）+ DeepSeek（文→21 项 JSON）**；TC3 签名手写、**无 npm 依赖**。前端移除 PDF、上限 5 张、文案改"截图/照片" | `cloud-functions/analyzeCBA/index.js`、`src/app/cba/upload/page.tsx` | ✅ 云函数已上线（**端点级**验证）；⚠️ 前端 UI 契约缺陷致结果被丢弃 → 已于 **2026-06-07 #1** 修复 |
 | **#3** | **医生复核（微信对照，零存储）**：管理员邮件指标段标注"⚠️ AI 提取，待陆医生对照微信原图复核"；前端提交后提示用户把化验原图发微信 | `cloud-functions/analyzeCBA/index.js`、`src/app/cba/preview/page.tsx` | ✅ 已上线 |
 
 **关键配置（已完成）：** `analyzeCBA` 已配 `TENCENT_SECRET_ID` / `TENCENT_SECRET_KEY` 环境变量；腾讯云**通用印刷体识别 OCR 服务已开通**（此前 `FailedOperation.UnOpenError` 即未开通所致）。
