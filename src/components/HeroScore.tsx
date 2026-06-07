@@ -87,8 +87,9 @@ export function HeroScore({ bioAge, actualAge, assessmentCode, className }: Prop
       </div>
 
       {/* 说明注释 */}
+      {/* [CHANGE 2026-06-07] 原因：展示层统一为五维品牌维度，文案"7大维度"与页面"五维健康档案"冲突，改为"五大健康维度"（内部算法仍为7维，不影响） | 影响范围：src/components/HeroScore.tsx（说明文案） */}
       <p className="text-[11px] text-clinical-muted mt-4 max-w-xs mx-auto leading-relaxed">
-        基于7大健康维度生活方式指标综合评估。
+        基于五大健康维度生活方式指标综合评估。
         实际年龄：<strong className="text-clinical-secondary">{actualAge}</strong> 岁 ·
         评估编号：<strong className="text-clinical-secondary">{assessmentCode ?? "—"}</strong>
       </p>
