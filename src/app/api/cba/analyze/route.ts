@@ -34,7 +34,8 @@ export async function POST(req: NextRequest) {
     });
 
     const json = await res.json();
-    return NextResponse.json(json);
+    // [CHANGE 2026-06-07] 原因：analyzeCBA 成功返回 {code:0,biomarkers}，无 ok 字段，而 upload 页以 json.ok 判定，导致 OCR 结果被静默丢弃；此处整形为文档约定的 {ok,biomarkers} 契约 | 影响范围：src/app/api/cba/analyze/route.ts（成功响应）
+    return NextResponse.json({ ok: json.code === 0, biomarkers: json.biomarkers ?? null });
   } catch (err) {
     console.error("[cba/analyze] Error:", err);
     // 降级：返回空结果，前端回退到手动填写

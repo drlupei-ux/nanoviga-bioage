@@ -83,8 +83,9 @@ export default function CBALandingPage() {
               哪个器官正在悄悄老化？哪个还有逆转余地？
             </p>
 
+            {/* [CHANGE 2026-06-07] 原因：内测期取消¥199，统一 Clinical Beta 文案 | 影响范围：CBA 落地页主 CTA */}
             <CTAButton size="lg" fullWidth onClick={handleStart}>
-              上传体检报告，解锁器官级生物年龄 &nbsp;¥199
+              上传体检报告，解锁器官级生物年龄（内测免费）
             </CTAButton>
 
             <p className="text-xs text-clinical-muted mt-3">
@@ -137,11 +138,12 @@ export default function CBALandingPage() {
 
           {/* ── 底部 CTA ─────────────────────────────────────────────────── */}
           <div className="animate-fade-up3">
+            {/* [CHANGE 2026-06-07] 原因：内测期取消¥199 收费并清理"支付"措辞，统一 Clinical Beta 文案 | 影响范围：CBA 落地页底部 CTA + 说明 */}
             <CTAButton size="lg" fullWidth onClick={handleStart} className="mb-3">
-              开始评估 &nbsp;¥199
+              开始评估（内测免费）
             </CTAButton>
             <p className="text-xs text-clinical-muted text-center leading-relaxed">
-              支付后通过微信接收完整报告 · 基于医学文献，非医疗诊断
+              提交后通过微信接收完整报告 · 基于医学文献，非医疗诊断
             </p>
           </div>
 

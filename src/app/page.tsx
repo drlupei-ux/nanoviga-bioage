@@ -178,7 +178,8 @@ export default function LandingPage() {
                 上传体检报告 → PhenoAge 生化生物年龄 + 5维器官精准评估
               </p>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-clinical-jade">CBA 临床生化评估 ¥199</span>
+                {/* [CHANGE 2026-06-07] 原因：内测期取消¥199，统一 Clinical Beta 文案 | 影响范围：首页 L2 入口标签 */}
+                <span className="text-sm font-semibold text-clinical-jade">CBA 临床生化评估 · 内测免费</span>
                 <ArrowRight className="w-4 h-4 text-clinical-jade" strokeWidth={1.5} />
               </div>
             </button>
@@ -196,7 +197,8 @@ export default function LandingPage() {
               className="w-full h-12 rounded-2xl border border-clinical-jade/40 text-clinical-jade text-sm font-medium hover:bg-clinical-jade/5 transition-colors"
               onClick={() => router.push("/cba")}
             >
-              已有体检报告？解锁器官级生物年龄 ¥199 →
+              {/* [CHANGE 2026-06-07] 原因：内测期取消¥199，统一 Clinical Beta 文案 | 影响范围：首页次级 CTA */}
+              已有体检报告？解锁器官级生物年龄（内测免费）→
             </button>
           </div>
 

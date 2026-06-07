@@ -308,7 +308,8 @@ export default function ResultsPage() {
             size="lg"
             onClick={() => router.push(`/cba?ref=${assessmentCode}`)}
           >
-            查看完整分析与行动方案 ¥199 →
+            {/* [CHANGE 2026-06-07] 原因：内测期取消¥199，统一 Clinical Beta 文案 | 影响范围：results 升级 CTA */}
+            查看完整分析与行动方案（内测免费）→
           </CTAButton>
         </section>
 
@@ -345,7 +346,8 @@ export default function ResultsPage() {
             size="lg"
             onClick={() => router.push(`/cba?ref=${assessmentCode}`)}
           >
-            解锁器官级生物年龄 ¥199 →
+            {/* [CHANGE 2026-06-07] 原因：内测期取消¥199，统一 Clinical Beta 文案 | 影响范围：results 底部升级 CTA */}
+            解锁器官级生物年龄（内测免费）→
           </CTAButton>
           <p className="text-xs text-clinical-muted mt-3 text-center">
             无需额外抽血 · 使用您现有体检报告 · 24小时内报告送达
