@@ -96,5 +96,6 @@ export function getAgingStatus(diff: number): AgingStatus {
   if (diff >= 8)  return { label: "生物年龄显著更年轻", color: "#0D7A5F", desc: "明显低于实际年龄" };
   if (diff >= 3)  return { label: "生物年龄较年轻", color: "#C8A96E", desc: "低于平均衰老速度" };
   if (diff >= -2) return { label: "生物年龄与实际相符", color: "#475569", desc: "与实际年龄基本一致" };
-  return               { label: "生物年龄偏高", color: "#9B2335", desc: "建议关注健康管理" };
+  // [CHANGE 2026-06-07] 原因：品牌文案"健康管理"→"逆龄管理"，与"陆大夫逆龄管理"叙事统一 | 影响范围：results 状态标签 desc
+  return               { label: "生物年龄偏高", color: "#9B2335", desc: "建议关注逆龄管理" };
 }
