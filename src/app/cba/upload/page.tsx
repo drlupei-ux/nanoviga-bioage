@@ -21,6 +21,52 @@ const REQUIRED_KEYS = BIOMARKER_FIELDS.filter(f => f.required).map(f => f.key);
 const CORE_FIELDS   = BIOMARKER_FIELDS.filter(f => f.group === "core");
 const EXT_FIELDS    = BIOMARKER_FIELDS.filter(f => f.group === "extended");
 
+// [CHANGE 2026-06-07] 原因：CloudBase HTTP 访问请求体上限约 100KB（base64 膨胀 ×1.33），手机原图/截图（1–3MB）单张即超限触发 413 EXCEED_MAX_PAYLOAD_SIZE，OCR 从未执行；上传前用 canvas 将每张压缩到目标体积内（逐级降分辨率 + JPEG 降质），兼顾 OCR 可读性 | 影响范围：src/app/cba/upload/page.tsx（图片压缩工具）
+const COMPRESS_TARGET_BYTES = 60 * 1024; // 单图目标 <~60KB，为 CloudBase ~100KB 限额留余量
+async function compressImage(file: File): Promise<Blob> {
+  try {
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload  = () => resolve(fr.result as string);
+      fr.onerror = reject;
+      fr.readAsDataURL(file);
+    });
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const im = new window.Image();
+      im.onload  = () => resolve(im);
+      im.onerror = reject;
+      im.src = dataUrl;
+    });
+
+    const dims  = [1600, 1280, 1024, 800];
+    const quals = [0.7, 0.6, 0.5, 0.4];
+    let smallest: Blob | null = null;
+
+    for (const maxDim of dims) {
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const w = Math.max(1, Math.round(img.width  * scale));
+      const h = Math.max(1, Math.round(img.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) break;
+      ctx.drawImage(img, 0, 0, w, h);
+
+      for (const q of quals) {
+        const blob = await new Promise<Blob | null>((resolve) =>
+          canvas.toBlob(resolve, "image/jpeg", q)
+        );
+        if (!blob) continue;
+        if (!smallest || blob.size < smallest.size) smallest = blob;
+        if (blob.size <= COMPRESS_TARGET_BYTES) return blob; // 首个达标档（质量最高的可接受档）
+      }
+    }
+    return smallest ?? file; // 兜底：取最小档，仍失败则回退原文件
+  } catch {
+    return file; // 压缩异常则回退原图（由后端逐张转发兜底，至多对超大图失效）
+  }
+}
+
 export default function CBAUploadPage() {
   const router = useRouter();
   const { setBiomarkers, setResults, setL1RefCode, l1RefCode } = useCBA();
@@ -81,8 +127,12 @@ export default function CBAUploadPage() {
     setUploading(true);
     setUploadError("");
     try {
+      // [CHANGE 2026-06-07] 原因：上传前压缩每张图片，规避 CloudBase HTTP 访问 ~100KB 请求体上限（原图直传必 413） | 影响范围：AI 提取请求体积
       const formData = new FormData();
-      files.forEach(f => formData.append("files", f));
+      for (let i = 0; i < files.length; i++) {
+        const compressed = await compressImage(files[i]);
+        formData.append("files", compressed, `report_${i}.jpg`);
+      }
 
       const res  = await fetch("/api/cba/analyze", { method: "POST", body: formData });
       const json = await res.json();
