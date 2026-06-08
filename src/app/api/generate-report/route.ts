@@ -51,21 +51,6 @@ export async function POST(req: NextRequest) {
     peerPercentile,
   };
 
-  // [DIAG 2026-06-08 — 临时] ?diag=1：await 并回传 CloudBase 真实响应，验证 Vercel→CloudBase 投递链路。诊断后移除。
-  if (req.nextUrl.searchParams.get("diag") === "1") {
-    try {
-      const r = await fetch(CLOUDBASE_URL, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify(cloudbasePayload),
-      });
-      const text = await r.text();
-      return NextResponse.json({ diag: true, upstreamStatus: r.status, upstream: text.slice(0, 600) });
-    } catch (err) {
-      return NextResponse.json({ diag: true, upstreamError: String(err) });
-    }
-  }
-
   // waitUntil: 函数会保活到 fetch 完成，但不阻塞用户响应（避免未 await 时请求被丢弃）
   waitUntil(
     fetch(CLOUDBASE_URL, {
