@@ -418,19 +418,7 @@ function mapCba6DTo5D(organAges) {
   };
 }
 
-// ─── PLA 7D 内部维度 → 5D 品牌展示维度映射 ──────────────────────────────────
-// 与前端 src/lib/dimensionMapping.ts mapL1ToFivePillars() 保持一致
-function mapPlaTo5D(dimensionScores) {
-  if (!dimensionScores) return null;
-  const d = dimensionScores;
-  return {
-    '代谢活力':   +(d['营养代谢'] || 0).toFixed(1),
-    '炎症免疫':   +((d['身心平衡'] || 0) * 0.6 + (d['环境因素'] || 0) * 0.4).toFixed(1),
-    '心血管韧性': +(d['运动能力'] || 0).toFixed(1),
-    '神经睡眠':   +((d['睡眠质量'] || 0) * 0.7 + (d['感官衰老'] || 0) * 0.3).toFixed(1),
-    '器官储备':   +(d['遗传因素'] || 0).toFixed(1),
-  };
-}
+// [CHANGE 2026-06-08] 移除 mapPlaTo5D 死函数：其调用方 generateCBAReport/buildEmailBody 已删除
 
 // ─── 腾讯云 OCR：图片 → 原始文字（TC3-HMAC-SHA256 手写签名，无 npm 依赖）─────────
 // 签名规范：https://www.tencentcloud.com/document/product/845/32207
