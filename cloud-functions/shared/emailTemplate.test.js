@@ -171,3 +171,40 @@ test('buildMimeMessage dot-stuffs leading-dot lines', () => {
   const msg = T.buildMimeMessage({ fromEmail: 'a@163.com', toEmail: 'a@163.com', subject: 's', textBody: '.hi', htmlBody: '<p>.x</p>' });
   assert.ok(msg.includes('..hi'));
 });
+
+// ── New tests for fixes ───────────────────────────────────────────────────────
+
+test('buildMimeMessage: MIME header injection is stripped from toEmail', () => {
+  const msg = T.buildMimeMessage({ fromEmail: 'a@163.com', toEmail: 'a@163.com\r\nBcc: evil@x.com', subject: 's', textBody: 'hi', htmlBody: '<p>hi</p>' });
+  const lines = msg.split('\r\n');
+  assert.ok(!lines.some(l => l.startsWith('Bcc:')), 'output must NOT contain a Bcc: header line');
+});
+
+test('buildMimeMessage: both MIME parts include Content-Transfer-Encoding: 8bit', () => {
+  const msg = T.buildMimeMessage({ fromEmail: 'a@163.com', toEmail: 'b@163.com', subject: 's', textBody: 'hi', htmlBody: '<p>hi</p>' });
+  const occurrences = (msg.match(/Content-Transfer-Encoding: 8bit/g) || []).length;
+  assert.strictEqual(occurrences, 2, 'both text/plain and text/html parts must have CTE: 8bit');
+});
+
+test('parseModelJson: array input returns null', () => {
+  assert.strictEqual(T.parseModelJson('[1,2,3]'), null);
+});
+test('parseModelJson: object input still works', () => {
+  assert.deepStrictEqual(T.parseModelJson('{"a":1}'), { a: 1 });
+});
+
+test('assembleL1Sections: roadmap array is rejected, default object used', () => {
+  const minData = { name: '测', age: 40, gender: 'male', bioAge: 38, score: 65,
+    agingPaceStr: '1.0x', peerRankStr: '50%', contact: '—', assessmentCode: 'BCA-TEST',
+    submittedAt: '2026-06-08', date: '2026-06-08' };
+  const args = T.assembleL1Sections(minData, { roadmap: ['x'] }, '');
+  assert.ok(args.roadmap && !Array.isArray(args.roadmap), 'roadmap must not be an array');
+  assert.ok(Array.isArray(args.roadmap.d7) && Array.isArray(args.roadmap.d30) && Array.isArray(args.roadmap.d90),
+    'roadmap must be the default {d7,d30,d90} object');
+});
+
+test('riskList: empty array returns a string containing <table and does not throw', () => {
+  let out;
+  assert.doesNotThrow(() => { out = T.riskList([]); });
+  assert.ok(typeof out === 'string' && out.includes('<table'), 'must return a string with <table');
+});

@@ -16,7 +16,7 @@ function esc(s) {
 function mdToInlineHtml(s) {
   let out = esc(s);
   out = out.replace(/^\s*#{1,6}\s*/gm, '');                      // drop heading marks
-  out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');  // bold
+  out = out.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');  // bold
   out = out.replace(/\r?\n/g, '<br>');                            // newlines
   return out;
 }
@@ -31,9 +31,10 @@ const PALETTE = {
 
 function computeRating({ age, bioAge, score }) {
   const ageDiff = Number(age) - Number(bioAge);
+  const numScore = Number(score);
   let label, color;
-  if (ageDiff >= 3 && score >= 70) { label = '优秀'; color = PALETTE.rGood; }
-  else if (ageDiff <= -3 || score < 50) { label = '高风险'; color = PALETTE.rRisk; }
+  if (ageDiff >= 3 && numScore >= 70) { label = '优秀'; color = PALETTE.rGood; }
+  else if (ageDiff <= -3 || numScore < 50) { label = '高风险'; color = PALETTE.rRisk; }
   else { label = '需关注'; color = PALETTE.rWatch; }
   return { label, color, ageDiff };
 }
@@ -166,11 +167,14 @@ function parseModelJson(raw) {
   s = s.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
   const a = s.indexOf('{'), b = s.lastIndexOf('}');
   if (a !== -1 && b !== -1 && b > a) s = s.slice(a, b + 1);
-  try { return JSON.parse(s); } catch (_) { return null; }
+  let parsed; try { parsed = JSON.parse(s); } catch (_) { return null; }
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+  return parsed;
 }
 
 // ── Task 8: assembleL1Sections + assembleCbaSections ─────────────────────────
 
+// 运营联系信息：变更后需重新内联部署 generateReport 与 analyzeCBA
 const WECHAT_ID = 'Charlie20850';
 const QR_URL = 'https://nanoviga.com/wechat-qr.png';
 
@@ -187,7 +191,8 @@ function _assemble(kind, data, parsed, rawText, heroTitle) {
   if (!parsed) { base.fallbackHtml = mdToInlineHtml(rawText || '（报告生成异常，请稍后重试）'); return base; }
   base.risks = Array.isArray(parsed.risks) ? parsed.risks : [];
   base.mechanism = Array.isArray(parsed.mechanism) ? parsed.mechanism : [];
-  base.roadmap = parsed.roadmap && typeof parsed.roadmap === 'object' ? parsed.roadmap : base.roadmap;
+  base.roadmap = parsed.roadmap && typeof parsed.roadmap === 'object' && !Array.isArray(parsed.roadmap)
+    ? parsed.roadmap : base.roadmap;
   return base;
 }
 
@@ -225,20 +230,23 @@ function renderEmail(a) {
 // ── Task 10: buildMimeMessage ─────────────────────────────────────────────────
 
 function buildMimeMessage({ fromEmail, toEmail, subject, textBody, htmlBody }) {
+  const sanitizeHeader = v => String(v).replace(/[\r\n]+/g, ' ').trim();
   const b64 = s => Buffer.from(String(s), 'utf8').toString('base64');
   const boundary = 'nvbnd_' + Date.now().toString(36);
   const dotStuff = s => String(s).replace(/\r?\n/g, '\r\n').replace(/^\./gm, '..');
   return (
-    `From: BioAge Compass <${fromEmail}>\r\n` +
-    `To: ${toEmail}\r\n` +
+    `From: BioAge Compass <${sanitizeHeader(fromEmail)}>\r\n` +
+    `To: ${sanitizeHeader(toEmail)}\r\n` +
     `Subject: =?utf-8?B?${b64(subject)}?=\r\n` +
     `MIME-Version: 1.0\r\n` +
     `Content-Type: multipart/alternative; boundary="${boundary}"\r\n\r\n` +
     `--${boundary}\r\n` +
-    `Content-Type: text/plain; charset=utf-8\r\n\r\n` +
+    `Content-Type: text/plain; charset=utf-8\r\n` +
+    `Content-Transfer-Encoding: 8bit\r\n\r\n` +
     `${dotStuff(textBody)}\r\n` +
     `--${boundary}\r\n` +
-    `Content-Type: text/html; charset=utf-8\r\n\r\n` +
+    `Content-Type: text/html; charset=utf-8\r\n` +
+    `Content-Transfer-Encoding: 8bit\r\n\r\n` +
     `${dotStuff(htmlBody)}\r\n` +
     `--${boundary}--`
   );
