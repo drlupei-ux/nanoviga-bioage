@@ -5,9 +5,11 @@
 // [CHANGE 2026-03-28] 原因：修复PLA数据查询——去除显式凭证覆盖、改用command.eq()、增加report_submissions回退 | 影响范围：cloud-functions/analyzeCBA/index.js
 // Node.js 18 · 部署于 CloudBase 环境 bioage-compass-prod-9chaf35e573d
 // [CHANGE 2026-05-31] 原因：部署 CLINICAL_REASONING_SYSTEM (A+B+C+H 升级) 到生产环境 | 影响范围：cloud-functions/analyzeCBA/index.js
+// [CHANGE 2026-06-08] 原因：JSON contract + HTML multipart email via shared template (Task 13) | 影响范围：cloud-functions/analyzeCBA/index.js
 const https  = require('https');
 const tls    = require('tls');
 const crypto = require('crypto');
+const ET     = require('../shared/emailTemplate'); // 部署时内联，见 plan Task 14
 
 const ADMIN_EMAIL = '13816746212@163.com';
 const ENV_ID      = 'bioage-compass-prod-9chaf35e573d';
@@ -344,23 +346,42 @@ exports.main = async (event, context) => {
       }
     }
 
-    // 4. 生成 DeepSeek 完整报告（融合 PLA 数据）
+    // 4. 生成 DeepSeek JSON 结构化报告（融合 PLA 数据）
     // 6D→5D 映射已在步骤3之前完成，report 和 email 共享同一映射结果
-    let report = '';
+    const cbaPrompt =
+      `根据以下CBA临床生化评估数据，生成结构化"生物年龄风险结论"。\n\n` +
+      `实际年龄：${actualAge}岁，性别：${gender === 'male' ? '男' : '女'}，PhenoAge：${phenoAge}岁\n` +
+      `器官年龄：${JSON.stringify(organAges5D)}\n生化指标：${JSON.stringify(biomarkers)}\n` +
+      (plaData ? `关联L1：生物年龄${plaData.bioAge}岁/评分${plaData.score}\n` : '') +
+      `仅返回合法JSON（无Markdown），schema：\n` +
+      `{"rating":"优秀|需关注|高风险","ratingReason":"一句话",` +
+      `"risks":[{"name":"风险名","oneLine":"≤30字"}],"mechanism":[{"cause":"原因","physiology":"生理机制","result":"结果"}],` +
+      `"roadmap":{"d7":[".."],"d30":[".."],"d90":[".."]}}\n要求：risks恰好3条；临床、克制、可执行。`;
+
+    let rawCba = '';
     try {
-      report = await generateCBAReport(DEEPSEEK_KEY, {
-        assessmentCode, l1RefCode, name, actualAge, gender,
-        phenoAge, organAges: organAges5D, biomarkers, plaData
-      });
-    } catch(e) { console.log('Report gen error:', e.message); report = '（报告生成失败，请管理员手动触发）'; }
+      rawCba = await callDeepSeekWithReasoning(DEEPSEEK_KEY, CLINICAL_REASONING_SYSTEM, cbaPrompt, 800);
+    } catch(e) { console.log('CBA JSON gen error:', e.message); rawCba = ''; }
+
+    const parsed  = ET.parseModelJson(rawCba);
+    const nowStr  = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+    const dateStr = new Date().toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' });
+    const sections = ET.assembleCbaSections({
+      name: name || '', age: actualAge, gender, bioAge: phenoAge, score: 100,
+      agingPaceStr: 'N/A', peerRankStr: 'N/A',
+      contact: `尾号${phoneSuffix}`, assessmentCode,
+      submittedAt: nowStr, date: dateStr,
+    }, parsed, rawCba);
+    const htmlBody = ET.renderEmail(sections);
+    const rating   = sections.hero.rating.label;
+    const subject  = `【CBA报告】${name || '客户'} 尾号${phoneSuffix} | ${rating} | ${assessmentCode}`.slice(0, 60);
+    const textBody = `BioAge Compass CBA 临床生化报告\n编号：${assessmentCode} | PhenoAge：${phenoAge}岁\n（请在支持HTML的邮件客户端查看完整报告）`;
 
     // 5. 发送邮件通知（await 确保发送完成后再返回）
     let emailResult = 'skipped';
     if (EMAIL_AUTH_CODE) {
-      const subject = buildEmailSubject({ name, phoneSuffix, l1RefCode, assessmentCode, phenoAge, actualAge });
-      const body    = buildEmailBody({ assessmentCode, l1RefCode, name, phoneSuffix, actualAge, gender, phenoAge, organAges: organAges5D, biomarkers, report, plaData });
       try {
-        await sendSmtpEmail163(ADMIN_EMAIL, EMAIL_AUTH_CODE, ADMIN_EMAIL, subject, body);
+        await sendSmtpEmail163(ADMIN_EMAIL, EMAIL_AUTH_CODE, ADMIN_EMAIL, subject, textBody, htmlBody);
         emailResult = 'sent';
         console.log('Email sent OK');
       } catch(e) {
@@ -369,7 +390,7 @@ exports.main = async (event, context) => {
       }
     }
 
-    return okResp({ ok: true, dbSaved, hasReport: !!report, plaLinked: !!plaData, emailResult });
+    return okResp({ ok: true, dbSaved, hasReport: !!rawCba, plaLinked: !!plaData, emailResult });
   }
 
   return errResp('Unknown mode: ' + mode);
@@ -499,127 +520,6 @@ async function extractBiomarkersWithAI(deepseekKey, files) {
   } catch (e) { console.log('DeepSeek 结构化失败:', e.message); return null; }
 }
 
-// ─── DeepSeek 完整 CBA 报告生成（融合 PLA 数据）─────────────────────────────
-async function generateCBAReport(key, { assessmentCode, l1RefCode, name, actualAge, gender, phenoAge, organAges, biomarkers, plaData }) {
-  const genderStr  = gender === 'male' ? '男' : '女';
-  const ageDiff    = actualAge - phenoAge;
-  const diffStr    = ageDiff > 0 ? `比实际年龄年轻 ${ageDiff.toFixed(1)} 岁` : ageDiff < 0 ? `比实际年龄偏大 ${Math.abs(ageDiff).toFixed(1)} 岁` : '与实际年龄相当';
-  // organAges already mapped to 5D by caller; use directly
-  const organLines = organAges
-    ? Object.entries(organAges).map(([dim, age]) => `${dim}: 器官年龄 ${age} 岁（差值 ${Number(age)-actualAge > 0 ? '+' : ''}${Number(age)-actualAge} 岁）`).join('\n')
-    : '';
-  const bioLines = biomarkers
-    ? Object.entries(biomarkers).filter(([,v]) => v !== null).map(([k, v]) => `${k}: ${v}`).join('  |  ')
-    : '';
-
-  // 构建 PLA 数据段（核心：双维度交叉分析指令）
-  let plaSection = '';
-  if (plaData) {
-    const fiveDim = mapPlaTo5D(plaData.dimensionScores);
-    const dimLines = fiveDim
-      ? Object.entries(fiveDim).map(([k, v]) => `${k}:${v}分`).join('、')
-      : '（无数据）';
-    const plaAgeDiff = (plaData.age || 0) - (plaData.bioAge || 0);
-    const plaStatus  = plaAgeDiff >= 8 ? '逆龄' : plaAgeDiff >= 3 ? '缓慢衰老' : plaAgeDiff >= -2 ? '正常衰老' : '加速衰老';
-    plaSection =
-      `\n\n【关联 L1 PLA 生活方式评估数据（编号 ${l1RefCode}）】\n` +
-      `PLA生物年龄：${plaData.bioAge}岁（实际${plaData.age}岁，${plaAgeDiff > 0 ? '年轻' : '偏大'}${Math.abs(plaAgeDiff)}岁，${plaStatus}）\n` +
-      `PLA总分：${plaData.score}分\n` +
-      `五维生活方式得分：${dimLines}\n` +
-      `衰老速度：${plaData.agingPace ? plaData.agingPace + 'x' : 'N/A'} | 同龄排名：${plaData.peerPercentile ? '前' + plaData.peerPercentile + '%' : 'N/A'}\n\n` +
-      `⚡ 双维度交叉分析要求：\n` +
-      `① 找出 CBA 异常生化指标与 PLA 低分维度之间的因果链（例：PLA睡眠质量低→CBA炎症指标CRP偏高）\n` +
-      `② 识别 PLA 与 CBA 之间的"反差维度"（生活方式好但生化异常，或反之），解读其临床意义\n` +
-      `③ 基于两套数据综合判断，优先干预哪个维度ROI最高（同时改善生活方式+生化指标）\n` +
-      `④ 在报告结尾明确总结：CBA与PLA的交叉发现，让评估结论比单独任一评估更精准`;
-  } else if (l1RefCode) {
-    plaSection = `\n注：此用户已完成 L1 PLA 评估（编号 ${l1RefCode}），未能获取详细数据，请在报告中说明双维度评估的互补价值。`;
-  }
-
-  const prompt =
-    `你是一位专业的抗衰老临床医生。请根据以下 CBA（临床生化生物年龄）评估数据，为用户生成一份完整的器官级生物年龄分析报告（约750字）。${plaSection}\n\n` +
-    `用户信息：${name || '用户'}，${actualAge}岁，${genderStr}\n` +
-    `PhenoAge 生物年龄：${phenoAge}岁（${diffStr}）\n` +
-    `5维器官年龄：\n${organLines}\n` +
-    `关键生化指标：${bioLines}\n\n` +
-    `报告必须包含以下5个部分，每部分使用加粗标题：\n\n` +
-    `1. **核心发现**：PhenoAge 与实际年龄差距解读，整体衰老状态评级\n\n` +
-    `2. **5维器官年龄深度分析**：逐一解读每个品牌维度（代谢活力/炎症免疫/心血管韧性/神经睡眠/器官储备），分析关键指标临床意义\n\n` +
-    `3. **衰老速度与同龄排名**：与同龄人群对比，通俗表达百分位意义\n\n` +
-    `4. **优先干预路径**（ROI从高到低）：3个干预维度，每个给出2条具体建议${plaData ? '；若PLA数据印证了某项风险，需明确说明' : ''}\n\n` +
-    `5. **3/6/12个月复查计划**：分阶段复查指标与节点${plaData ? '\n\n6. **PLA×CBA 双维度交叉洞察**：基于两套数据得出的综合结论，说明互相印证或反差之处，以及比单独评估更精准的具体发现' : ''}\n\n` +
-    `语言：简体中文，专业权威，温暖可读，避免使用"AI"、"算法"等词。`;
-
-  // [CHANGE 2026-05-31] 改用 callDeepSeekWithReasoning 注入 CLINICAL_REASONING_SYSTEM
-  return await callDeepSeekWithReasoning(key, CLINICAL_REASONING_SYSTEM, prompt, 2000);
-}
-
-// ─── 邮件主题构建 ─────────────────────────────────────────────────────────────
-function buildEmailSubject({ name, phoneSuffix, l1RefCode, assessmentCode, phenoAge, actualAge }) {
-  const tag = l1RefCode ? `[联动 ${l1RefCode}]` : '[独立CBA]';
-  return `【CBA报告】${name || '新用户'} | 尾号${phoneSuffix} | ${tag} | 生物年龄${phenoAge}岁 vs ${actualAge}岁`.slice(0, 70);
-}
-
-// ─── 邮件内容构建（含 PLA 融合摘要）────────────────────────────────────────────
-function buildEmailBody({ assessmentCode, l1RefCode, name, phoneSuffix, actualAge, gender, phenoAge, organAges, biomarkers, report, plaData }) {
-  const genderStr  = gender === 'male' ? '男' : '女';
-  // organAges already mapped to 5D by caller; use directly
-  const organLines = organAges
-    ? Object.entries(organAges).map(([dim, age]) => `  ${dim}：${age}岁（${Number(age)-actualAge > 0 ? '+' : ''}${Number(age)-actualAge}岁）`).join('\n')
-    : '  （无数据）';
-  const bioLines = biomarkers
-    ? Object.entries(biomarkers).filter(([,v]) => v !== null).map(([k, v]) => `  ${k}: ${v}`).join('\n')
-    : '  （无数据）';
-
-  // PLA 摘要段（邮件中显示）
-  let plaBlock = '';
-  if (plaData) {
-    const fiveDim = mapPlaTo5D(plaData.dimensionScores);
-    const dimLines = fiveDim
-      ? Object.entries(fiveDim).map(([k, v]) => `  ${k}：${v}分`).join('\n')
-      : '  （无数据）';
-    plaBlock = `\n📋 关联 L1 PLA 数据（已融入报告）\n---------------------------------\nPLA生物年龄：${plaData.bioAge}岁（实际${plaData.age}岁）\nPLA总分：${plaData.score}分\n五维生活方式得分：\n${dimLines}\n`;
-  } else if (l1RefCode) {
-    plaBlock = `\n📋 L1 PLA 数据：编号 ${l1RefCode}，未能从数据库获取详情\n`;
-  }
-
-  return `============================
-【BioAge Compass】CBA 临床生化报告请求
-============================
-
-📋 用户信息
------------
-CBA评估码：${assessmentCode}
-L1联动编号：${l1RefCode || '无（独立用户）'}
-姓名：${name || '未知'}
-年龄：${actualAge}岁  性别：${genderStr}
-手机尾号：${phoneSuffix}
-提交时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}
-
-📊 CBA 评估结果
---------------
-PhenoAge 生物年龄：${phenoAge}岁
-实际年龄：${actualAge}岁
-差值：${(actualAge - phenoAge) > 0 ? '年轻' : '偏大'}${Math.abs(actualAge - phenoAge).toFixed(1)}岁
-
-5维器官年龄：
-${organLines}
-
-关键生化指标（⚠️ AI 提取，请陆医生对照用户微信发来的原始化验截图逐项复核）：
-${bioLines}
-${plaBlock}
-📄 AI 完整 CBA 报告（${plaData ? '已融合PLA双维度分析' : '独立CBA分析'}）
--------------------
-${report}
-
-============================
-⚡ 操作指引
-${l1RefCode
-  ? `✅ 联动用户：查找微信中 L1编号 ${l1RefCode} 对应的联系人，手机尾号 ${phoneSuffix} 核验，发送报告。${plaData ? '\n   ℹ️  报告已融合该用户PLA数据，包含双维度交叉分析。' : '\n   ⚠️  未能获取PLA详情，报告为标准CBA分析。'}`
-  : `🆕 独立用户：等待对方添加微信（手机尾号 ${phoneSuffix}），接受好友后发送报告。`}
-============================`;
-}
-
 // ─── DeepSeek 文本 API 调用 ───────────────────────────────────────────────────
 function callDeepSeek(key, prompt, maxTokens) {
   const reqBody = JSON.stringify({
@@ -659,7 +559,8 @@ function callDeepSeekRaw(key, reqBody) {
 }
 
 // ─── 163 SMTP 直连发送邮件 ────────────────────────────────────────────────────
-function sendSmtpEmail163(fromEmail, authCode, toEmail, subject, textBody) {
+// [CHANGE 2026-06-08] 增加 htmlBody 参数；DATA_CMD 改用 ET.buildMimeMessage 发送 multipart/alternative
+function sendSmtpEmail163(fromEmail, authCode, toEmail, subject, textBody, htmlBody) {
   return new Promise((resolve, reject) => {
     const b64 = s => Buffer.from(s, 'utf8').toString('base64');
     let state = 'GREETING', buf = '', done = false;
@@ -694,13 +595,9 @@ function sendSmtpEmail163(fromEmail, authCode, toEmail, subject, textBody) {
           case 'RCPT_TO':   if (code === 250) { socket.write('DATA\r\n'); state = 'DATA_CMD'; } break;
           case 'DATA_CMD':
             if (code === 354) {
-              const msg =
-                `From: BioAge CBA <${fromEmail}>\r\n` +
-                `To: ${toEmail}\r\n` +
-                `Subject: =?utf-8?B?${b64(subject)}?=\r\n` +
-                `MIME-Version: 1.0\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n` +
-                textBody.replace(/\r\n\.\r\n/g, '\r\n..\r\n') + '\r\n.';
-              socket.write(msg + '\r\n'); state = 'DATA_SENT';
+              const msg = ET.buildMimeMessage({ fromEmail, toEmail, subject, textBody, htmlBody });
+              socket.write(msg + '\r\n.\r\n');
+              state = 'DATA_SENT';
             }
             break;
           case 'DATA_SENT': if (code === 250) { socket.write('QUIT\r\n'); state = 'QUIT'; } break;
