@@ -1,6 +1,10 @@
 // [CHANGE 2026-03-23] 原因：CBA 提交 API 路由，保存到 CloudBase + fire-and-forget 报告生成 | 影响范围：src/app/api/cba/submit/route.ts（新建）
 // [CHANGE 2026-03-28] 原因：透传 l1PlaData（PLA评估数据），供云函数直接使用无需DB查询 | 影响范围：src/app/api/cba/submit/route.ts
+// [CHANGE 2026-06-08] 原因：未 await 的 fetch 在 Vercel 函数返回后被冻结/终止，发往 CloudBase 的请求被静默丢弃 → CBA 提交后邮件不发送；改用 waitUntil 保活函数直至 fetch 完成 | 影响范围：src/app/api/cba/submit/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { waitUntil } from "@vercel/functions";
+
+export const maxDuration = 60;
 
 const CLOUDBASE_URL =
   "https://bioage-compass-prod-9chaf35e573d-1405252881.ap-shanghai.app.tcloudbase.com/analyzeCBA";
@@ -49,13 +53,15 @@ export async function POST(req: NextRequest) {
     submittedAt:    new Date().toISOString(),
   };
 
-  // Fire-and-forget — CloudBase 处理 DB 保存 + DeepSeek 报告生成 + 邮件通知
-  // 不 await，避免 Vercel 10s 超时
-  fetch(CLOUDBASE_URL, {
-    method:  "POST",
-    headers: { "Content-Type": "application/json" },
-    body:    JSON.stringify(cloudbasePayload),
-  }).catch((err) => console.error("[cba/submit] CloudBase call failed:", err));
+  // CloudBase 处理 DB 保存 + DeepSeek 报告生成 + 邮件通知
+  // waitUntil: 不阻塞用户响应，但保活函数到 fetch 完成（避免未 await 时请求被丢弃）
+  waitUntil(
+    fetch(CLOUDBASE_URL, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(cloudbasePayload),
+    }).catch((err) => console.error("[cba/submit] CloudBase call failed:", err))
+  );
 
   return NextResponse.json({ ok: true, assessmentCode });
 }
