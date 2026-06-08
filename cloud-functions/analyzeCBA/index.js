@@ -366,6 +366,7 @@ exports.main = async (event, context) => {
     const parsed  = ET.parseModelJson(rawCba);
     const nowStr  = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
     const dateStr = new Date().toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' });
+    // score:100 为中性占位——CBA 无 PLA 评分，使 computeRating 仅由 PhenoAge 与实际年龄之差驱动评级
     const sections = ET.assembleCbaSections({
       name: name || '', age: actualAge, gender, bioAge: phenoAge, score: 100,
       agingPaceStr: 'N/A', peerRankStr: 'N/A',
