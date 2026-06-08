@@ -232,8 +232,7 @@ exports.main = async (event, context) => {
   }
 
   // ─── 模式2：完整缓龄报告 + 保存DB + 发邮件通知 ───────────────────────────
-  const ageDiff = (age || 0) - (bioAge || 0);
-  const derivedStatus = ageDiff >= 8 ? '逆龄' : ageDiff >= 3 ? '缓慢衰老' : ageDiff >= -2 ? '正常衰老' : '加速衰老';
+  // [CHANGE 2026-06-08] 移除 ageDiff/derivedStatus 死变量：评级改由 sections.hero.rating（computeRating）派生
   const agingPaceStr = agingPace ? `${agingPace}x` : ((bioAge && age) ? (bioAge/age).toFixed(2) + 'x' : 'N/A');
   const computedPeerPercentile = (peerPercentile != null && peerPercentile !== '')
     ? Number(peerPercentile)
