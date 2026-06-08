@@ -1,6 +1,8 @@
 // [CHANGE 2026-05-31] 原因：部署 CLINICAL_REASONING_SYSTEM (A+B+C+H 升级) 到生产环境 | 影响范围：cloud-functions/generateReport/index.js
+// [CHANGE 2026-06-08] 原因：JSON contract + HTML multipart email via shared template (Task 12) | 影响范围：cloud-functions/generateReport/index.js
 const https = require('https');
 const tls   = require('tls');
+const ET    = require('../shared/emailTemplate'); // 部署时内联，见 plan Task 14
 
 const ENDPOINT = 'https://bioage-compass-prod-9chaf35e573d-1405252881.ap-shanghai.app.tcloudbase.com';
 const ADMIN_EMAIL = '13816746212@163.com';
@@ -238,23 +240,36 @@ exports.main = async (event, context) => {
     : (bioAge && age ? Math.max(1, Math.min(99, Math.round(50 - (age - bioAge) * 3.5))) : null);
   const peerRankStr  = (computedPeerPercentile != null) ? `前${computedPeerPercentile}%` : 'N/A';
 
+  // [CHANGE 2026-06-08] JSON contract prompt (Task 12 Step 1) — structured output replaces Markdown
   const prompt =
-    `你是一位专业的抗衰老健康顾问。请根据以下PLA评估数据，为用户生成一份完整缓龄报告（约600字）。\n\n` +
-    `用户信息：\n- 姓名：${name||'用户'}\n- 年龄：${age}岁\n` +
-    `- 性别：${gender==='male'?'男':'女'}\n- 身体年龄：${bioAge}岁\n` +
-    `- 衰老速度：${agingPaceStr}\n- 同龄排名：${peerRankStr}\n- 缓龄状态：${derivedStatus}\n` +
-    `- PLA评分：${score}分\n- 各维度得分：${dimText}\n\n` +
-    `报告必须包含以下2个部分，每部分使用加粗标题：\n\n` +
-    `1. **风险信号**：基于七维评估数据，识别用户最显著的3-5个健康风险信号。` +
-    `每个风险信号说明：①是什么风险 ②当前数据体现 ③对加速衰老的影响机制。语言专业但易懂。\n\n` +
-    `2. **缓龄策略**：针对上述风险信号，制定个性化缓龄优化策略，分两阶段：\n` +
-    `   - 近期（1-3个月可执行）：3条具体行动建议\n` +
-    `   - 中期（3-12个月可达成）：3条进阶建议\n` +
-    `   每条建议需具体可操作，避免泛泛而谈。\n\n` +
-    `语言：简体中文，温暖专业，流畅自然，不超过600字。`;
+    `根据以下PLA评估数据，生成一份"身体年龄风险评估"结构化结论。\n\n` +
+    `用户：${name||'用户'}，${age}岁，${gender==='male'?'男':'女'}\n` +
+    `身体年龄：${bioAge}岁，衰老速度：${agingPaceStr}，同龄排名：${peerRankStr}，PLA评分：${score}分\n` +
+    `各维度：${dimText}\n\n` +
+    `仅返回合法JSON（无Markdown、无JSON外文字），schema：\n` +
+    `{"rating":"优秀|需关注|高风险","ratingReason":"一句话",` +
+    `"risks":[{"name":"风险名","oneLine":"≤30字"}],` +
+    `"mechanism":[{"cause":"原因","physiology":"生理机制","result":"结果"}],` +
+    `"roadmap":{"d7":[".."],"d30":[".."],"d90":[".."]}}\n` +
+    `要求：risks恰好3条；语言简体中文，临床、克制、可执行。`;
 
   // [CHANGE 2026-05-31] 改用 callDeepSeekWithReasoning 注入 CLINICAL_REASONING_SYSTEM
-  const report = await callDeepSeekWithReasoning(DEEPSEEK_KEY, CLINICAL_REASONING_SYSTEM, prompt, 1500);
+  // [CHANGE 2026-06-08] max_tokens 降至 800（JSON contract 无需长文本）
+  const rawReport = await callDeepSeekWithReasoning(DEEPSEEK_KEY, CLINICAL_REASONING_SYSTEM, prompt, 800);
+  const parsed = ET.parseModelJson(rawReport);
+
+  const nowStr  = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+  const dateStr = new Date().toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' });
+  const sections = ET.assembleL1Sections({
+    name, age, gender, bioAge, score,
+    agingPaceStr, peerRankStr,
+    contact: contact || '', assessmentCode: assessmentCode || '',
+    submittedAt: nowStr, date: dateStr,
+  }, parsed, rawReport);
+  const htmlBody = ET.renderEmail(sections);
+  const rating   = sections.hero.rating.label;
+  const subject  = `【缓龄报告】${name||'新客户'} | ${rating} | ${assessmentCode||''}`.slice(0, 60);
+  const textBody = `BioAge Compass 身体年龄评估报告\n客户：${name||'未知'} | 编号：${assessmentCode||''}\n身体年龄：${bioAge}岁（实际${age}岁）| 评级：${rating}\n（请在支持HTML的邮件客户端查看完整报告）`;
 
   // 保存到 CloudBase 数据库（使用内置 HTTP API，无需 npm）
   let dbSaved = false, dbError = null;
@@ -269,7 +284,7 @@ exports.main = async (event, context) => {
         bioAge: bioAge||0, score: score||0,
         dimensionScores: dimensionScores||{},
         contact: contact||'', assessmentCode: assessmentCode||'',
-        report, createdAt: new Date().toISOString(), status: 'pending'
+        report: rawReport, createdAt: new Date().toISOString(), status: 'pending'
       }
     });
     // 使用 CloudBase 云函数内置身份直接调用数据库
@@ -297,41 +312,8 @@ exports.main = async (event, context) => {
   // [CHANGE 2026-03-27] 原因：fire-and-forget 导致云函数返回后 SMTP 连接被终止，邮件静默丢失 | 影响范围：cloud-functions/generateReport/index.js
   let emailResult = 'skipped';
   if (EMAIL_AUTH_CODE) {
-    const ageDiff2 = age - bioAge;
-    const diffStr = ageDiff2 > 0 ? `年轻${ageDiff2}岁` : ageDiff2 < 0 ? `偏大${Math.abs(ageDiff2)}岁` : '相当';
-    const subject = `【缓龄报告】${name||'新客户'} | ${contact||'未留联系'} | ${derivedStatus} | ${assessmentCode||''}`.slice(0,60);
-    const body =
-`============================
-【BioAge Compass】新客户报告请求
-============================
-
-📋 客户信息
------------
-姓名：${name||'未知'}
-年龄：${age}岁
-性别：${gender==='male'?'男':'女'}
-联系方式：${contact||'未留联系方式'}
-评估码：${assessmentCode||'未知'}
-提交时间：${new Date().toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'})}
-
-📊 PLA评估结果
---------------
-实际年龄：${age}岁
-生物年龄：${bioAge}岁（${diffStr}）
-PLA总分：${score}分
-衰老速度：${agingPaceStr} | 同龄排名：${peerRankStr} | 缓龄状态：${derivedStatus}
-各维度：${dimText}
-
-📄 AI完整评估报告
------------------
-${report}
-
-============================
-⚡ 请通过微信1V1发送完整报告给该客户
-============================`;
-
     try {
-      await sendSmtpEmail163(ADMIN_EMAIL, EMAIL_AUTH_CODE, ADMIN_EMAIL, subject, body);
+      await sendSmtpEmail163(ADMIN_EMAIL, EMAIL_AUTH_CODE, ADMIN_EMAIL, subject, textBody, htmlBody);
       emailResult = 'sent';
       console.log('Email sent OK');
     } catch(e) {
@@ -342,7 +324,7 @@ ${report}
     console.log('EMAIL_163_AUTH_CODE not set, skipping email');
   }
 
-  return okResp({ report, saved: dbSaved, dbError, emailResult });
+  return okResp({ report: rawReport, saved: dbSaved, dbError, emailResult });
 };
 
 // ─── DeepSeek API 调用 ────────────────────────────────────────────────────────
@@ -401,7 +383,8 @@ function callDeepSeekWithReasoning(key, systemContent, userPrompt, maxTokens) {
 }
 
 // ─── 163 SMTP 直连（无需 npm） ─────────────────────────────────────────────────
-function sendSmtpEmail163(fromEmail, authCode, toEmail, subject, textBody) {
+// [CHANGE 2026-06-08] 增加 htmlBody 参数；DATA_CMD 改用 ET.buildMimeMessage 发送 multipart/alternative
+function sendSmtpEmail163(fromEmail, authCode, toEmail, subject, textBody, htmlBody) {
   return new Promise((resolve, reject) => {
     const b64 = s => Buffer.from(s,'utf8').toString('base64');
     let state = 'GREETING', buf = '', done = false;
@@ -456,13 +439,8 @@ function sendSmtpEmail163(fromEmail, authCode, toEmail, subject, textBody) {
             break;
           case 'DATA_CMD':
             if (code === 354) {
-              const msg =
-                `From: BioAge Compass <${fromEmail}>\r\n` +
-                `To: ${toEmail}\r\n` +
-                `Subject: =?utf-8?B?${b64(subject)}?=\r\n` +
-                `MIME-Version: 1.0\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n` +
-                textBody.replace(/\r\n\.\r\n/g,'\r\n..\r\n') + '\r\n.';
-              socket.write(msg + '\r\n');
+              const msg = ET.buildMimeMessage({ fromEmail, toEmail, subject, textBody, htmlBody });
+              socket.write(msg + '\r\n.\r\n');
               state = 'DATA_SENT';
             }
             break;
