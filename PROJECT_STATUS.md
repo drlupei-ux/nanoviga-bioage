@@ -1,6 +1,30 @@
 # BioAge Compass — 项目状态文档
 
-> 下次开发从此文件开始。最后更新：2026-06-07
+> 下次开发从此文件开始。最后更新：2026-06-08
+
+---
+
+## 2026-06-08 Clinical Conversion Report Email System（代码完成 + 评审通过；**待手动部署**）
+
+> 分支 `feat/clinical-email-system`。重构 L1/CBA 通知邮件：旧版以 `text/plain` 发送 Markdown，客户端原样显示 `###`/`**`，不专业、不易读、无转化。新版改为 **模型输出结构化 JSON → 确定性 HTML 模板渲染**（非 MD→HTML），医生中转、正文面向客户、可分离内部条；5 区结构（身体年龄总览+评级徽章 / 三大风险 / 风险机制 / 7-30-90 行动路线 / 微信+CBA 转化卡）。设计 spec：`docs/superpowers/specs/2026-06-08-...md`，计划：`docs/superpowers/plans/2026-06-08-...md`。
+
+| 单元 | 内容 | 提交 |
+|---|---|---|
+| A | `cloud-functions/shared/emailTemplate.js`（唯一源，纯函数，零依赖，Node18）+ `emailTemplate.test.js`（node:test，30 用例全过） | `39a9c23`→`523c73a` |
+| B | `tools/email-preview.js` 本地多端预览（生成 L1/CBA HTML，gitignore） | `a7439da`/`7f0c76b` |
+| C | `generateReport/index.js`：JSON 契约 prompt + parse/兜底 + assemble→render + SMTP `multipart/alternative` | `5bbecad`/`0d877c1` |
+| D | `analyzeCBA/index.js`：CBA 变体同上；删除 140 行死代码（generateCBAReport/buildEmailSubject/Body/mapPlaTo5D） | `2ec9b7b`/`6a76c83` |
+
+**评审：** 每单元两段式（spec 合规 → 代码质量）子代理评审。质量评审发现并修复：MIME 头注入加固（sanitizeHeader）、`Content-Transfer-Encoding: 8bit`（中文 UTF-8）、`parseModelJson` 拒绝数组/非对象、roadmap 数组守卫。全部 APPROVED。
+
+**关键约束：** 模板是仓库唯一源，**部署时需内联粘贴进两个 index.js**（标记 `==EMAIL_TEMPLATE_START/END==`），变更需同步两处。无 npm 依赖，env 不变。
+
+**待办（你方，最后一步）：**
+1. 本地 `node tools/email-preview.js` → 浏览器看 `tools/preview/L1.html`/`CBA.html` 验收设计。
+2. 按计划 Task 14：把模板内联进 `generateReport`/`analyzeCBA` 的 index.js，旧版腾讯控制台手动部署。
+3. `curl` 测两函数 → `emailResult:sent` → **iPhone/163/QQ/Gmail 真机收验** HTML 渲染（无 `**`/`###`、QR+微信可见、内部条可分离）。
+4. 合并分支：`feat/clinical-email-system` → `main`（前端无改动，云函数经控制台部署，非 Vercel）。
+5. （可选）把 §8 文档备注加进 `CLAUDE.md`（你的 `CLAUDE.md` 有未提交 WIP，故我未代改）。
 
 ---
 
