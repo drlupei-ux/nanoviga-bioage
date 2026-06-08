@@ -61,32 +61,7 @@ export default function ResultsPage() {
     }).catch(() => {}); // silent fail — data is always in sessionStorage
   }, [results]);
 
-  // [CHANGE 2026-06-07] 原因：L1 完成自动把结果+编号邮件发给陆大夫（复用 generateReport，无需姓名/手机留资）；用户加微信备注编号即可匹配，陆大夫据此发 L2 入口 | 影响范围：results 自动通知（编号级 sessionStorage 去重，避免刷新重发）
-  useEffect(() => {
-    if (!results || reportSentRef.current) return;
-    const sentKey = `nanoviga_report_sent_${results.assessmentCode}`;
-    try {
-      if (sessionStorage.getItem(sentKey)) { reportSentRef.current = true; return; }
-    } catch {}
-    reportSentRef.current = true;
-    try { sessionStorage.setItem(sentKey, "1"); } catch {}
-    fetch(REPORT_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name:            results.profile?.name || "自助L1用户",
-        age:             results.actualAge,
-        gender:          results.profile?.gender || "",
-        bioAge:          results.bioAge,
-        score:           Math.round(results.totalScore),
-        dimensionScores: results.dimensionScores,
-        assessmentCode:  results.assessmentCode,
-        agingPace:       results.agingRate,
-        peerPercentile:  results.peerPercentile,
-        contact:         `见微信备注编号 ${results.assessmentCode}`,
-      }),
-    }).catch(() => {}); // fire-and-forget；失败不影响用户
-  }, [results]);
+  // [CHANGE 2026-06-08] 原因：L1 通知邮件改由「用户点击加微信」触发（见 notifyDoctor + WeChatAddCard.onEngage），不再每个匿名 L1 自动发——大幅降低 163 SMTP 发信量，规避 550 限频导致邮件静默丢失；L1 数据仍在页面加载时存入 DB（上方 save-assessment），不丢线索 | 影响范围：results 通知邮件触发时机（自动 useEffect → 加微信引擎）
 
   const [copied, setCopied] = useState(false);
 
@@ -111,6 +86,33 @@ export default function ResultsPage() {
     navigator.clipboard.writeText(assessmentCode).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {});
+  }
+
+  // [CHANGE 2026-06-08] 原因：用户点击「加微信」= 真实线索，此时才把结果+编号邮件通知陆大夫（替代每个匿名 L1 自动发，降低 163 限频）；编号级 sessionStorage 去重，多次点击只发一封；fire-and-forget 失败不影响用户 | 影响范围：results 加微信触发通知
+  function notifyDoctor() {
+    if (reportSentRef.current) return;
+    const sentKey = `nanoviga_report_sent_${assessmentCode}`;
+    try {
+      if (sessionStorage.getItem(sentKey)) { reportSentRef.current = true; return; }
+    } catch {}
+    reportSentRef.current = true;
+    try { sessionStorage.setItem(sentKey, "1"); } catch {}
+    fetch(REPORT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name:            profile?.name || "自助L1用户",
+        age:             actualAge,
+        gender:          profile?.gender || "",
+        bioAge,
+        score:           Math.round(totalScore),
+        dimensionScores,
+        assessmentCode,
+        agingPace:       agingRate,
+        peerPercentile,
+        contact:         `见微信备注编号 ${assessmentCode}`,
+      }),
     }).catch(() => {});
   }
   const formattedDate   = new Date(completedAt).toLocaleDateString("zh-CN", {
@@ -181,7 +183,7 @@ export default function ResultsPage() {
         </section>
 
         {/* ── 加微信引导（详细报告 / 团队沟通 / L2 由陆大夫人工发放）── */}
-        <WeChatAddCard assessmentCode={assessmentCode} />
+        <WeChatAddCard assessmentCode={assessmentCode} onEngage={notifyDoctor} />
 
         {/* ── 页脚信息 ──────────────────────────────── */}
         <div className="mt-10 text-center">

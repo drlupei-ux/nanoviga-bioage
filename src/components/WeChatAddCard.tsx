@@ -12,10 +12,12 @@ const REASONS = [
   "根据体检报告深度评估衰老风险",
 ];
 
-export function WeChatAddCard({ assessmentCode }: { assessmentCode: string }) {
+// [CHANGE 2026-06-08] 原因：新增 onEngage——用户点击「加微信」时回调（真实线索），由结果页据此通知陆大夫，替代每个匿名 L1 自动发邮件 | 影响范围：WeChatAddCard 加微信交互
+export function WeChatAddCard({ assessmentCode, onEngage }: { assessmentCode: string; onEngage?: () => void }) {
   const [copied, setCopied] = useState(false);
 
   function handleAdd() {
+    onEngage?.();   // 用户点击加微信 = 真实线索，触发通知陆大夫
     const done = () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
