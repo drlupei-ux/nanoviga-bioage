@@ -19,8 +19,10 @@
 |---|---|
 | 服务 | Tencent Cloud **International** — Simple Email Service (SES) |
 | Region | **`ap-hongkong`**（无需 ICP 备案；nanoviga.com 未备案） |
-| 发件地址 | **`bioage@nanoviga.com`**，显示名 **`BioAge Compass`** |
-| 收件地址 | `13816746212@163.com`（陆大夫通知箱；发件≠收件，消除自发自收标记） |
+| 发件地址 (From) | **`bioage@nanoviga.com`**，显示名 **`BioAge Compass`** |
+| **Reply-To** | **`support@nanoviga.com`**（回复去向；SES 仅出站，收信需另配，见 §6.1） |
+| 收件地址 (生产) | env **`SES_TO`**（陆大夫通知箱；**不硬编码 PII**；发件≠收件，消除自发自收标记） |
+| 测试收件地址 | env **`SES_TEST_RECIPIENT`**（首测/联调覆盖；设置即覆盖 `SES_TO`，**go-live 前必须清空**，见 §5.4） |
 | 发信内容 | **内联 HTML（`SendEmail.Simple`）**，直接用 `renderEmail()` 输出；不注册 Tencent 模板（回退方案见 §9） |
 | 凭证 | 复用 `TENCENT_SECRET_ID` / `TENCENT_SECRET_KEY` + 现有 TC3-HMAC-SHA256 签名原语 |
 | 163 路径 | **完全删除**（`sendSmtpEmail163` + `buildMimeMessage`），不保留兜底 |
@@ -30,6 +32,27 @@
 **范围**：两个云函数发信机制替换为 SES；删除 163 SMTP 与 MIME 构建；新增 `sendViaTencentSES`；环境变量调整；外部 SES 账号/域名/DNS/额度配置说明。
 
 **非目标**：不改 HTML 模板渲染、JSON 契约 prompt、DB 持久化、`/results` 加微信触发、前端；不引入 npm 依赖；不实现 Daily Digest（后续复用 SES）。
+
+---
+
+## 3.5 Operational prerequisites before coding（编码前置门控）
+
+> 详细步骤见 §4；本节是**门控清单**与硬性顺序。
+
+下列前置项必须由运维方（你）在 Tencent 控制台 + DNS 完成，**编码方不可绕过**：
+
+1. **SES account setup** — 国际站开通 SES（`ap-hongkong`）。
+2. **Domain verification** — `nanoviga.com` 在 SES 控制台状态 = **Verified**（DNS 记录已加并验证通过）。
+3. **Production access / sending quota** — 已申请并获批生产发信权限/额度（非沙箱受限态）。
+4. **CAM permissions validation** — 云函数所用 `TENCENT_SECRET_ID/KEY` 实测具备 `ses:SendEmail` 权限。
+5. **DNS propagation verification** — SPF/DKIM/所有权记录已全网传播并被 SES 校验通过（控制台显示已验证）。
+
+### 🚦 DEPLOYMENT GATE（硬性）
+**实现（编码）可以先写并通过本地单测，但严禁部署/上线，直到：**
+- ✅ **SES 域名验证完成（Domain Verified）**，**且**
+- ✅ **SES 生产发信权限/额度已获批（Production access approved）**。
+
+两者未同时满足前，不得执行 §8 的云函数部署与 §4.7 首测（届时只会拿到 `DomainNotVerified` / 额度受限错误）。
 
 ---
 
@@ -74,6 +97,8 @@
 | 端到端可发首封 | 多数情况 DNS 生效当天；若卡额度审批则 +1~2 工作日 |
 
 ### 4.7 首封测试邮件流程
+> 前置：先在两个云函数设 **`SES_TEST_RECIPIENT`**（如 `SES_TEST_RECIPIENT=test@example.com`，一个你能查收的测试箱），使首测不发往生产通知箱、且不在文档/命令里硬编码真实邮箱。
+
 1. 代码部署后（§8），直连 SES 云函数端点发一封：
    ```bash
    curl -s -X POST '.../generateReport' -H 'Content-Type: application/json' \
@@ -82,7 +107,7 @@
           "contact":"见微信备注 BCA-SES1","assessmentCode":"BCA-SES1"}' --max-time 120
    ```
 2. 期望返回 `"emailResult":"sent"`（含 SES `MessageId`）。
-3. 到 `13816746212@163.com` 收信：发件人显示 **BioAge Compass `<bioage@nanoviga.com>`**，HTML 报告正常渲染（无 `**`/`###`、评级徽章、QR、内部条）。检查**垃圾箱**——首发可能先进垃圾箱，标记"非垃圾"以养信誉。
+3. 到 **`SES_TEST_RECIPIENT`** 收信：发件人显示 **BioAge Compass `<bioage@nanoviga.com>`**、回复地址为 **`support@nanoviga.com`**，HTML 报告正常渲染（无 `**`/`###`、评级徽章、QR、内部条）。检查**垃圾箱**——首发可能先进垃圾箱，标记"非垃圾"以养信誉。
 4. 失败时按 `emailResult` 中的 SES `Code` 排查（§6）。
 5. 注意：仍处 163 限频无关——SES 是独立通道；但首发后观察 1–2 天送达稳定性。
 
@@ -92,7 +117,7 @@
 
 ### 5.1 新增 `sendViaTencentSES`（置于 shared 模块，部署随模板一并内联）
 ```
-sendViaTencentSES({ secretId, secretKey, region, fromAddr, fromName, toAddr, subject, html, text })
+sendViaTencentSES({ secretId, secretKey, region, fromAddr, fromName, toAddr, replyTo, subject, html, text })
   → Promise<{ ok: boolean, messageId?: string, error?: string }>
 ```
 - TC3-HMAC-SHA256 签名（复用 `tcSha256Hex`/`tcHmac`；与 OCR 同算法，service 改 `ses`）。
@@ -101,7 +126,8 @@ sendViaTencentSES({ secretId, secretKey, region, fromAddr, fromName, toAddr, sub
   ```json
   {
     "FromEmailAddress": "BioAge Compass <bioage@nanoviga.com>",
-    "Destination": ["13816746212@163.com"],
+    "Destination": ["<SES_TEST_RECIPIENT || SES_TO>"],
+    "ReplyToAddresses": "support@nanoviga.com",
     "Subject": "<subject>",
     "Simple": { "Html": "<base64(html)>", "Text": "<base64(text)>" }
   }
@@ -118,9 +144,10 @@ sendViaTencentSES({ secretId, secretKey, region, fromAddr, fromName, toAddr, sub
 const sesCfg = { secretId: process.env.TENCENT_SECRET_ID, secretKey: process.env.TENCENT_SECRET_KEY,
   region: process.env.SES_REGION || 'ap-hongkong',
   fromAddr: process.env.SES_FROM || 'bioage@nanoviga.com', fromName: 'BioAge Compass',
-  toAddr: process.env.SES_TO || '13816746212@163.com' };
+  replyTo: process.env.SES_REPLY_TO || 'support@nanoviga.com',
+  toAddr: process.env.SES_TEST_RECIPIENT || process.env.SES_TO };  // 测试覆盖优先；go-live 前清空 SES_TEST_RECIPIENT
 let emailResult = 'skipped';
-if (sesCfg.secretId && sesCfg.secretKey) {
+if (sesCfg.secretId && sesCfg.secretKey && sesCfg.toAddr) {
   const r = await ET.sendViaTencentSES({ ...sesCfg, subject, html: htmlBody, text: textBody });
   emailResult = r.ok ? 'sent' : ('failed: ' + r.error);
 }
@@ -128,13 +155,30 @@ if (sesCfg.secretId && sesCfg.secretKey) {
 保持：DB 保存在发信**之前**；`await` 发信；`emailResult` 进响应。
 
 ### 5.4 环境变量
-- 新增（两个函数）：`SES_FROM`=`bioage@nanoviga.com`、`SES_REGION`=`ap-hongkong`、`SES_TO`=`13816746212@163.com`（均有代码内默认值，env 可选覆盖）。
+- 新增（两个函数）：
+  - `SES_FROM` = `bioage@nanoviga.com`（代码内有默认值）
+  - `SES_REGION` = `ap-hongkong`（代码内有默认值）
+  - `SES_REPLY_TO` = `support@nanoviga.com`（代码内有默认值；回复去向）
+  - `SES_TO` = 生产收件箱（**无代码默认、不硬编码 PII**；未配且无测试覆盖则 `emailResult: skipped`）
+  - `SES_TEST_RECIPIENT` = 测试收件覆盖（例 `SES_TEST_RECIPIENT=test@example.com`；**设置即覆盖 `SES_TO`，go-live 前必须清空**）
 - 复用：`TENCENT_SECRET_ID` / `TENCENT_SECRET_KEY`。
   - ⚠️ **`generateReport`（L1）此前未用这两个密钥**（仅 `analyzeCBA` 的 OCR 用）。必须确认**两个函数的环境变量都配置了** `TENCENT_SECRET_ID/KEY`，否则 L1 因缺凭证 → `emailResult: skipped`，邮件不发。部署时逐函数核对环境变量。
 - **退役**：`EMAIL_163_AUTH_CODE`（不再读取）。
 
-## 6. 错误处理与可观测性
-- `emailResult`：`sent`（含 messageId，可记日志）/ `failed: <Code> <Message>` / `skipped`（无凭证）。
+## 6. 邮件归属与可观测性
+
+### 6.1 邮件归属与回复处理（SES 仅出站）
+**Tencent SES 只负责出站发信，不接收任何入站邮件。** 因此发信身份与回复去向需明确：
+- **From**：`BioAge Compass <bioage@nanoviga.com>`（SES 验证过的发件身份）。
+- **Reply-To**：`support@nanoviga.com`（客户/收件人点"回复"时去向）。
+- **入站收信不经 SES**：发往 `bioage@nanoviga.com` 或 `support@nanoviga.com` 的回复邮件，SES **不会**收。必须**另行配置一个真实可收信的邮箱/转发**：
+  - 在 `nanoviga.com` 的邮件服务（如企业邮箱 / Google Workspace / 阿里邮箱 / 转发规则）上，为 `support@nanoviga.com`（以及建议为 `bioage@nanoviga.com`）建立可收信的邮箱或**转发到陆大夫常用箱**。
+  - 这需要 `nanoviga.com` 配置 **MX 记录**指向所选邮件服务（与 SES 的发信 DNS 记录并存、互不冲突）。
+  - **运维门控项**：go-live 前确认 `support@nanoviga.com` 能实际收到测试回复（否则客户回复石沉大海）。
+- 本期范围仅做出站迁移；入站邮箱/转发由运维侧按上述配置，不在代码改动内。
+
+### 6.2 错误处理
+- `emailResult`：`sent`（含 messageId，可记日志）/ `failed: <Code> <Message>` / `skipped`（无凭证或无收件地址）。
 - 常见 SES Code：`InvalidParameterValue.DomainNotVerified`（域名未验证）、`InvalidParameterValue.FromAddressStatusError`（发件地址未就绪）、`FailedOperation.FrequencyLimit`/`LimitExceeded`（额度/频率）、`UnauthorizedOperation`（CAM 无权限）。
 - DB 保存先于发信 → 发信失败不丢线索。SES 服务端排队，消除 163 式静默丢失。
 
@@ -160,6 +204,7 @@ if (sesCfg.secretId && sesCfg.secretKey) {
 | CAM 密钥无 SES 权限 | §4.1 步骤2 预检 `QcloudSESFullAccess` |
 
 ## 10. 实施顺序（供 plan）
+0. **（门控，运维方）** 完成 §3.5 前置 + 满足 🚦DEPLOYMENT GATE（域名 Verified **且** 生产权限获批）。代码 1–5 可在门控未过时先写并跑本地单测，但**部署（步骤 6）必须等门控通过**。
 1. shared 模块：新增 `sendViaTencentSES` + TC3 签名（复用）+ 单测；移除 `buildMimeMessage` + 其单测。
 2. `generateReport/index.js`：替换发信块为 SES，删 `sendSmtpEmail163`/`EMAIL_163_AUTH_CODE`。
 3. `analyzeCBA/index.js`：同上。
