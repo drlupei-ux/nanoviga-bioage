@@ -1,7 +1,8 @@
-# Email Backbone Migration: 163 SMTP → Tencent SES (International) — 设计 Spec
+# Email Backbone Migration: 163 SMTP → Tencent SES — 设计 Spec
 
 - **日期**：2026-06-11
-- **状态**：设计已通过，待 spec 复核 → 实施计划
+- **状态**：设计已通过（含 2026-06-11 region 修正），待 spec 复核 → 实施计划
+- **核实更正（2026-06-11）**：**无需 SES 国际版账号**。中国站 SES API 支持 `ap-guangzhou`/`ap-hongkong` 等地域，复用现有**中国站账号 + `TENCENT_SECRET_ID/KEY`**（与 CloudBase/OCR 同账号）。**发信专用域名无需 ICP 备案**（仅当域名 A 记录指向大陆服务器才需备案；nanoviga.com A 记录指向 Vercel/海外）。来源：[SES 请求结构/地域](https://cloud.tencent.com/document/product/1288/51055)、[SES 域名相关问题](https://cloud.tencent.com/document/product/1288/52776)。最终采用 **region `ap-guangzhou`（国内，对 163 投递更顺）**。
 - **前序**：构建于 `feat/clinical-email-system`（Clinical Conversion Report Email System，HTML 模板系统已就绪）
 - **关联 spec**：`docs/superpowers/specs/2026-06-08-clinical-conversion-email-system-design.md`
 
@@ -11,14 +12,14 @@
 
 当前两个云函数（`generateReport` L1 / `analyzeCBA` CBA）经**手写 163 SMTP 直连**发信，收件人=发件人=同一 163（`13816746212@163.com`）。**2026-06-10 验证：163 已账号级封禁发信，持续 `550 User has no permission` 超过 2 天**（授权码仍有效，AUTH 成功；550 发生在发信阶段）。自发自收 + 突发测试触发反垃圾。免费 163 SMTP 不适合事务邮件。
 
-**目标**：把发信后端从 163 SMTP 迁移到 **Tencent SES 国际版（邮件推送，region `ap-hongkong`）**，提升送达可靠性与可观测性，消除自发自收限制。HTML 报告模板系统不变。
+**目标**：把发信后端从 163 SMTP 迁移到 **Tencent SES（邮件推送，中国站账号，region `ap-guangzhou`）**，提升送达可靠性与可观测性，消除自发自收限制。HTML 报告模板系统不变。
 
 ## 2. 已确认决策
 
 | 决策 | 取值 |
 |---|---|
-| 服务 | Tencent Cloud **International** — Simple Email Service (SES) |
-| Region | **`ap-hongkong`**（无需 ICP 备案；nanoviga.com 未备案） |
+| 服务 | Tencent Cloud **中国站** — Simple Email Service (SES，邮件推送)；**复用现有账号**（CloudBase/OCR 同一个） |
+| Region | **`ap-guangzhou`**（国内，对 163 投递更顺）。发信专用域名**无需 ICP 备案**（A 记录非大陆即可） |
 | 发件地址 (From) | **`bioage@nanoviga.com`**，显示名 **`BioAge Compass`** |
 | **Reply-To** | **`support@nanoviga.com`**（回复去向；SES 仅出站，收信需另配，见 §6.1） |
 | 收件地址 (生产) | env **`SES_TO`**（陆大夫通知箱；**不硬编码 PII**；发件≠收件，消除自发自收标记） |
@@ -41,7 +42,7 @@
 
 下列前置项必须由运维方（你）在 Tencent 控制台 + DNS 完成，**编码方不可绕过**：
 
-1. **SES account setup** — 国际站开通 SES（`ap-hongkong`）。
+1. **SES account setup** — 中国站（现有账号）开通 SES，地域 `ap-guangzhou`。
 2. **Domain verification** — `nanoviga.com` 在 SES 控制台状态 = **Verified**（DNS 记录已加并验证通过）。
 3. **Production access / sending quota** — 已申请并获批生产发信权限/额度（非沙箱受限态）。
 4. **CAM permissions validation** — 云函数所用 `TENCENT_SECRET_ID/KEY` 实测具备 `ses:SendEmail` 权限。
@@ -61,8 +62,8 @@
 > 这些是发信的前置条件，无法自动化。**精确的记录值由 SES 控制台在添加域名时生成**——下文给出记录"类型/位置"，token 以控制台为准，勿照抄示例值。
 
 ### 4.1 Tencent SES 账号开通
-1. 登录 **国际站**控制台 `console.intl.cloud.tencent.com` → 产品搜索 **Simple Email Service (邮件推送)** → 选择地域 **Hong Kong (`ap-hongkong`)** → 开通服务。
-2. 确认用于云函数的访问密钥（`TENCENT_SECRET_ID/KEY`）对应的子账号/角色，在 **CAM** 中拥有 SES 权限（`QcloudSESFullAccess` 或自定义仅含 `ses:SendEmail`、`ses:GetSendEmailStatus`）。
+1. 登录**中国站**控制台 `console.cloud.tencent.com`（与 CloudBase/OCR **同一账号**）→ 产品搜索 **邮件推送 (SES)** → 选择地域 **广州 (`ap-guangzhou`)** → 开通服务。**无需注册国际站账号、无需新密钥。**
+2. 确认云函数所用 `TENCENT_SECRET_ID/KEY`（OCR 同一对）对应子账号/角色，在 **CAM** 中拥有 SES 权限（`QcloudSESFullAccess` 或自定义仅含 `ses:SendEmail`、`ses:GetSendEmailStatus`）。
 
 ### 4.2 域名验证（`nanoviga.com`）
 1. SES 控制台 → **发信域名 (Sender Domains)** → 新建 → 填 `nanoviga.com`。
@@ -79,6 +80,7 @@
 | **return-path / 自定义 MAIL FROM**（可选，提升对齐） | **CNAME**/MX | 控制台指定子域 | 控制台给的值 |
 
 注意：若 `nanoviga.com` 已有 SPF TXT，需**合并**进同一条（一个域只能有一条 SPF），不要新增第二条。
+> **备案说明（已核实）**：发信专用域名**无需 ICP 备案**——仅当域名 A 记录指向大陆服务器才需备案；nanoviga.com A 记录指向 Vercel（海外），故无需备案。域名验证是纯 DNS（TXT/SPF/DKIM），与备案无关。来源：[SES 域名相关问题](https://cloud.tencent.com/document/product/1288/52776)。
 
 ### 4.4 发件地址创建
 1. 域名验证通过后 → **发信地址 (Sender Addresses)** → 新建 → `bioage@nanoviga.com`，显示名 `BioAge Compass`。
@@ -121,7 +123,7 @@ sendViaTencentSES({ secretId, secretKey, region, fromAddr, fromName, toAddr, rep
   → Promise<{ ok: boolean, messageId?: string, error?: string }>
 ```
 - TC3-HMAC-SHA256 签名（复用 `tcSha256Hex`/`tcHmac`；与 OCR 同算法，service 改 `ses`）。
-- 请求：`POST https://ses.tencentcloudapi.com`，头 `X-TC-Action: SendEmail`、`X-TC-Version: 2020-10-02`、`X-TC-Region: ap-hongkong`、`Content-Type: application/json; charset=utf-8`。
+- 请求：`POST https://ses.tencentcloudapi.com`（就近接入，自动路由；亦可用区域域名 `ses.ap-guangzhou.tencentcloudapi.com`），头 `X-TC-Action: SendEmail`、`X-TC-Version: 2020-10-02`、`X-TC-Region: ap-guangzhou`、`Content-Type: application/json; charset=utf-8`。
 - Body：
   ```json
   {
@@ -142,7 +144,7 @@ sendViaTencentSES({ secretId, secretKey, region, fromAddr, fromName, toAddr, rep
 原 `if (EMAIL_AUTH_CODE) { await sendSmtpEmail163(...) }` →
 ```js
 const sesCfg = { secretId: process.env.TENCENT_SECRET_ID, secretKey: process.env.TENCENT_SECRET_KEY,
-  region: process.env.SES_REGION || 'ap-hongkong',
+  region: process.env.SES_REGION || 'ap-guangzhou',
   fromAddr: process.env.SES_FROM || 'bioage@nanoviga.com', fromName: 'BioAge Compass',
   replyTo: process.env.SES_REPLY_TO || 'support@nanoviga.com',
   toAddr: process.env.SES_TEST_RECIPIENT || process.env.SES_TO };  // 测试覆盖优先；go-live 前清空 SES_TEST_RECIPIENT
@@ -157,7 +159,7 @@ if (sesCfg.secretId && sesCfg.secretKey && sesCfg.toAddr) {
 ### 5.4 环境变量
 - 新增（两个函数）：
   - `SES_FROM` = `bioage@nanoviga.com`（代码内有默认值）
-  - `SES_REGION` = `ap-hongkong`（代码内有默认值）
+  - `SES_REGION` = `ap-guangzhou`（代码内有默认值）
   - `SES_REPLY_TO` = `support@nanoviga.com`（代码内有默认值；回复去向）
   - `SES_TO` = 生产收件箱（**无代码默认、不硬编码 PII**；未配且无测试覆盖则 `emailResult: skipped`）
   - `SES_TEST_RECIPIENT` = 测试收件覆盖（例 `SES_TEST_RECIPIENT=test@example.com`；**设置即覆盖 `SES_TO`，go-live 前必须清空**）
@@ -200,7 +202,7 @@ if (sesCfg.secretId && sesCfg.secretKey && sesCfg.toAddr) {
 | 内联 `Simple` 发信被账号策略拒绝（需注册模板） | 回退：在 SES 控制台注册一个"透传 HTML"模板并审核，改用 `Template`/`TemplateData`；接口层 `sendViaTencentSES` 预留 `template` 分支 |
 | SES 新账号额度/沙箱限制 | §4.5 提前申请；本场景低频，默认额度多半够 |
 | DNS 传播/SPF 合并错误 | §4.3 注明 SPF 单条合并；验证未过不发码 |
-| ap-hongkong 发往 163 进垃圾箱 | DKIM+SPF 对齐；首发标记非垃圾养信誉；发件≠收件已消除自发自收标记 |
+| 国内区(ap-guangzhou)对内容/模板审核较严，内联 Simple 可能被拒 | 见上行回退（注册透传模板）；首发标记非垃圾养信誉；DKIM+SPF 对齐；发件≠收件已消除自发自收标记 |
 | CAM 密钥无 SES 权限 | §4.1 步骤2 预检 `QcloudSESFullAccess` |
 
 ## 10. 实施顺序（供 plan）

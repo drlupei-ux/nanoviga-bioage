@@ -1,19 +1,20 @@
 # Tencent SES Go-Live — Operator Checklist（运维操作手册）
 
 > 配套设计 spec：`2026-06-11-tencent-ses-email-backbone-design.md`。
-> 发件 `BioAge Compass <bioage@nanoviga.com>` · Reply-To `support@nanoviga.com` · Region `ap-hongkong` · DNS 托管在**阿里云**。
+> 发件 `BioAge Compass <bioage@nanoviga.com>` · Reply-To `support@nanoviga.com` · **中国站账号**（CloudBase/OCR 同账号）· Region `ap-guangzhou` · DNS 托管在**阿里云**。
+> 已核实：**无需国际版账号**，中国站 SES 即支持；**发信专用域名无需 ICP 备案**（A 记录非大陆即可）。
 > 🚦 **门控：代码不部署，直到第 3 步域名 Verified 且第 6 步生产权限获批。** 精确的 DNS 值由 Tencent SES 控制台生成——**照抄控制台，勿用本文档示例值**。
 
 ---
 
 ## 1. Tencent SES 账号开通
-- [ ] 登录国际站 `console.intl.cloud.tencent.com`（用承载云函数的同一个腾讯云账号；OCR 已在用其密钥）。
-- [ ] 产品搜索 **Simple Email Service / 邮件推送** → 开通服务。
-- [ ] 准备好云函数所用的 `TENCENT_SECRET_ID` / `TENCENT_SECRET_KEY`（与 OCR 同一对）。
+- [ ] 登录**中国站** `console.cloud.tencent.com`（**与 CloudBase/OCR 同一个腾讯云账号**，无需国际站账号）。
+- [ ] 产品搜索 **邮件推送 / SES** → 开通服务。
+- [ ] 准备好云函数所用的 `TENCENT_SECRET_ID` / `TENCENT_SECRET_KEY`（与 OCR 同一对，无需新密钥）。
 
 ## 2. SES Region 选择
-- [ ] 在 SES 控制台右上角地域切到 **Hong Kong（`ap-hongkong`）**。
-- [ ] 原因：nanoviga.com 未 ICP 备案；`ap-hongkong` 国际区**无需备案**，仍可投递 163。后续所有操作都在此地域。
+- [ ] 在 SES 控制台地域切到 **广州（`ap-guangzhou`）**。后续所有操作都在此地域。
+- [ ] 原因：收件人是国内 163，国内区投递更顺、延迟低；发信专用域名**无需备案**（nanoviga.com A 记录指向 Vercel/海外）。
 
 ## 3. 域名验证（`nanoviga.com`）
 - [ ] SES 控制台 → **发信域名 / Sender Domains** → 新建 → 输入 `nanoviga.com`。
@@ -66,7 +67,7 @@
   ```
 - [ ] 额度：非受限/沙箱，每日上限 ≥ 预期。
 - [ ] CAM：密钥具备 `ses:SendEmail`。
-- [ ] 两个云函数环境变量待配：`SES_FROM=bioage@nanoviga.com`、`SES_REGION=ap-hongkong`、`SES_REPLY_TO=support@nanoviga.com`、`SES_TEST_RECIPIENT=<你的测试箱>`、`TENCENT_SECRET_ID/KEY`（**L1 此前没配，需补**）。生产箱 `SES_TO` 先留空，go-live 再填。
+- [ ] 两个云函数环境变量待配：`SES_FROM=bioage@nanoviga.com`、`SES_REGION=ap-guangzhou`、`SES_REPLY_TO=support@nanoviga.com`、`SES_TEST_RECIPIENT=<你的测试箱>`、`TENCENT_SECRET_ID/KEY`（**L1 此前没配，需补**）。生产箱 `SES_TO` 先留空，go-live 再填。
 
 ## 9. 首封测试邮件流程
 - [ ] 代码部署后（云函数控制台手动部署，见 spec §8），设好 `SES_TEST_RECIPIENT=<你的测试箱>`。
