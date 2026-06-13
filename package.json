@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "node --import tsx --test src/lib/admin/*.test.ts",
+    "ensure:counters": "node --env-file=.env.local --import tsx scripts/ensure-case-counters.ts",
     "seed:test-case": "node --env-file=.env.local --import tsx scripts/create-test-submission.ts",
     "clean:test-cases": "node --env-file=.env.local --import tsx scripts/delete-test-submissions.ts"
   },
