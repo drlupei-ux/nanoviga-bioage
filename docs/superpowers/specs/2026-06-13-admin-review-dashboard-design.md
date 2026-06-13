@@ -2,7 +2,11 @@
 
 **Date:** 2026-06-13
 **Branch (target):** `feat/clinical-email-system` → ships to production via `git push origin main:clinical`
-**Status:** Approved design, ready for implementation planning
+**Status:** Approved design (revision 2), ready for implementation planning
+
+### Revision history
+- **r1** — initial design: 5-state lifecycle (`pending`→`approved`→`ready_for_delivery`→`delivered` / `rejected`), priority `normal/high/vip`, single `doctorNote`.
+- **r2** (this doc) — lifecycle `submitted`→`under_review`→`approved`→`delivered`→`archived`; priority `normal/attention/vip`; added `tags[]`; split `doctorNote` → `doctorSummary`/`doctorAdvice`/`doctorNextStep`; added human-readable `caseId` `BAC-YYYY-NNNN`.
 
 ---
 
@@ -11,15 +15,15 @@
 Replace admin **email notifications** with a gated, in-app **Admin Review Dashboard**.
 
 Both cloud functions (`generateReport` for PLA, `analyzeCBA` for CBA) already persist each
-submission to CloudBase with `status: 'pending'`, then send a notification email to the admin
-mailbox. This project:
+submission to CloudBase, then send a notification email to the admin mailbox. This project:
 
 1. **Disables** the email send (reversibly, behind a flag — code stays).
 2. Adds an **`/admin`** area inside the existing Next.js app that reads those same DB records.
-3. Lets the admin **review each report**, view full content + contact info, set **priority**,
-   and move it through a **status lifecycle**, writing every decision back to the DB.
-4. Persists the **full CBA narrative** into the DB (today it only exists in the email body) so the
-   dashboard can display the complete CBA report.
+3. Lets the admin **review each case**, view full content + contact info, set **priority** and
+   **tags**, capture a structured **doctor sign-off**, and move it through a **status lifecycle**,
+   writing every decision back to the DB.
+4. Persists the **full CBA narrative** into the DB (today it only exists in the email body).
+5. Assigns each reviewed case a **human-readable `caseId`** (`BAC-YYYY-NNNN`).
 
 **Guiding constraint (project CLAUDE.md):** stability > correctness > features. Minimal,
 backward-compatible, reversible changes. Protected files untouched. Test gates enforced.
@@ -31,44 +35,52 @@ backward-compatible, reversible changes. Protected files untouched. Test gates e
 ### Goals
 - Stop sending notification emails (reversible).
 - Single dashboard reviewing **both** PLA (`report_submissions`) and CBA (`cba_submissions`).
-- View full report + user contact info per submission.
-- Approve / Reject / Mark Ready / Export PDF actions.
-- Priority tagging (`normal` / `high` / `vip`).
-- Doctor Note captured at approval, stored for future delivery.
+- View full report + user contact info per case.
+- Lifecycle actions: Start Review / Approve / Mark Delivered / Archive / set priority / set tags.
+- Priority tagging (`normal` / `attention` / `vip`) and free `tags[]` for future case-library indexing.
+- Structured doctor sign-off (`doctorSummary` / `doctorAdvice` / `doctorNextStep`) stored for the
+  future delivery workflow.
+- Human-readable `caseId` per case.
 - Persist full CBA narrative into the DB.
-- Status written back to the DB on every transition.
+- Export PDF of a case (browser print).
 
 ### Non-Goals (YAGNI — explicitly out of scope)
-- Actual **delivery** to the user (email/WeChat/PDF send on approval). Only the `delivered` state
-  and reserved fields are designed; no send is implemented.
+- Actual **delivery** to the user (auto email/WeChat/PDF send). Only the `delivered` state +
+  reserved fields are designed; "Mark Delivered" is a manual status move for now.
 - Multi-admin accounts, roles, or permissions (single shared password).
-- Full audit trail / decision history (only the latest decision is stored).
-- Server-side PDF rendering (we use browser print-to-PDF).
-- Capturing new contact fields (WeChat/email) at submission time — display only what exists today.
+- A full audit trail / decision history (only the latest decision is stored).
+- Server-side PDF rendering (browser print-to-PDF).
+- The case-library **search/index UI** that `tags[]` enables (field is stored & editable now;
+  indexing is future).
+- Capturing new contact fields (WeChat/email) at submission — display only what exists today.
 
 ---
 
 ## 3. Status Lifecycle
 
 ```
-pending ──Approve──▶ approved ──Mark Ready──▶ ready_for_delivery ──(future hook)──▶ delivered
-   │
-   └──Reject──▶ rejected
+submitted ──Start Review──▶ under_review ──Approve──▶ approved ──Mark Delivered──▶ delivered ──Archive──▶ archived
+   │                            │                        │                            │
+   └────────────────────────────┴────────────Archive─────┴────────────────────────────┘
+                         (Archive = terminal disposition, incl. declining a case)
 ```
 
 | State | Meaning | Set by | Allowed from |
 |---|---|---|---|
-| `pending` | Submitted, awaiting review | cloud function on submit | — (initial) |
-| `approved` | Clinical content signed off | **Approve** button | `pending` |
-| `ready_for_delivery` | Finalized, queued to send | **Mark Ready** button | `approved` |
-| `delivered` | Sent to user | future delivery hook | `ready_for_delivery` |
-| `rejected` | Declined | **Reject** button | `pending` |
+| `submitted` | Submitted, not yet picked up | cloud function on submit | — (initial) |
+| `under_review` | Admin is reviewing; **`caseId` assigned here** | **Start Review** | `submitted` |
+| `approved` | Clinical sign-off captured (doctor fields) | **Approve** | `under_review` |
+| `delivered` | Marked sent to user (manual now; auto later) | **Mark Delivered** | `approved` |
+| `archived` | Terminal — completed **or declined** | **Archive** | any non-`archived` state |
 
 **Rules**
-- Reject is only allowed from `pending` (per final decision).
-- Each forward/terminal transition writes review metadata (§5).
-- Server-side transition guard: any request whose `from` state doesn't match the table above is
-  rejected with `409 Conflict` (prevents stale-tab double-submits).
+- The happy path is strictly linear; you cannot skip forward (e.g. `submitted`→`approved` is `409`).
+- **Decline = Archive.** There is no dedicated `rejected` state in r2; a case that should not proceed
+  is archived from wherever it is. *(Decision — flagged for override: if a distinct `rejected` state
+  is wanted, add it as a sixth value reachable from `under_review`.)*
+- **Legacy compatibility:** existing documents with `status:'pending'` are normalized to `submitted`
+  on read (and the cloud functions are updated to write `submitted` going forward).
+- Server-side transition guard: any request whose `fromStatus` doesn't match the table → `409`.
 
 ---
 
@@ -86,33 +98,55 @@ pending ──Approve──▶ approved ──Mark Ready──▶ ready_for_deli
 
 | Field | Type | Default | Written by | Notes |
 |---|---|---|---|---|
-| `status` | string | `'pending'` | cloud fn + admin | now 5-state (§3) |
-| `priority` | string | `'normal'` | admin (editable) | enum: `normal` `high` `vip` |
-| `reviewedAt` | ISO string | `null` | admin | set on every status transition |
-| `reviewedBy` | string | `null` | admin | admin label (from session) |
-| `reviewNote` | string | `null` | admin | optional; used for reject reason or general note |
-| `doctorNote` | string | `null` | admin | **captured at Approve**; stored for future delivery |
-| `deliveredAt` | ISO string | `null` | future hook | reserved |
-| `deliveryChannel` | string | `null` | future hook | reserved (`email`/`wechat`/`pdf`) |
-| `report` (CBA) | string | — | `analyzeCBA` | **new for CBA**: full narrative persisted (§7.2) |
+| `status` | string | `'submitted'` | cloud fn + admin | 5-value enum (§3); legacy `pending`→`submitted` on read |
+| `caseId` | string | `null` | admin | **`BAC-YYYY-NNNN`**; assigned at Start Review (§4.4) |
+| `priority` | string | `'normal'` | admin | enum `normal` `attention` `vip` |
+| `tags` | string[] | `[]` | admin | free labels for future case-library indexing |
+| `reviewedAt` | ISO string | `null` | admin | updated on every status transition |
+| `reviewedBy` | string | `null` | admin | admin label from session |
+| `reviewNote` | string | `null` | admin | optional; general/archive note |
+| `doctorSummary` | string | `null` | admin | **captured at Approve (required)** — case summary |
+| `doctorAdvice` | string | `null` | admin | captured at Approve (optional) — clinical advice |
+| `doctorNextStep` | string | `null` | admin | captured at Approve (optional) — recommended next step |
+| `deliveredAt` | ISO string | `null` | Mark Delivered | set when moved to `delivered` |
+| `deliveryChannel` | string | `null` | Mark Delivered / future | `manual` now; `email`/`wechat`/`pdf` later |
+| `report` (CBA) | string | absent | `analyzeCBA` | **new for CBA**: full narrative persisted (§7.2) |
 
-**Backward compatibility:** all new fields are additive and optional. Existing documents lacking
-them are treated as: `priority='normal'`, notes `null`. No migration required; the API normalizes
-missing fields on read.
+**Backward compatibility:** all new fields additive/optional. Legacy docs coerce on read to
+`status` normalized, `priority='normal'`, `tags=[]`, `caseId=null`, notes `null`. No migration.
 
-### 4.3 Normalized read model (API → UI)
+### 4.3 New collection — `case_counters`
 
-The API maps both collections into one shape so the dashboard is collection-agnostic:
+Supports atomic, per-year sequential numbering for `caseId`.
+
+```
+{ _id: <"2026">, year: 2026, seq: <int> }   // one doc per year
+```
+
+### 4.4 `caseId` assignment
+
+- Format: **`BAC-YYYY-NNNN`** — `YYYY` = current year, `NNNN` = zero-padded 4-digit sequence
+  (e.g. `BAC-2026-0001`).
+- Assigned **once**, server-side, at the `submitted → under_review` transition (Start Review).
+- Allocation: atomically `inc` `case_counters/{year}.seq` (create with `seq:1` if absent), then
+  format. Idempotent guard: if the record already has a `caseId`, reuse it (no re-allocation).
+- Year rollover: a new year creates a new counter doc starting at `0001`; the year is embedded in
+  the id, so ids stay unique across years.
+- Distinct from the existing random `assessmentCode` (`BCA-XXXX`), which is unchanged.
+
+### 4.5 Normalized read model (API → UI)
 
 ```ts
 type AdminSubmission = {
   id: string;                 // CloudBase _id
   type: 'pla' | 'cba';
+  caseId: string | null;      // BAC-YYYY-NNNN, null until under_review
   name: string;
   assessmentCode: string;
   l1RefCode?: string | null;  // CBA only
-  status: 'pending'|'approved'|'ready_for_delivery'|'delivered'|'rejected';
-  priority: 'normal'|'high'|'vip';
+  status: 'submitted'|'under_review'|'approved'|'delivered'|'archived';
+  priority: 'normal'|'attention'|'vip';
+  tags: string[];
   submittedAt: string;        // createdAt (PLA) | submittedAt (CBA), ISO
   headlineAge: number;        // bioAge (PLA) | phenoAge (CBA)
   actualAge: number;          // age (PLA) | actualAge (CBA)
@@ -131,7 +165,11 @@ type AdminSubmission = {
   reviewedAt?: string | null;
   reviewedBy?: string | null;
   reviewNote?: string | null;
-  doctorNote?: string | null;
+  doctorSummary?: string | null;
+  doctorAdvice?: string | null;
+  doctorNextStep?: string | null;
+  deliveredAt?: string | null;
+  deliveryChannel?: string | null;
 };
 ```
 
@@ -139,8 +177,8 @@ type AdminSubmission = {
 
 ## 5. Backend — Next.js API routes + CloudBase Admin SDK
 
-All admin DB access runs **server-side on Vercel** via `@cloudbase/node-sdk` initialized with a
-Tencent CAM credential. Client never sees credentials.
+All admin DB access runs **server-side on Vercel** via `@cloudbase/node-sdk` with a Tencent CAM
+credential. Client never sees credentials. All routes `runtime = 'nodejs'`.
 
 ### 5.1 New dependency
 - `@cloudbase/node-sdk` added to `package.json` dependencies.
@@ -156,136 +194,143 @@ Tencent CAM credential. Client never sees credentials.
 | `ADMIN_SESSION_SECRET` | HMAC secret to sign the session cookie |
 
 ### 5.3 CloudBase client helper
-`src/lib/admin/cloudbase.ts` — lazy singleton:
-```ts
-tcb.init({ env: TCB_ENV_ID, secretId: TENCENT_SECRET_ID, secretKey: TENCENT_SECRET_KEY })
-```
-Exposes `db()` and typed `listPending`, `getOne`, `updateReview` helpers. All routes use
-`runtime = 'nodejs'` (SDK needs Node, not Edge).
+`src/lib/admin/cloudbase.ts` — lazy singleton `tcb.init({ env, secretId, secretKey })`. Exposes
+`db()` plus typed helpers: `listSubmissions`, `getOne`, `updateReview`, `allocateCaseId`
+(atomic counter on `case_counters`).
 
 ### 5.4 Routes
 
 | Route | Method | Auth | Behavior |
 |---|---|---|---|
-| `/api/admin/login` | POST | none | Compare body password to `ADMIN_DASHBOARD_PASSWORD`; on match set signed httpOnly cookie, return `{ok:true}`; else `401`. |
+| `/api/admin/login` | POST | none | Compare body password to `ADMIN_DASHBOARD_PASSWORD`; on match set signed httpOnly cookie; else `401`. |
 | `/api/admin/logout` | POST | cookie | Clear cookie. |
-| `/api/admin/submissions` | GET | cookie | Query `?type=pla\|cba\|all&status=&priority=`. Returns normalized list (no `report`/biomarkers payload — list is lean). Default sort: priority (vip→high→normal) then `submittedAt` desc. |
-| `/api/admin/submissions/[type]/[id]` | GET | cookie | Full normalized `AdminSubmission` incl. report + detail fields. |
-| `/api/admin/submissions/[type]/[id]/review` | POST | cookie | Body `{action, fromStatus, priority?, reviewNote?, doctorNote?}`. Validates transition (§3), writes status + metadata, returns updated record. |
+| `/api/admin/submissions` | GET | cookie | Query `?type=pla\|cba\|all&status=&priority=&tag=`. Lean normalized list (no report/biomarkers). Default sort: priority (vip→attention→normal) then `submittedAt` desc. |
+| `/api/admin/submissions/[type]/[id]` | GET | cookie | Full normalized `AdminSubmission`. |
+| `/api/admin/submissions/[type]/[id]/review` | POST | cookie | Body `{action, fromStatus, ...}`. Validates transition (§3), writes fields, returns updated record. |
 
-`action` ∈ `approve` | `mark_ready` | `reject` | `set_priority`.
-- `approve`: requires `doctorNote` (per requirement #5) — captured here; `pending→approved`.
-- `mark_ready`: `approved→ready_for_delivery`.
-- `reject`: optional `reviewNote` (reason); `pending→rejected`.
-- `set_priority`: updates `priority` only, no status change (allowed in any non-terminal state).
+**`action` values & payloads:**
+
+| action | from → to | required / fields written |
+|---|---|---|
+| `start_review` | `submitted → under_review` | allocates+writes `caseId`; `reviewedBy/At` |
+| `approve` | `under_review → approved` | **`doctorSummary` required**; `doctorAdvice?`, `doctorNextStep?`; `reviewedBy/At` |
+| `mark_delivered` | `approved → delivered` | `deliveredAt`, `deliveryChannel='manual'`; `reviewedBy/At` |
+| `archive` | any non-`archived` → `archived` | optional `reviewNote` (e.g. decline reason); `reviewedBy/At` |
+| `set_priority` | no status change | `priority` ∈ enum; allowed when not `archived` |
+| `set_tags` | no status change | `tags: string[]`; allowed when not `archived` |
 
 ### 5.5 Errors
-- `401` unauthenticated, `409` invalid transition / `fromStatus` mismatch, `404` not found,
-  `400` missing required field (e.g. approve without doctorNote), `500` SDK/db error (logged).
+`401` unauth · `409` invalid/stale transition (`fromStatus` mismatch) · `404` not found ·
+`400` missing required field (e.g. approve without `doctorSummary`) · `500` db/SDK error (logged).
 
 ---
 
 ## 6. Frontend — `/admin`
 
-Mobile-first, uses existing `clinical.*` tokens, `.clinical-card`, `cn()`. No new design system.
-**No protected files touched.** Tone follows product rules (clinical, Chinese UI; avoid the banned
-words "AI/model/algorithm/generated").
+Mobile-first; reuses `clinical.*` tokens, `.clinical-card`, `cn()`. **No protected file touched.**
+Chinese UI; avoid banned words ("AI/model/algorithm/generated").
 
 ### 6.1 Auth gate — `src/middleware.ts` (new)
-Matches `/admin/:path*` and `/api/admin/:path*` (except `/api/admin/login`). Verifies the signed
-cookie; unauthenticated browser nav → redirect to `/admin/login`; unauthenticated API → `401`.
+Matches `/admin/:path*` and `/api/admin/:path*` (except `/api/admin/login`). Verifies signed cookie;
+unauthenticated browser nav → redirect to `/admin/login`; unauthenticated API → `401`.
 
 ### 6.2 `/admin/login`
-Single password field → POST `/api/admin/login` → on success `router.push('/admin')`.
+Single password field → POST `/api/admin/login` → success → `router.push('/admin')`.
 
 ### 6.3 `/admin` (list)
-- Filter chips: type (全部/PLA/CBA), status, priority.
-- Table/cards: 客户 · 编号 · 类型 · 优先级徽章 · 年龄(headline/actual) · 提交时间 · 状态徽章.
-- Priority badge color-coded (vip/high/normal). Status badge color-coded per state.
-- Row/card click → detail. Default view = `status=pending`, sorted vip→high→normal then newest.
+- Filter chips: type (全部/PLA/CBA), status, priority, tag.
+- Rows/cards: 案例号(`caseId` or 未分配) · 客户 · 编号 · 类型 · 优先级徽章 · 标签 · 年龄 · 提交时间 · 状态徽章.
+- Priority + status badges color-coded. Default view `status=submitted`, sorted vip→attention→normal then newest.
+- Row click → detail.
 
 ### 6.4 `/admin/[type]/[id]` (detail)
-Sections:
-1. **Header** — name, code, type, status badge, priority selector (writes via `set_priority`).
-2. **Contact panel (requirement #4)** — shows available contact info:
-   - PLA: phone (full). CBA: phone suffix (last 4) + `l1RefCode`.
-   - WeChat / email rows render "未提供" since not captured at submission today (honest display;
-     no fabricated data). Panel is structured so future captured fields slot in.
-3. **Report body** —
-   - PLA: rendered `report` text + `dimensionScores` (5D mapping for display) + score.
-   - CBA: persisted narrative `report` + PhenoAge + `organAges` (5D) + key `biomarkers`.
-4. **Review history** — current `status`, `reviewedBy/At`, `reviewNote`, `doctorNote` (read-back).
-5. **Actions (contextual per §3)** —
-   - `pending`: **Approve** (opens doctorNote-required modal) · **Reject** (optional reason) · Export PDF
-   - `approved`: **Mark Ready for Delivery** · Export PDF
-   - `ready_for_delivery` / `delivered` / `rejected`: read-only badge · Export PDF
-   - Every action posts `fromStatus` for the server-side guard; UI refetches on success.
+1. **Header** — `caseId`, name, assessmentCode, type, status badge, **priority selector**
+   (`set_priority`), **tags editor** (chip add/remove → `set_tags`).
+2. **Contact panel (req #4 prior)** — PLA: phone (full); CBA: phone suffix + `l1RefCode`.
+   WeChat / email rows show "未提供" (not captured today). Structured so future fields slot in.
+3. **Report body** — PLA: `report` text + 5D `dimensionScores` + score. CBA: persisted narrative
+   `report` + PhenoAge + `organAges` (5D) + key `biomarkers`.
+4. **Doctor sign-off** — read-back of `doctorSummary` / `doctorAdvice` / `doctorNextStep` once
+   approved; review history (`status`, `reviewedBy/At`, `reviewNote`, `deliveredAt/Channel`).
+5. **Contextual actions (per §3)** + Export PDF:
+   - `submitted` → **Start Review** · Archive · Export PDF
+   - `under_review` → **Approve** (modal: doctorSummary [required] / doctorAdvice / doctorNextStep) · Archive · Export PDF
+   - `approved` → **Mark Delivered** · Archive · Export PDF
+   - `delivered` → **Archive** · Export PDF
+   - `archived` → read-only badge · Export PDF
+   - Every action posts `fromStatus`; UI refetches on success.
 
 ### 6.5 Export PDF
-- A print stylesheet (`@media print`) hides nav/actions, shows a clean clinical report layout.
-- **Export PDF** button calls `window.print()`; admin chooses "Save as PDF". No new deps.
+`@media print` stylesheet (hides nav/actions, clean clinical layout) + **Export PDF** button →
+`window.print()` → "Save as PDF". No new dep; no protected CSS touched.
 
 ---
 
 ## 7. Cloud-function changes (manual Monaco-console deploy)
 
-Two functions edited; each redeployed once via the legacy Tencent console (per runtime CLAUDE.md §8
-`applyEdits` procedure). Both changes are minimal and reversible.
+Two functions edited in-place, each redeployed once via the legacy console (`applyEdits`,
+runtime CLAUDE.md §8). Minimal, reversible.
 
 ### 7.1 `generateReport/index.js`
-- Wrap the SMTP send in an explicit flag:
-  `const EMAIL_ENABLED = process.env.EMAIL_ENABLED === 'true';` — default **off**.
-  Email block runs only if `EMAIL_ENABLED && EMAIL_AUTH_CODE`. Code retained (reversible).
-- DB save already stores the full `report`. **No other change.**
-- New doc fields default via the admin layer; cloud fn keeps writing `status:'pending'`.
-  (Optional, low-risk: also write `priority:'normal'` on insert for consistency.)
+- **Email gate:** `EMAIL_ENABLED = process.env.EMAIL_ENABLED === 'true'` (default **off**); email
+  block runs only when `EMAIL_ENABLED && EMAIL_AUTH_CODE`. Code retained below the guard.
+- **Status literal:** write `status: 'submitted'` on insert (was `'pending'`).
+- **(Optional, low-risk):** also write `priority:'normal'`, `tags:[]` on insert.
 
 ### 7.2 `analyzeCBA/index.js`
-- Same `EMAIL_ENABLED` gate on the email send.
-- **Persist the narrative (requirement #2):** capture the inserted doc id from `.add()` and, after
-  report generation, `collection('cba_submissions').doc(id).update({ report: rawCba })`. Mirror the
-  HTTP fallback path. This makes the full CBA report available to the dashboard.
-  - Edge case: if generation fails, the doc still exists with `report` absent; dashboard shows
-    "报告生成中/缺失" gracefully.
+- **Email gate:** same `EMAIL_ENABLED` guard.
+- **Status literal:** write `status: 'submitted'` on insert.
+- **Persist narrative:** capture the inserted doc `_id` from `.add()`; after report generation,
+  `db.collection('cba_submissions').doc(id).update({ report: rawCba })`. Mirror in the HTTP-fallback
+  path. If generation fails the doc exists without `report`; dashboard shows "报告缺失".
+
+**No HTTP contract change**; callers (`/api/generate-report`, `/api/cba/submit`) unaffected.
 
 ---
 
 ## 8. Security
-
-- Admin password compared server-side; never shipped to client.
-- Session cookie: httpOnly, `Secure`, `SameSite=Lax`, HMAC-signed with `ADMIN_SESSION_SECRET`,
-  reasonable expiry (e.g. 12h).
-- Middleware blocks all `/admin/*` + `/api/admin/*` before any data access.
-- CAM credential scoped (ideally) to CloudBase DB access on the one env.
-- No PII beyond what users submitted; CBA already stores only phone **suffix**.
+- Password compared server-side; never shipped to client.
+- Session cookie: httpOnly, `Secure`, `SameSite=Lax`, HMAC-signed (`ADMIN_SESSION_SECRET`), ~12h expiry.
+- Middleware blocks `/admin/*` + `/api/admin/*` before any data access.
+- CAM credential scoped to CloudBase DB on the one env.
+- CBA stores only phone **suffix**; no new PII introduced.
 
 ---
 
 ## 9. Test & Deploy Gates (runtime CLAUDE.md)
-
-1. `PYTHONPATH=. python3 preflight_check.py` — structure check passes.
+1. `PYTHONPATH=. python3 preflight_check.py` — passes.
 2. `PYTHONPATH=. python3 tests/run_tests.py` — all PASS.
 3. `npm run build` — no TS errors.
-4. `risk_engine`: admin pages display **existing** reports only (no new medical generation), so no
-   R2+/R3 output is introduced. Note this explicitly in the PR.
+4. `risk_engine`: admin pages display **existing** reports only (no new medical generation) — no
+   R2+/R3 output introduced; note in PR.
 5. Ship admin/Next.js code: `git push origin main:clinical` (Vercel watches `clinical`).
-6. Cloud functions: manual Monaco-console deploy (§7), then `curl`-verify both endpoints.
+6. Cloud functions: manual Monaco deploy (§7), then `curl`-verify both endpoints.
 
 **Pre-deploy checklist**
 - [ ] Vercel env vars set (§5.2).
 - [ ] `npm run build` green.
 - [ ] `/api/admin/*` smoke-tested with valid + invalid cookie.
-- [ ] Both cloud functions redeployed with `EMAIL_ENABLED` unset (email off) and CBA narrative
-      persistence confirmed via a test submission.
+- [ ] Transition guard verified (a skip-forward attempt → `409`).
+- [ ] `caseId` allocation verified (two Start Reviews → sequential ids, no dup).
+- [ ] Both cloud functions redeployed: email off (`EMAIL_ENABLED` unset), inserts write
+      `status:'submitted'`, CBA `report` persisted (test submission).
 
 ---
 
 ## 10. Rollback
 
-- Email: set `EMAIL_ENABLED=true` to restore notifications (code intact).
-- Dashboard: revert the `clinical` deploy; new collections fields are additive and inert if unused.
-- CBA narrative persistence: removing the `update()` call reverts cleanly; existing docs keep their
-  stored `report`.
+| Change | Rollback |
+|---|---|
+| Email disabled | Set `EMAIL_ENABLED=true` — code intact, notifications resume |
+| Dashboard / API / pages | Revert the `clinical` deploy; new DB fields additive & inert when unused |
+| `middleware.ts` | Removing it un-gates only `/admin/*`; rest of site unaffected |
+| CBA narrative persist | Remove the `update()` call; stored `report` values remain valid |
+| `status:'submitted'` literal | Read-normalization handles both `submitted` and legacy `pending`, so either literal is safe |
+| `case_counters` / `caseId` | Stop calling `allocateCaseId`; existing ids remain; counter doc is inert |
+| New DB fields / `@cloudbase/node-sdk` | Additive/server-only; removal affects only `/api/admin/*` |
+
+**Safety properties:** no protected file modified, no existing field retyped/removed, no existing
+endpoint contract changed — a full revert returns the system to today's behavior with no data cleanup.
 
 ---
 
@@ -293,14 +338,13 @@ Two functions edited; each redeployed once via the legacy Tencent console (per r
 
 **New (Next.js, shipped via Vercel):**
 - `src/middleware.ts` — auth gate
-- `src/lib/admin/cloudbase.ts` — admin SDK client + db helpers
+- `src/lib/admin/cloudbase.ts` — admin SDK client + db helpers (incl. `allocateCaseId`)
 - `src/lib/admin/session.ts` — cookie sign/verify
-- `src/lib/admin/types.ts` — `AdminSubmission`, status/priority enums, transition map
+- `src/lib/admin/types.ts` — `AdminSubmission`, status/priority enums, transition map, caseId format
 - `src/app/admin/login/page.tsx`
 - `src/app/admin/page.tsx` — list
 - `src/app/admin/[type]/[id]/page.tsx` — detail
-- `src/app/admin/admin.css` or print styles (or `@media print` in globals — **without** touching
-  protected `.clinical-*`/`.pb-safe*` rules)
+- print styles via `@media print` (without touching protected `.clinical-*`/`.pb-safe*` rules)
 - `src/app/api/admin/login/route.ts`
 - `src/app/api/admin/logout/route.ts`
 - `src/app/api/admin/submissions/route.ts`
@@ -308,9 +352,11 @@ Two functions edited; each redeployed once via the legacy Tencent console (per r
 - `src/app/api/admin/submissions/[type]/[id]/review/route.ts`
 - `package.json` — add `@cloudbase/node-sdk`
 
+**New collection:** `case_counters` (created lazily on first `caseId` allocation).
+
 **Edited (cloud functions, manual deploy):**
-- `cloud-functions/generateReport/index.js` — `EMAIL_ENABLED` gate
-- `cloud-functions/analyzeCBA/index.js` — `EMAIL_ENABLED` gate + persist `report` narrative
+- `cloud-functions/generateReport/index.js` — `EMAIL_ENABLED` gate + `status:'submitted'`
+- `cloud-functions/analyzeCBA/index.js` — `EMAIL_ENABLED` gate + `status:'submitted'` + persist `report`
 
 **Untouched protected files:** `src/lib/scoring.ts`, `src/context/AssessmentContext.tsx`,
 `tailwind.config.ts`, protected `globals.css` rules.
@@ -318,6 +364,8 @@ Two functions edited; each redeployed once via the legacy Tencent console (per r
 ---
 
 ## 12. Open follow-ups (future, not this spec)
-- Delivery hook: `ready_for_delivery → delivered` via WeChat/email/PDF send.
+- Delivery hook: auto-send on/after `approved` (WeChat/email/PDF), populating `deliveryChannel`.
 - Capture WeChat/email at submission to populate the contact panel.
+- Case-library search/index UI built on `tags[]`.
+- Dedicated `rejected` state if decline-vs-archive should be distinguished.
 - Decision history / audit log if multi-admin is introduced.
