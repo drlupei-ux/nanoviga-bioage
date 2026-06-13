@@ -2,7 +2,9 @@
 
 **Date:** 2026-06-13
 **Branch (target):** `feat/clinical-email-system` → ships to production via `git push origin main:clinical`
-**Status:** Approved design (revision 2), ready for implementation planning
+**Status:** SUPERSEDED for now by the V0 MVP — see
+`2026-06-13-admin-review-dashboard-v0-design.md`. This document is retained as the **full-scope
+future vision**; V0 ships first and deliberately omits most of it.
 
 ### Revision history
 - **r1** — initial design: 5-state lifecycle (`pending`→`approved`→`ready_for_delivery`→`delivered` / `rejected`), priority `normal/high/vip`, single `doctorNote`.

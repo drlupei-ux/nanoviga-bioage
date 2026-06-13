@@ -1,5 +1,8 @@
 # Admin Review Dashboard Implementation Plan
 
+> **⚠️ SUPERSEDED for now by the V0 MVP:** `2026-06-13-admin-review-dashboard-v0.md`. Implement V0
+> first. This full plan is retained as the future-scope reference; do NOT execute it as-is.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace admin email notifications with a password-gated in-app `/admin` review dashboard that reads PLA/CBA submissions from CloudBase, lets the admin move each case through a 5-state lifecycle with priority/tags/doctor sign-off, and writes decisions back — while allocating a permanent `BAC-YYYY-NNNN` caseId at submission.
