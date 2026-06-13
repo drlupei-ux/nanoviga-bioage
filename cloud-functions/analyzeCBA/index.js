@@ -298,6 +298,10 @@ exports.main = async (event, context) => {
     // 3. 持久化到数据库（在报告生成和邮件发送之前，确保即使后续步骤失败也不丢失数据）
     // [CHANGE 2026-05-30] 原因：修复 cba_submit 模式中 DB 写入缺失 bug（dbSaved 未赋值，提交数据仅靠邮件，SMTP 失败时永久丢失）
     const organAges5D = mapCba6DTo5D(organAges);
+    // [CHANGE 2026-06-13] 原因：caseId 提交时分配；SDK 不可用则留空由 admin backfill | 影响范围：analyzeCBA
+    let cbaDocId = null;
+    let caseId = null;
+    if (tcbApp) { try { caseId = await allocateCaseId(tcbApp); } catch (e) { console.log('caseId alloc failed:', e.message); } }
     const dbPayload = {
       assessmentCode,
       l1RefCode:   l1RefCode ?? null,
@@ -309,14 +313,17 @@ exports.main = async (event, context) => {
       organAges:   organAges5D ?? {},
       biomarkers:  biomarkers ?? {},
       submittedAt: submittedAt ?? new Date().toISOString(),
-      status:      'pending',
+      // [CHANGE 2026-06-13] 原因：新生命周期 + 可读编号 | 影响范围：cba_submissions 文档
+      status:      'submitted',
+      caseId,
     };
     let dbSaved = false;
 
     // 路径A：TCB SDK（首选）
     if (tcbApp) {
       try {
-        await tcbApp.database().collection('cba_submissions').add(dbPayload);
+        const _add = await tcbApp.database().collection('cba_submissions').add(dbPayload);
+        cbaDocId = _add && (_add.id || _add._id || (_add.ids && _add.ids[0])) || null;
         dbSaved = true;
         console.log('CBA submission saved to DB via SDK:', assessmentCode);
       } catch(e) {
@@ -363,6 +370,12 @@ exports.main = async (event, context) => {
       rawCba = await callDeepSeekWithReasoning(DEEPSEEK_KEY, CLINICAL_REASONING_SYSTEM, cbaPrompt, 800);
     } catch(e) { console.log('CBA JSON gen error:', e.message); rawCba = ''; }
 
+    // [CHANGE 2026-06-13] 原因：把生成的 CBA 全文写回文档，供审核台展示（原仅在邮件） | 影响范围：cba_submissions.report
+    if (cbaDocId && rawCba) {
+      try { await tcbApp.database().collection('cba_submissions').doc(cbaDocId).update({ report: rawCba }); }
+      catch (e) { console.log('CBA report persist failed:', e.message); }
+    }
+
     const parsed  = ET.parseModelJson(rawCba);
     const nowStr  = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
     const dateStr = new Date().toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' });
@@ -379,8 +392,10 @@ exports.main = async (event, context) => {
     const textBody = `BioAge Compass CBA 临床生化报告\n编号：${assessmentCode} | PhenoAge：${phenoAge}岁\n（请在支持HTML的邮件客户端查看完整报告）`;
 
     // 5. 发送邮件通知（await 确保发送完成后再返回）
+    // [CHANGE 2026-06-13] 原因：停用管理员邮件，改为站内审核台；保留代码可逆 | 影响范围：analyzeCBA 邮件
+    const EMAIL_ENABLED = process.env.EMAIL_ENABLED === 'true';
     let emailResult = 'skipped';
-    if (EMAIL_AUTH_CODE) {
+    if (EMAIL_ENABLED && EMAIL_AUTH_CODE) {
       try {
         await sendSmtpEmail163(ADMIN_EMAIL, EMAIL_AUTH_CODE, ADMIN_EMAIL, subject, textBody, htmlBody);
         emailResult = 'sent';
@@ -598,6 +613,22 @@ function sendSmtpEmail163(fromEmail, authCode, toEmail, subject, textBody, htmlB
     socket.on('close', () => finish(null));
     setTimeout(() => finish(new Error('SMTP timeout')), 25000);
   });
+}
+
+// ─── caseId 分配器 ────────────────────────────────────────────────────────────
+// [CHANGE 2026-06-13] 原因：提交时分配可读 caseId，原子事务避免并发重复 | 影响范围：analyzeCBA 入库
+async function allocateCaseId(app) {
+  const db = app.database();
+  const year = new Date().getFullYear();
+  let seq = 0;
+  await db.runTransaction(async (tx) => {
+    const ref = tx.collection('case_counters').doc(String(year));
+    const snap = await ref.get();
+    const cur = snap && snap.data ? (Array.isArray(snap.data) ? snap.data[0] : snap.data) : null;
+    if (!cur) { seq = 1; await ref.set({ year, seq }); }
+    else { seq = (cur.seq || 0) + 1; await ref.update({ seq }); }
+  });
+  return `BAC-${year}-${String(seq).padStart(4, '0')}`;
 }
 
 // ─── 响应辅助 ─────────────────────────────────────────────────────────────────
