@@ -26,16 +26,21 @@ const mgr = new (CloudBase as any)({
 async function main() {
   const code = fs.readFileSync(artifact, 'utf8');
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nv-deploy-'));
-  // SDK expects functionRootPath/<funcName>/index.js
+  // SDK expects functionRootPath/<funcName>/{index.js,package.json}
   fs.mkdirSync(path.join(dir, name), { recursive: true });
   fs.writeFileSync(path.join(dir, name, 'index.js'), code);
+  // The function requires @cloudbase/node-sdk at runtime; declare it so CloudBase
+  // installs it during deploy (InstallDependency=TRUE). Pinned to a verified 3.x.
+  fs.writeFileSync(path.join(dir, name, 'package.json'), JSON.stringify({
+    name, version: '1.0.0', dependencies: { '@cloudbase/node-sdk': '3.18.1' },
+  }, null, 2));
 
   const before = await mgr.functions.getFunctionDetail(name);
   console.log(`deploying ${name}  (${Buffer.byteLength(code)} bytes)`);
   console.log(`  live ModTime before: ${before.ModTime} | handler: ${before.Handler}`);
 
   await mgr.functions.updateFunctionCode({
-    func: { name, handler: 'index.main', runtime: 'Nodejs18.15', installDependency: false },
+    func: { name, handler: 'index.main', runtime: 'Nodejs18.15', installDependency: true },
     functionRootPath: dir,
   });
   console.log('  updateFunctionCode submitted; polling status…');
