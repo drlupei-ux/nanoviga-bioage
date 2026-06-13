@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --import tsx --test src/lib/admin/*.test.ts"
+    "test": "node --import tsx --test src/lib/admin/*.test.ts",
+    "seed:test-case": "node --env-file=.env.local --import tsx scripts/create-test-submission.ts",
+    "clean:test-cases": "node --env-file=.env.local --import tsx scripts/delete-test-submissions.ts"
   },
   "dependencies": {
     "@cloudbase/node-sdk": "^3.18.1",
