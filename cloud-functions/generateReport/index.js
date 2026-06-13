@@ -276,6 +276,9 @@ exports.main = async (event, context) => {
     const envId   = process.env.TCB_ENV_ID || 'bioage-compass-prod-9chaf35e573d';
     const token   = process.env.TCB_TOKEN || process.env.TENCENTCLOUD_SECRETID || '';
     const dbUrl   = `https://${envId}.ap-shanghai.app.tcloudbase.com/database`;
+    // [CHANGE 2026-06-13] 原因：caseId 提交时分配；失败不阻塞，由 admin 详情读取时 backfill | 影响范围：generateReport
+    let caseId = null;
+    try { caseId = await allocateCaseId(); } catch (e) { console.log('caseId alloc failed:', e.message); }
     const payload = JSON.stringify({
       collectionName: 'report_submissions',
       data: {
@@ -283,7 +286,9 @@ exports.main = async (event, context) => {
         bioAge: bioAge||0, score: score||0,
         dimensionScores: dimensionScores||{},
         contact: contact||'', assessmentCode: assessmentCode||'',
-        report: rawReport, createdAt: new Date().toISOString(), status: 'pending'
+        report: rawReport, createdAt: new Date().toISOString(),
+        // [CHANGE 2026-06-13] 原因：新生命周期 + 可读编号 | 影响范围：report_submissions 文档
+        status: 'submitted', caseId
       }
     });
     // 使用 CloudBase 云函数内置身份直接调用数据库
@@ -309,8 +314,10 @@ exports.main = async (event, context) => {
   } catch(e) { dbError = e.message; console.log('DB error:', e.message); }
 
   // [CHANGE 2026-03-27] 原因：fire-and-forget 导致云函数返回后 SMTP 连接被终止，邮件静默丢失 | 影响范围：cloud-functions/generateReport/index.js
+  // [CHANGE 2026-06-13] 原因：停用管理员邮件，改为站内审核台；保留代码可逆 | 影响范围：generateReport 邮件
+  const EMAIL_ENABLED = process.env.EMAIL_ENABLED === 'true';
   let emailResult = 'skipped';
-  if (EMAIL_AUTH_CODE) {
+  if (EMAIL_ENABLED && EMAIL_AUTH_CODE) {
     try {
       await sendSmtpEmail163(ADMIN_EMAIL, EMAIL_AUTH_CODE, ADMIN_EMAIL, subject, textBody, htmlBody);
       emailResult = 'sent';
@@ -325,6 +332,22 @@ exports.main = async (event, context) => {
 
   return okResp({ report: rawReport, saved: dbSaved, dbError, emailResult });
 };
+
+// [CHANGE 2026-06-13] 原因：提交时分配可读 caseId(BAC-YYYY-NNNN)，原子事务避免并发重复 | 影响范围：generateReport 入库
+async function allocateCaseId() {
+  const envId = process.env.TCB_ENV_ID || 'bioage-compass-prod-9chaf35e573d';
+  const db = require('@cloudbase/node-sdk').init({ env: envId }).database();
+  const year = new Date().getFullYear();
+  let seq = 0;
+  await db.runTransaction(async (tx) => {
+    const ref = tx.collection('case_counters').doc(String(year));
+    const snap = await ref.get();
+    const cur = snap && snap.data ? (Array.isArray(snap.data) ? snap.data[0] : snap.data) : null;
+    if (!cur) { seq = 1; await ref.set({ year, seq }); }
+    else { seq = (cur.seq || 0) + 1; await ref.update({ seq }); }
+  });
+  return `BAC-${year}-${String(seq).padStart(4, '0')}`;
+}
 
 // ─── DeepSeek API 调用 ────────────────────────────────────────────────────────
 function callDeepSeek(key, prompt, maxTokens) {
