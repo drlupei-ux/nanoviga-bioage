@@ -6,7 +6,8 @@
 
 ### Revision history
 - **r1** — initial design: 5-state lifecycle (`pending`→`approved`→`ready_for_delivery`→`delivered` / `rejected`), priority `normal/high/vip`, single `doctorNote`.
-- **r2** (this doc) — lifecycle `submitted`→`under_review`→`approved`→`delivered`→`archived`; priority `normal/attention/vip`; added `tags[]`; split `doctorNote` → `doctorSummary`/`doctorAdvice`/`doctorNextStep`; added human-readable `caseId` `BAC-YYYY-NNNN`.
+- **r2** — lifecycle `submitted`→`under_review`→`approved`→`delivered`→`archived`; priority `normal/attention/vip`; added `tags[]`; split `doctorNote` → `doctorSummary`/`doctorAdvice`/`doctorNextStep`; added human-readable `caseId` `BAC-YYYY-NNNN`.
+- **r3** (this doc) — `caseId` is now allocated **at submission time inside the cloud functions** (not at Start Review), so it is the permanent user-facing identifier from day one. Atomic yearly counter allocation moves into the cloud-function runtime via a CloudBase **transaction**; the admin layer keeps a lazy **backfill** for legacy/fallback records that lack a `caseId`.
 
 ---
 
@@ -23,7 +24,8 @@ submission to CloudBase, then send a notification email to the admin mailbox. Th
    **tags**, capture a structured **doctor sign-off**, and move it through a **status lifecycle**,
    writing every decision back to the DB.
 4. Persists the **full CBA narrative** into the DB (today it only exists in the email body).
-5. Assigns each reviewed case a **human-readable `caseId`** (`BAC-YYYY-NNNN`).
+5. Assigns every submission a permanent **human-readable `caseId`** (`BAC-YYYY-NNNN`) **at submission
+   time**, so it is the single user-facing identifier across review, delivery, CRM, and support.
 
 **Guiding constraint (project CLAUDE.md):** stability > correctness > features. Minimal,
 backward-compatible, reversible changes. Protected files untouched. Test gates enforced.
@@ -40,7 +42,7 @@ backward-compatible, reversible changes. Protected files untouched. Test gates e
 - Priority tagging (`normal` / `attention` / `vip`) and free `tags[]` for future case-library indexing.
 - Structured doctor sign-off (`doctorSummary` / `doctorAdvice` / `doctorNextStep`) stored for the
   future delivery workflow.
-- Human-readable `caseId` per case.
+- Human-readable `caseId` per case, **stable from submission onward** (single identifier; no dual id during `submitted`).
 - Persist full CBA narrative into the DB.
 - Export PDF of a case (browser print).
 
@@ -67,8 +69,8 @@ submitted ──Start Review──▶ under_review ──Approve──▶ approv
 
 | State | Meaning | Set by | Allowed from |
 |---|---|---|---|
-| `submitted` | Submitted, not yet picked up | cloud function on submit | — (initial) |
-| `under_review` | Admin is reviewing; **`caseId` assigned here** | **Start Review** | `submitted` |
+| `submitted` | Submitted, not yet picked up; **`caseId` already assigned** | cloud function on submit | — (initial) |
+| `under_review` | Admin is reviewing | **Start Review** | `submitted` |
 | `approved` | Clinical sign-off captured (doctor fields) | **Approve** | `under_review` |
 | `delivered` | Marked sent to user (manual now; auto later) | **Mark Delivered** | `approved` |
 | `archived` | Terminal — completed **or declined** | **Archive** | any non-`archived` state |
@@ -99,7 +101,7 @@ submitted ──Start Review──▶ under_review ──Approve──▶ approv
 | Field | Type | Default | Written by | Notes |
 |---|---|---|---|---|
 | `status` | string | `'submitted'` | cloud fn + admin | 5-value enum (§3); legacy `pending`→`submitted` on read |
-| `caseId` | string | `null` | admin | **`BAC-YYYY-NNNN`**; assigned at Start Review (§4.4) |
+| `caseId` | string | — | **cloud fn at submit** | **`BAC-YYYY-NNNN`**; allocated at submission (§4.4). `null` only for legacy/fallback docs → admin backfills |
 | `priority` | string | `'normal'` | admin | enum `normal` `attention` `vip` |
 | `tags` | string[] | `[]` | admin | free labels for future case-library indexing |
 | `reviewedAt` | ISO string | `null` | admin | updated on every status transition |
@@ -117,22 +119,39 @@ submitted ──Start Review──▶ under_review ──Approve──▶ approv
 
 ### 4.3 New collection — `case_counters`
 
-Supports atomic, per-year sequential numbering for `caseId`.
+Supports atomic, per-year sequential numbering for `caseId`. **One global yearly sequence shared by
+both PLA and CBA**, so `BAC` ids are unique across report types.
 
 ```
 { _id: <"2026">, year: 2026, seq: <int> }   // one doc per year
 ```
 
-### 4.4 `caseId` assignment
+Written by **both cloud functions** (primary, at submission) and by the **admin backfill** path.
+
+### 4.4 `caseId` assignment (at submission)
 
 - Format: **`BAC-YYYY-NNNN`** — `YYYY` = current year, `NNNN` = zero-padded 4-digit sequence
-  (e.g. `BAC-2026-0001`).
-- Assigned **once**, server-side, at the `submitted → under_review` transition (Start Review).
-- Allocation: atomically `inc` `case_counters/{year}.seq` (create with `seq:1` if absent), then
-  format. Idempotent guard: if the record already has a `caseId`, reuse it (no re-allocation).
-- Year rollover: a new year creates a new counter doc starting at `0001`; the year is embedded in
-  the id, so ids stay unique across years.
-- Distinct from the existing random `assessmentCode` (`BCA-XXXX`), which is unchanged.
+  (e.g. `BAC-2026-0001`). Distinct from the random `assessmentCode` (`BCA-XXXX`), which is unchanged.
+- **Allocated at submission**, inside each cloud function, **before** the document is inserted, so the
+  stored record carries `caseId` from the `submitted` state onward — the permanent, user-facing id.
+- **Atomic allocation = a CloudBase transaction** (`db.runTransaction`). A bare `command.inc` updates
+  atomically but does not return the new value; the transaction reads `case_counters/{year}`, creates
+  it with `seq:1` if absent, increments `seq`, and returns the new value to format the id. CloudBase
+  retries the transaction on write-conflict, guaranteeing uniqueness under concurrent submissions.
+- **Allocation order in the cloud function:** (1) `runTransaction` → `caseId`; (2) insert the
+  submission doc with `caseId` included. In `analyzeCBA` this happens before report generation
+  (matching the existing early-save ordering); the later `report` update is unaffected.
+- **Failure / fallback handling:**
+  - If transaction allocation fails, or the function falls back to the HTTP `saveAssessment` path
+    (SDK unavailable), the doc is inserted with `caseId: null` rather than blocking submission.
+  - The **admin layer backfills** any `caseId: null` record (legacy `pending` docs included) on first
+    read, using the same transactional allocator (§5.3). Backfill is idempotent: a record that
+    already has a `caseId` is never re-allocated.
+- **At-least-once note:** cloud functions are effectively single-invocation per submission; a rare
+  retry could consume an extra sequence number (gap), which is acceptable — ids stay unique and
+  monotonic, only non-contiguous. No double-id for one record (caseId written once on insert).
+- Year rollover: a new year lazily creates a new counter doc starting at `0001`; the year is embedded
+  in the id, so ids stay unique across years.
 
 ### 4.5 Normalized read model (API → UI)
 
@@ -140,7 +159,7 @@ Supports atomic, per-year sequential numbering for `caseId`.
 type AdminSubmission = {
   id: string;                 // CloudBase _id
   type: 'pla' | 'cba';
-  caseId: string | null;      // BAC-YYYY-NNNN, null until under_review
+  caseId: string | null;      // BAC-YYYY-NNNN, assigned at submission; null only for legacy/fallback (backfilled on read)
   name: string;
   assessmentCode: string;
   l1RefCode?: string | null;  // CBA only
@@ -195,8 +214,12 @@ credential. Client never sees credentials. All routes `runtime = 'nodejs'`.
 
 ### 5.3 CloudBase client helper
 `src/lib/admin/cloudbase.ts` — lazy singleton `tcb.init({ env, secretId, secretKey })`. Exposes
-`db()` plus typed helpers: `listSubmissions`, `getOne`, `updateReview`, `allocateCaseId`
-(atomic counter on `case_counters`).
+`db()` plus typed helpers: `listSubmissions`, `getOne`, `updateReview`, and `backfillCaseId`.
+
+`backfillCaseId(type, id)` — used **only to heal** records read with `caseId: null` (legacy `pending`
+docs and HTTP-fallback inserts). Same transactional allocator as the cloud functions (`runTransaction`
+on `case_counters/{year}`), idempotent (no-op if a `caseId` already exists). Primary allocation lives
+in the cloud functions (§7); the admin no longer allocates on Start Review.
 
 ### 5.4 Routes
 
@@ -205,14 +228,14 @@ credential. Client never sees credentials. All routes `runtime = 'nodejs'`.
 | `/api/admin/login` | POST | none | Compare body password to `ADMIN_DASHBOARD_PASSWORD`; on match set signed httpOnly cookie; else `401`. |
 | `/api/admin/logout` | POST | cookie | Clear cookie. |
 | `/api/admin/submissions` | GET | cookie | Query `?type=pla\|cba\|all&status=&priority=&tag=`. Lean normalized list (no report/biomarkers). Default sort: priority (vip→attention→normal) then `submittedAt` desc. |
-| `/api/admin/submissions/[type]/[id]` | GET | cookie | Full normalized `AdminSubmission`. |
+| `/api/admin/submissions/[type]/[id]` | GET | cookie | Full normalized `AdminSubmission`. If `caseId` is null (legacy/fallback), **backfill it** (§5.3) before returning, so opening a case guarantees a permanent id. |
 | `/api/admin/submissions/[type]/[id]/review` | POST | cookie | Body `{action, fromStatus, ...}`. Validates transition (§3), writes fields, returns updated record. |
 
 **`action` values & payloads:**
 
 | action | from → to | required / fields written |
 |---|---|---|
-| `start_review` | `submitted → under_review` | allocates+writes `caseId`; `reviewedBy/At` |
+| `start_review` | `submitted → under_review` | `reviewedBy/At` (caseId already present from submission) |
 | `approve` | `under_review → approved` | **`doctorSummary` required**; `doctorAdvice?`, `doctorNextStep?`; `reviewedBy/At` |
 | `mark_delivered` | `approved → delivered` | `deliveredAt`, `deliveryChannel='manual'`; `reviewedBy/At` |
 | `archive` | any non-`archived` → `archived` | optional `reviewNote` (e.g. decline reason); `reviewedBy/At` |
@@ -239,7 +262,7 @@ Single password field → POST `/api/admin/login` → success → `router.push('
 
 ### 6.3 `/admin` (list)
 - Filter chips: type (全部/PLA/CBA), status, priority, tag.
-- Rows/cards: 案例号(`caseId` or 未分配) · 客户 · 编号 · 类型 · 优先级徽章 · 标签 · 年龄 · 提交时间 · 状态徽章.
+- Rows/cards: 案例号(`caseId`; "未分配" only for un-opened legacy/fallback) · 客户 · 编号 · 类型 · 优先级徽章 · 标签 · 年龄 · 提交时间 · 状态徽章.
 - Priority + status badges color-coded. Default view `status=submitted`, sorted vip→attention→normal then newest.
 - Row click → detail.
 
@@ -271,20 +294,32 @@ Single password field → POST `/api/admin/login` → success → `router.push('
 Two functions edited in-place, each redeployed once via the legacy console (`applyEdits`,
 runtime CLAUDE.md §8). Minimal, reversible.
 
+**Shared addition (both functions):** a `allocateCaseId(db)` helper that runs the `case_counters`
+**transaction** (§4.4) and returns `BAC-YYYY-NNNN`. Implemented inline in each function (the two
+runtimes don't share modules; keep the logic identical). Called on the SDK path **before** insert;
+on the HTTP-fallback path, insert with `caseId: null` (admin backfills later). Wrap allocation in
+try/catch so a counter failure never blocks the submission.
+
 ### 7.1 `generateReport/index.js`
+- **caseId:** allocate via the transaction helper, then include `caseId` in the inserted
+  `report_submissions` doc.
 - **Email gate:** `EMAIL_ENABLED = process.env.EMAIL_ENABLED === 'true'` (default **off**); email
   block runs only when `EMAIL_ENABLED && EMAIL_AUTH_CODE`. Code retained below the guard.
 - **Status literal:** write `status: 'submitted'` on insert (was `'pending'`).
-- **(Optional, low-risk):** also write `priority:'normal'`, `tags:[]` on insert.
+- **Defaults:** also write `priority:'normal'`, `tags:[]` on insert for field consistency.
 
 ### 7.2 `analyzeCBA/index.js`
+- **caseId:** allocate via the transaction helper **before** the early DB save; include `caseId` in
+  the inserted `cba_submissions` doc. (Allocation precedes report generation, matching the existing
+  save-then-generate ordering.)
 - **Email gate:** same `EMAIL_ENABLED` guard.
-- **Status literal:** write `status: 'submitted'` on insert.
+- **Status literal:** write `status: 'submitted'` on insert; also `priority:'normal'`, `tags:[]`.
 - **Persist narrative:** capture the inserted doc `_id` from `.add()`; after report generation,
   `db.collection('cba_submissions').doc(id).update({ report: rawCba })`. Mirror in the HTTP-fallback
   path. If generation fails the doc exists without `report`; dashboard shows "报告缺失".
 
-**No HTTP contract change**; callers (`/api/generate-report`, `/api/cba/submit`) unaffected.
+**No HTTP contract change**; callers (`/api/generate-report`, `/api/cba/submit`) unaffected. The
+`caseId` is allocated server-side and is **not** required in the request payload.
 
 ---
 
@@ -311,9 +346,11 @@ runtime CLAUDE.md §8). Minimal, reversible.
 - [ ] `npm run build` green.
 - [ ] `/api/admin/*` smoke-tested with valid + invalid cookie.
 - [ ] Transition guard verified (a skip-forward attempt → `409`).
-- [ ] `caseId` allocation verified (two Start Reviews → sequential ids, no dup).
+- [ ] `caseId` allocation verified at submission (two test submissions across PLA+CBA → sequential
+      `BAC-YYYY-NNNN`, shared counter, no dup; concurrent submissions stay unique).
+- [ ] Admin backfill verified (a legacy `caseId:null` doc gets a permanent id on detail open).
 - [ ] Both cloud functions redeployed: email off (`EMAIL_ENABLED` unset), inserts write
-      `status:'submitted'`, CBA `report` persisted (test submission).
+      `caseId` + `status:'submitted'` + `priority/tags`, CBA `report` persisted (test submission).
 
 ---
 
@@ -326,7 +363,7 @@ runtime CLAUDE.md §8). Minimal, reversible.
 | `middleware.ts` | Removing it un-gates only `/admin/*`; rest of site unaffected |
 | CBA narrative persist | Remove the `update()` call; stored `report` values remain valid |
 | `status:'submitted'` literal | Read-normalization handles both `submitted` and legacy `pending`, so either literal is safe |
-| `case_counters` / `caseId` | Stop calling `allocateCaseId`; existing ids remain; counter doc is inert |
+| `case_counters` / `caseId` | Remove the cloud-fn allocation block (revert to no `caseId` on insert) and stop calling `backfillCaseId`; existing ids remain valid; counter doc is inert. Records simply carry `caseId:null` again. |
 | New DB fields / `@cloudbase/node-sdk` | Additive/server-only; removal affects only `/api/admin/*` |
 
 **Safety properties:** no protected file modified, no existing field retyped/removed, no existing
@@ -338,7 +375,7 @@ endpoint contract changed — a full revert returns the system to today's behavi
 
 **New (Next.js, shipped via Vercel):**
 - `src/middleware.ts` — auth gate
-- `src/lib/admin/cloudbase.ts` — admin SDK client + db helpers (incl. `allocateCaseId`)
+- `src/lib/admin/cloudbase.ts` — admin SDK client + db helpers (incl. `backfillCaseId` transaction)
 - `src/lib/admin/session.ts` — cookie sign/verify
 - `src/lib/admin/types.ts` — `AdminSubmission`, status/priority enums, transition map, caseId format
 - `src/app/admin/login/page.tsx`
@@ -352,11 +389,11 @@ endpoint contract changed — a full revert returns the system to today's behavi
 - `src/app/api/admin/submissions/[type]/[id]/review/route.ts`
 - `package.json` — add `@cloudbase/node-sdk`
 
-**New collection:** `case_counters` (created lazily on first `caseId` allocation).
+**New collection:** `case_counters` (created lazily on first `caseId` allocation by the cloud functions).
 
 **Edited (cloud functions, manual deploy):**
-- `cloud-functions/generateReport/index.js` — `EMAIL_ENABLED` gate + `status:'submitted'`
-- `cloud-functions/analyzeCBA/index.js` — `EMAIL_ENABLED` gate + `status:'submitted'` + persist `report`
+- `cloud-functions/generateReport/index.js` — `EMAIL_ENABLED` gate + `status:'submitted'` + `caseId` allocation (transaction) + `priority/tags` defaults
+- `cloud-functions/analyzeCBA/index.js` — `EMAIL_ENABLED` gate + `status:'submitted'` + `caseId` allocation + `priority/tags` defaults + persist `report`
 
 **Untouched protected files:** `src/lib/scoring.ts`, `src/context/AssessmentContext.tsx`,
 `tailwind.config.ts`, protected `globals.css` rules.
