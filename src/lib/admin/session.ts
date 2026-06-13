@@ -7,9 +7,9 @@ function bytesToB64url(bytes: Uint8Array): string {
   for (const b of bytes) s += String.fromCharCode(b);
   return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
-function b64urlToBytes(str: string): Uint8Array {
+function b64urlToBytes(str: string): Uint8Array<ArrayBuffer> {
   const bin = atob(str.replace(/-/g, '+').replace(/_/g, '/'));
-  const out = new Uint8Array(bin.length);
+  const out = new Uint8Array(bin.length) as Uint8Array<ArrayBuffer>;
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
   return out;
 }
