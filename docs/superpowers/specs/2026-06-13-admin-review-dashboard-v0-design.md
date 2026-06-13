@@ -36,6 +36,8 @@ submitted ──(open the case)──▶ under_review ──(Deliver)──▶ d
   `under_review` (no separate "Start Review" button — fewer clicks, fewer APIs). Idempotent.
 - No backward transitions, no decline/archive in V0. A case that shouldn't proceed is simply left
   un-delivered.
+- **Delivery is NOT a lock during the 50-case pilot.** `doctorNote` stays editable after a case
+  reaches `delivered`; re-submitting just updates the note (status remains `delivered`).
 
 ## 4. Data model — 3 new fields, additive
 
@@ -88,7 +90,7 @@ Server-side on Vercel via `@cloudbase/node-sdk` (admin credential). All routes `
 | `/api/admin/logout` | POST | cookie | clear cookie |
 | `/api/admin/submissions` | GET | cookie | `?type=pla\|cba\|all&status=` → normalized list (lean) |
 | `/api/admin/submissions/[type]/[id]` | GET | cookie | full record; **backfill `caseId` if null** and **auto-advance `submitted→under_review`** |
-| `/api/admin/submissions/[type]/[id]/deliver` | POST | cookie | body `{doctorNote}`; requires status `under_review`; writes `doctorNote` + `status='delivered'` |
+| `/api/admin/submissions/[type]/[id]/deliver` | POST | cookie | body `{doctorNote}` (required); writes `doctorNote` + `status='delivered'`. Re-POST after delivery just updates the note (not a lock). |
 
 **Env (Vercel):** `TCB_ENV_ID`, `TENCENT_SECRET_ID`, `TENCENT_SECRET_KEY`, `ADMIN_DASHBOARD_PASSWORD`,
 `ADMIN_SESSION_SECRET`. **Dep:** `@cloudbase/node-sdk`. Cloud functions honor `EMAIL_ENABLED` (unset =

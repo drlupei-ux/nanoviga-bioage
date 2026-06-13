@@ -548,9 +548,8 @@ export async function POST(req: Request, { params }: { params: { type: string; i
 
   const current = await getOne(type, params.id);
   if (!current) return NextResponse.json({ error: 'not_found' }, { status: 404 });
-  if (current.status === 'delivered') {
-    return NextResponse.json({ error: 'already_delivered' }, { status: 409 });
-  }
+  // Delivery is NOT a lock in the pilot: deliver() sets doctorNote + status='delivered'
+  // idempotently, so re-POSTing after delivery simply updates the note.
   try {
     await deliver(type, params.id, doctorNote);
     return NextResponse.json({ item: await getOne(type, params.id) });
@@ -592,15 +591,19 @@ curl -s -b /tmp/nv.txt 'http://localhost:3000/api/admin/submissions/pla/<ID>' | 
 ```
 Expected: `caseId` `BAC-2026-NNNN`, `status:'under_review'`, `report` present.
 
-- [ ] **Step 4: Deliver + guard**
+- [ ] **Step 4: Deliver + editable-after-delivery**
 ```bash
 curl -s -b /tmp/nv.txt -X POST 'http://localhost:3000/api/admin/submissions/pla/<ID>/deliver' \
   -H 'Content-Type: application/json' -d '{"doctorNote":"已电话沟通，建议复查血脂"}'
+# re-POST after delivery just updates the note (NOT a lock) → 200 with new note
+curl -s -b /tmp/nv.txt -X POST 'http://localhost:3000/api/admin/submissions/pla/<ID>/deliver' \
+  -H 'Content-Type: application/json' -d '{"doctorNote":"补充：已发送复查清单"}'
+# empty note → 400
 curl -s -o /dev/null -w "%{http_code}\n" -b /tmp/nv.txt -X POST \
   'http://localhost:3000/api/admin/submissions/pla/<ID>/deliver' \
-  -H 'Content-Type: application/json' -d '{"doctorNote":"x"}'   # already delivered → 409
+  -H 'Content-Type: application/json' -d '{"doctorNote":""}'
 ```
-Expected: first returns the record with `status:'delivered'` + `doctorNote`; second `409`. Confirm in CloudBase console.
+Expected: first → `status:'delivered'` + note; second → still `delivered`, note updated to the new text; third → `400`. Confirm in CloudBase console.
 
 - [ ] **Step 5: No commit.** Fix Task 4/6 code if any check fails.
 
@@ -851,19 +854,16 @@ export default function AdminDetail() {
 
       <section className="clinical-card mt-3">
         <h2 className="clinical-section-label">医生备注</h2>
-        <textarea value={note} onChange={e => setNote(e.target.value)} disabled={delivered}
-          placeholder="填写本案例的医生备注…" className="w-full h-28 p-2 mt-2 rounded border text-base disabled:opacity-70" />
+        <textarea value={note} onChange={e => setNote(e.target.value)}
+          placeholder="填写本案例的医生备注…" className="w-full h-28 p-2 mt-2 rounded border text-base" />
       </section>
 
       <section className="mt-4">
-        {!delivered ? (
-          <button disabled={busy || !note.trim()} onClick={deliver}
-            className="w-full h-12 rounded bg-clinical-primary text-white font-medium disabled:opacity-60">
-            {busy ? '提交中…' : '确认交付'}
-          </button>
-        ) : (
-          <p className="text-center text-sm text-clinical-jade">本案例已交付。</p>
-        )}
+        <button disabled={busy || !note.trim()} onClick={deliver}
+          className="w-full h-12 rounded bg-clinical-primary text-white font-medium disabled:opacity-60">
+          {busy ? '提交中…' : delivered ? '保存备注' : '确认交付'}
+        </button>
+        {delivered && <p className="text-center text-xs text-clinical-jade mt-2">本案例已交付（备注仍可修改）。</p>}
       </section>
     </main>
   );
@@ -872,7 +872,7 @@ export default function AdminDetail() {
 
 - [ ] **Step 2: Typecheck** — `npm run build` → compiles.
 
-- [ ] **Step 3: Browser check** — open a case (status flips to 审核中), write a note, 确认交付 → status 已交付, textarea locks.
+- [ ] **Step 3: Browser check** — open a case (status flips to 审核中), write a note, 确认交付 → status 已交付; the textarea stays editable and the button becomes 保存备注 — edit the note and save again to confirm it updates without changing status.
 
 - [ ] **Step 4: Commit**
 ```bash
