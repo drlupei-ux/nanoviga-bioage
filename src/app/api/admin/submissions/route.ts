@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 import { listSubmissions } from '@/lib/admin/cloudbase';
+import { adminGuard } from '@/lib/admin/auth';
 import type { ReviewStatus, SubmissionType } from '@/lib/admin/types';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
+  const unauth = await adminGuard();
+  if (unauth) return unauth;
   const q = new URL(req.url).searchParams;
   const type = (q.get('type') || 'all') as SubmissionType | 'all';
   const status = (q.get('status') || undefined) as ReviewStatus | undefined;

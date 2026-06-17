@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getOne, backfillCaseId, ensureUnderReview } from '@/lib/admin/cloudbase';
+import { adminGuard } from '@/lib/admin/auth';
 import type { SubmissionType } from '@/lib/admin/types';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -7,6 +8,8 @@ export const dynamic = 'force-dynamic';
 const asType = (t: string): SubmissionType | null => (t === 'pla' || t === 'cba' ? t : null);
 
 export async function GET(_req: Request, { params }: { params: { type: string; id: string } }) {
+  const unauth = await adminGuard();
+  if (unauth) return unauth;
   const type = asType(params.type);
   if (!type) return NextResponse.json({ error: 'bad_type' }, { status: 400 });
   try {
