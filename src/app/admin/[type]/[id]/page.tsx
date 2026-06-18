@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { api, StatusBadge } from '../../AdminUI';
+import { DoctorReportView } from '../../DoctorReportView';
 import type { AdminSubmission } from '@/lib/admin/types';
 
 export default function AdminDetail() {
@@ -56,7 +57,6 @@ export default function AdminDetail() {
 
       <section className="clinical-card mt-3">
         <h2 className="clinical-section-label">评估报告</h2>
-        <p className="text-sm mt-1">身体年龄 {item.headlineAge} / 实际 {item.actualAge} 岁{typeof item.score === 'number' ? ` · 评分 ${item.score}` : ''}</p>
         {item.type === 'pla' && item.dimensionScores && (
           <ul className="text-sm mt-2 grid grid-cols-2 gap-1">
             {Object.entries(item.dimensionScores).map(([k, v]) => <li key={k}>{k}: {v}</li>)}
@@ -67,7 +67,7 @@ export default function AdminDetail() {
             {Object.entries(item.organAges).map(([k, v]) => <li key={k}>{k}: {v}岁</li>)}
           </ul>
         )}
-        <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">{item.report || '报告缺失'}</div>
+        <div className="mt-3"><DoctorReportView item={item} doctorNote={note} /></div>
       </section>
 
       <section className="clinical-card mt-3">
