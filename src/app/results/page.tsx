@@ -10,7 +10,9 @@ import { AssessmentHeader } from "@/components/AssessmentHeader";
 import { HeroScore } from "@/components/HeroScore";
 import { RadarHealth } from "@/components/RadarHealth";
 import { CTAButton } from "@/components/CTAButton";
-import { WeChatAddCard } from "@/components/WeChatAddCard";
+import { ClaimReportCTA } from "@/components/ClaimReportCTA";
+import { WeChatClaimModal } from "@/components/WeChatClaimModal";
+import { track } from "@/lib/track";
 
 const SAVE_URL   = "/api/save-assessment";   // proxied to avoid browser CORS
 const REPORT_URL = "/api/generate-report";   // L1 完成自动把结果+编号邮件给陆大夫（复用 generateReport）
@@ -21,6 +23,7 @@ export default function ResultsPage() {
   const { results, setResults } = useAssessment();
   const savedRef      = useRef(false); // prevent double-fire in React StrictMode
   const reportSentRef = useRef(false); // 自动邮件只发一次
+  const funnelRef     = useRef(false); // 漏斗 pla_completed/claim_generated 只发一次
 
   // Guard: if context is empty (React race condition or page refresh),
   // try sessionStorage before redirecting home
@@ -61,9 +64,19 @@ export default function ResultsPage() {
     }).catch(() => {}); // silent fail — data is always in sessionStorage
   }, [results]);
 
+  // [CHANGE 2026-06-18] 转化漏斗：PLA 完成 + 领取码生成（去重，每会话一次）
+  useEffect(() => {
+    if (!results || funnelRef.current) return;
+    funnelRef.current = true;
+    const code = results.assessmentCode.replace(/^BCA-/i, "");
+    track("pla_completed", { assessmentCode: results.assessmentCode });
+    track("claim_generated", { claimCode: code });
+  }, [results]);
+
   // [CHANGE 2026-06-08] 原因：L1 通知邮件改由「用户点击加微信」触发（见 notifyDoctor + WeChatAddCard.onEngage），不再每个匿名 L1 自动发——大幅降低 163 SMTP 发信量，规避 550 限频导致邮件静默丢失；L1 数据仍在页面加载时存入 DB（上方 save-assessment），不丢线索 | 影响范围：results 通知邮件触发时机（自动 useEffect → 加微信引擎）
 
   const [copied, setCopied] = useState(false);
+  const [claimOpen, setClaimOpen] = useState(false);
 
   if (!results) return null;
 
@@ -81,6 +94,17 @@ export default function ResultsPage() {
   } = results;
 
   const fivePillarScores = mapL1ToFivePillars(dimensionScores);
+  const claimCode = assessmentCode.replace(/^BCA-/i, "");
+
+  // [CHANGE 2026-06-18] 主转化动作：复制领取请求文案 + 通知陆大夫建案 + 打开二维码弹层（1次点击出二维码）
+  function handleClaim() {
+    const reqText = `【缓龄评估】完整医生报告领取\n领取码：${claimCode}\n请发我完整医生报告，谢谢。`;
+    try { navigator.clipboard?.writeText(reqText).catch(() => {}); } catch {}
+    notifyDoctor();
+    track("get_report_clicked", { claimCode });
+    track("qr_modal_opened", { claimCode });
+    setClaimOpen(true);
+  }
 
   function copyCode() {
     navigator.clipboard.writeText(assessmentCode).then(() => {
@@ -132,14 +156,8 @@ export default function ResultsPage() {
       {/* ── 手机端固定底部CTA ── 用户不需要滚到底才能行动 ── */}
       <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden bg-white/95 backdrop-blur-sm border-t border-clinical-border px-4 pt-3 pb-safe-4">
         {/* [CHANGE 2026-06-07] 原因：L1/L2 分离——底部 CTA 由跳转 /report 改为滚动至加微信引导卡片 | 影响范围：results 固定底部 CTA */}
-        <CTAButton
-          fullWidth
-          size="lg"
-          onClick={() =>
-            document.getElementById("wechat-add")?.scrollIntoView({ behavior: "smooth", block: "center" })
-          }
-        >
-          添加陆大夫微信 · 获取完整报告 →
+        <CTAButton fullWidth size="lg" onClick={handleClaim}>
+          领取我的完整医生报告 →
         </CTAButton>
       </div>
 
@@ -182,8 +200,8 @@ export default function ResultsPage() {
           <RadarHealth dimensionScores={fivePillarScores} />
         </section>
 
-        {/* ── 加微信引导（详细报告 / 团队沟通 / L2 由陆大夫人工发放）── */}
-        <WeChatAddCard assessmentCode={assessmentCode} onEngage={notifyDoctor} />
+        {/* ── 主转化：领取完整医生报告（领取码 + 二维码弹层，1次点击出二维码）── */}
+        <ClaimReportCTA bioAge={bioAge} actualAge={actualAge} claimCode={claimCode} onClaim={handleClaim} />
 
         {/* ── 页脚信息 ──────────────────────────────── */}
         <div className="mt-10 text-center">
@@ -216,6 +234,8 @@ export default function ResultsPage() {
           </p>
         </div>
       </main>
+
+      <WeChatClaimModal open={claimOpen} onClose={() => setClaimOpen(false)} claimCode={claimCode} />
     </div>
   );
 }

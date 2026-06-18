@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getOne, deliver } from '@/lib/admin/cloudbase';
+import { getOne, deliver, getDb } from '@/lib/admin/cloudbase';
 import { adminGuard } from '@/lib/admin/auth';
 import type { SubmissionType } from '@/lib/admin/types';
 export const runtime = 'nodejs';
@@ -22,6 +22,8 @@ export async function POST(req: Request, { params }: { params: { type: string; i
   // idempotently, so re-POSTing after delivery simply updates the note.
   try {
     await deliver(type, params.id, doctorNote);
+    // [CHANGE 2026-06-18] 漏斗：报告交付事件
+    try { await getDb().collection('funnel_events').add({ event: 'report_delivered', props: { type, id: params.id, caseId: current.caseId }, ts: new Date().toISOString() }); } catch {}
     return NextResponse.json({ item: await getOne(type, params.id) });
   } catch (e: any) {
     console.error('admin deliver error', e);
